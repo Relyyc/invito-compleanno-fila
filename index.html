@@ -153,7 +153,28 @@
   #capture-canvas { display: none; }
 
   #game-wrap { position: relative; width: 100%; height: 100%; }
-  #game-canvas { display: block; margin: 0 auto; background: #4da6ff; image-rendering: pixelated; }
+  #game-canvas {
+    display: block; margin: 0 auto; background: #4da6ff; image-rendering: pixelated;
+    width: 100%; height: auto; max-height: 100vh;
+  }
+
+  #rotate-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #0b0b1a;
+    color: #fff;
+    z-index: 200;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+  }
+  @media (orientation: portrait) {
+    #screen-game.active #rotate-overlay { display: flex; }
+    #screen-game.active #game-wrap { display: none; }
+  }
 
   #hud {
     position: absolute;
@@ -203,7 +224,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v0.3</div>
+<div id="dev-version">DEV BUILD v0.4</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 1: DISCLAIMER -->
@@ -232,6 +253,10 @@
 
   <!-- SCHERMATA 3: GIOCO -->
   <section id="screen-game" class="screen">
+    <div id="rotate-overlay">
+      <div style="font-size:40px;">📱</div>
+      <p class="body-text" style="margin-top:16px;">Gira il telefono in orizzontale per giocare</p>
+    </div>
     <div id="game-wrap">
       <div id="hud">
         <div id="hud-name"></div>
@@ -349,24 +374,27 @@ document.getElementById('btn-confirm').addEventListener('click', () => {
   initGame();
 });
 
-// Ritaglia un quadrato centrale dal selfie e lo pixelizza (16x16 -> ingrandito, niente smoothing)
+// Ritaglia un cerchio centrale dal selfie, mantenendo l'immagine nitida (nessuna pixelizzazione)
 function pixelateFace(sourceCanvas) {
   const size = Math.min(sourceCanvas.width, sourceCanvas.height);
   const sx = (sourceCanvas.width - size) / 2;
   const sy = (sourceCanvas.height - size) / 2;
 
-  const small = document.createElement('canvas');
-  small.width = 16; small.height = 16;
-  const sctx = small.getContext('2d');
-  sctx.imageSmoothingEnabled = true;
-  sctx.drawImage(sourceCanvas, sx, sy, size, size, 0, 0, 16, 16);
+  const out = document.createElement('canvas');
+  const RES = 96; // risoluzione dell'output: alta, per restare nitida anche ingrandita
+  out.width = RES; out.height = RES;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
 
-  const big = document.createElement('canvas');
-  big.width = 64; big.height = 64;
-  const bctx = big.getContext('2d');
-  bctx.imageSmoothingEnabled = false;
-  bctx.drawImage(small, 0, 0, 64, 64);
-  return big;
+  octx.save();
+  octx.beginPath();
+  octx.arc(RES / 2, RES / 2, RES / 2, 0, Math.PI * 2);
+  octx.clip();
+  octx.drawImage(sourceCanvas, sx, sy, size, size, 0, 0, RES, RES);
+  octx.restore();
+
+  return out;
 }
 
 /* ============ SCHERMATA 3: GIOCO PLATFORM ============ */
@@ -414,7 +442,7 @@ function buildLevel() {
   p.push({ x: 0, y: GROUND_Y, w: 420, h: 40 });
   p.push({ x: 480, y: GROUND_Y, w: 260, h: 40 });      // dopo prima buca (420-480)
   p.push({ x: 800, y: GROUND_Y, w: 300, h: 40 });      // seconda buca (740-800)
-  p.push({ x: 1160, y: GROUND_Y, w: 940, h: 40 });     // resto fino alla bandiera
+  p.push({ x: 1160, y: GROUND_Y, w: 1400, h: 40 });    // resto fino alla bandiera e oltre (pizzeria)
 
   // piattaforme sospese
   p.push({ x: 560, y: GROUND_Y - 70, w: 90, h: 16 });
@@ -567,6 +595,7 @@ function render() {
 
   // bandiera / traguardo
   drawFlag(game.flagX);
+  drawArrivalBuilding(game.flagX + 60);
 
   // nemici
   for (const en of game.enemies) {
@@ -623,21 +652,19 @@ function drawCloud(x, y) {
 }
 
 function drawGroundBlock(plat) {
-  // corpo terra con motivo "mattoni" pixel
+  // corpo terra: colore pieno + un paio di linee di profondità pulite (niente pattern casuali)
   ctx.fillStyle = '#8a5a34';
   ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
-  ctx.fillStyle = '#6e4527';
-  for (let bx = 0; bx < plat.w; bx += 16) {
-    for (let by = 8; by < plat.h; by += 10) {
-      ctx.fillRect(plat.x + bx + ((by / 10) % 2 ? 8 : 0), plat.y + by, 12, 5);
-    }
-  }
-  // striscia erba in cima
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.fillRect(plat.x, plat.y + 7, plat.w, 3);
+  ctx.fillRect(plat.x, plat.y + plat.h - 4, plat.w, 4);
+
+  // striscia erba in cima, con ciuffetti regolari
   ctx.fillStyle = '#3fae4a';
   ctx.fillRect(plat.x, plat.y, plat.w, 7);
   ctx.fillStyle = '#2f8f3d';
-  for (let bx = 4; bx < plat.w; bx += 12) {
-    ctx.fillRect(plat.x + bx, plat.y, 4, 3);
+  for (let bx = 6; bx < plat.w - 4; bx += 18) {
+    ctx.fillRect(plat.x + bx, plat.y, 5, 3);
   }
 }
 
@@ -654,7 +681,882 @@ function drawFlag(flagX) {
   ctx.fill();
 }
 
+// Piccolo edificio decorativo dopo il traguardo, per dare la sensazione di "essere arrivati"
+function drawArrivalBuilding(x) {
+  const baseY = GROUND_Y;
+  const bw = 130, bh = 90;
+  // corpo edificio
+  ctx.fillStyle = '#d94f3c';
+  ctx.fillRect(x, baseY - bh, bw, bh);
+  // tetto
+  ctx.fillStyle = '#7a2e22';
+  ctx.fillRect(x - 6, baseY - bh - 14, bw + 12, 16);
+  // tenda/pensilina a righe
+  const stripeW = 14;
+  for (let i = 0; i * stripeW < bw; i++) {
+    ctx.fillStyle = i % 2 === 0 ? '#f4f1ea' : '#d94f3c';
+    ctx.fillRect(x + i * stripeW, baseY - bh + 18, stripeW, 10);
+  }
+  // porta
+  ctx.fillStyle = '#4a2c1a';
+  ctx.fillRect(x + bw / 2 - 12, baseY - 34, 24, 34);
+  // finestre
+  ctx.fillStyle = '#ffe9a8';
+  ctx.fillRect(x + 14, baseY - bh + 40, 22, 22);
+  ctx.fillRect(x + bw - 36, baseY - bh + 40, 22, 22);
+  // insegna
+  ctx.fillStyle = '#fff8e8';
+  ctx.fillRect(x + bw / 2 - 34, baseY - bh - 34, 68, 18);
+  ctx.fillStyle = '#7a2e22';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('PIZZA', x + bw / 2, baseY - bh - 21);
+}
+
+const enemySprite = new Image();
+let enemySpriteLoaded = false;
+enemySprite.onload = () => { enemySpriteLoaded = true; };
+// TODO: se disegni il tuo sprite nemico, salvalo come "nemico.png" nella stessa
+// cartella di questo file e questa riga lo caricherà automaticamente.
+// Dimensioni consigliate: 32x32px (o multipli), sfondo trasparente, stile pixel-art.
+enemySprite.src = 'nemico.png';
+
 function drawEnemy(en) {
+  if (enemySpriteLoaded) {
+    ctx.save();
+    if (en.dir < 0) {
+      ctx.translate(en.x + en.w, en.y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(enemySprite, 0, 0, en.w, en.h);
+    } else {
+      ctx.drawImage(enemySprite, en.x, en.y, en.w, en.h);
+    }
+    ctx.restore();
+    return;
+  }
+  const t = game.frame * 0.2;
+  const wobble = Math.sin(t) * 2;
+  // corpo
+  ctx.fillStyle = '#c0392b';
+  ctx.fillRect(en.x, en.y + 4 + wobble * 0, en.w, en.h - 4);
+  // pancia chiara
+  ctx.fillStyle = '#e8b4a0';
+  ctx.fillRect(en.x + 4, en.y + en.h - 9, en.w - 8, 6);
+  // occhi (guardano nella direzione di marcia)
+  ctx.fillStyle = '#fff';
+  const eyeX = en.dir > 0 ? en.x + en.w - 10 : en.x + 3;
+  ctx.fillRect(eyeX, en.y + 3, 6, 6);
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(eyeX + (en.dir > 0 ? 3 : 1), en.y + 5, 2, 3);
+  // sopracciglia arrabbiate
+  ctx.fillStyle = '#5c1a10';
+  ctx.fillRect(en.x + 2, en.y, en.w - 4, 3);
+}
+
+function drawPlayer(p) {
+  ctx.save();
+  const walking = Math.abs(p.vx) > 0 && p.onGround;
+  const legPhase = walking ? Math.sin(game.frame * 0.5) * 5 : 0;
+
+  // ombra a terra
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(p.x + p.w / 2, GROUND_Y + 3, p.w / 2, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // gambe (si muovono quando cammina)
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(p.x + 3, p.y + p.h - 8, 6, 8 + Math.max(0, legPhase));
+  ctx.fillRect(p.x + p.w - 9, p.y + p.h - 8, 6, 8 + Math.max(0, -legPhase));
+
+  // corpo / maglietta
+  const bodyGrad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+  bodyGrad.addColorStop(0, '#3b7dff');
+  bodyGrad.addColorStop(1, '#1f4fbf');
+  ctx.fillStyle = bodyGrad;
+  ctx.fillRect(p.x, p.y + 9, p.w, p.h - 17);
+
+  // braccia
+  ctx.fillStyle = '#1f4fbf';
+  const armLift = p.onGround ? 0 : -4;
+  ctx.fillRect(p.x - 2, p.y + 11 + armLift, 4, 10);
+  ctx.fillRect(p.x + p.w - 2, p.y + 11 + armLift, 4, 10);
+
+  // faccia (selfie pixelato) sopra al corpo
+  if (state.faceCanvas) {
+    if (p.facing === -1) {
+      ctx.translate(p.x + p.w, p.y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(state.faceCanvas, 0, 0, p.w, 20);
+    } else {
+      ctx.drawImage(state.faceCanvas, p.x, p.y, p.w, 20);
+    }
+  } else {
+    ctx.fillStyle = '#ffd6a5';
+    ctx.fillRect(p.x, p.y, p.w, 20);
+  }
+  ctx.restore();
+}
+
+/* ============ VITTORIA / SCONFITTA ============ */
+function onWin() {
+  document.getElementById('win-message').textContent =
+    `${state.name}, hai superato la prova! Preparati per una festa leggendaria.`;
+  const preview = document.getElementById('face-preview');
+  preview.width = 90; preview.height = 90;
+  const pctx = preview.getContext('2d');
+  if (state.faceCanvas) pctx.drawImage(state.faceCanvas, 0, 0, 90, 90);
+  showScreen('screen-win');
+}
+
+function onLose() {
+  document.getElementById('lose-message').textContent =
+    `Mi dispiace ${state.name}, questa volta non ce l'hai fatta. Niente festa per te... a meno che tu non voglia riprovare!`;
+  showScreen('screen-lose');
+}
+
+document.getElementById('btn-retry').addEventListener('click', () => {
+  showScreen('screen-game');
+  initGame();
+});
+</script>
+</body>
+</html><!DOCTYPE html>
+<!--
+  ================================================================
+  INVITO COMPLETEO - PROTOTIPO PRE-ALPHA
+  ================================================================
+  COSE DA SOSTITUIRE PRIMA DI PUBBLICARE (cerca "TODO" nel file):
+  1. TODO-NOME     -> nome del festeggiato/a
+  2. TODO-DATA     -> data e ora della festa
+  3. TODO-LUOGO    -> indirizzo / luogo
+  4. TODO-MUSICA   -> aggiungi un file audio royalty-free tuo
+                      (NON usare musiche originali Nintendo/Mario:
+                      problemi di copyright. Cerca su
+                      freesound.org, incompetech.com o pixabay.com
+                      musica "8-bit"/"chiptune" free licence)
+  5. TODO-RSVP     -> se vuoi raccogliere conferme, sostituisci
+                      il bottone finale con un link Formspree/
+                      Google Form
+  ================================================================
+-->
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sei Invitato! - Premi Start</title>
+<style>
+  @font-face {
+    font-family: 'PixelFont';
+    src: local('Press Start 2P');
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #000;
+    font-family: 'PixelFont', 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+  #app {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    background: #0b0b1a;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #dev-version {
+    position: fixed;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: #ffd93d;
+    font-family: 'PixelFont', 'Courier New', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid #ffd93d;
+    z-index: 999;
+    pointer-events: none;
+    letter-spacing: 1px;
+  }
+  .screen {
+    display: none;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+  }
+  .screen.active { display: flex; }
+
+  /* ---- scanline / CRT effect ---- */
+  .crt::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.15) 0px,
+      rgba(0,0,0,0.15) 1px,
+      transparent 2px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 50;
+  }
+  .crt::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    box-shadow: inset 0 0 120px rgba(0,0,0,0.8);
+    pointer-events: none;
+    z-index: 51;
+  }
+
+  .blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  h1.title {
+    font-size: clamp(20px, 5vw, 42px);
+    color: #ffd93d;
+    text-shadow: 3px 3px 0 #ff4d6d, 6px 6px 0 #000;
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  p.body-text {
+    font-size: clamp(11px, 2.2vw, 16px);
+    line-height: 2;
+    max-width: 560px;
+    color: #b8f2e6;
+  }
+  .warn {
+    color: #ffd93d;
+    margin: 20px 0;
+    font-size: clamp(11px, 2.2vw, 14px);
+  }
+  input[type=text] {
+    font-family: inherit;
+    font-size: clamp(12px, 2.5vw, 16px);
+    padding: 12px;
+    margin: 16px 0;
+    width: min(300px, 80vw);
+    background: #1a1a2e;
+    border: 3px solid #ffd93d;
+    color: #fff;
+    text-align: center;
+    outline: none;
+  }
+  button.pixel-btn {
+    font-family: inherit;
+    font-size: clamp(12px, 2.5vw, 16px);
+    padding: 16px 28px;
+    margin-top: 20px;
+    background: #ff4d6d;
+    color: #fff;
+    border: none;
+    box-shadow: 4px 4px 0 #7a1030, -4px 4px 0 #7a1030 , 0 0 0 3px #fff inset;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+  button.pixel-btn:active { transform: translateY(3px); box-shadow: none; }
+  button.pixel-btn:disabled { opacity: 0.4; cursor: default; }
+
+  #video-preview, #capture-canvas {
+    width: min(320px, 80vw);
+    height: min(240px, 60vw);
+    background: #000;
+    border: 4px solid #4dd6ff;
+    object-fit: cover;
+  }
+  #capture-canvas { display: none; }
+
+  #game-wrap { position: relative; width: 100%; height: 100%; }
+  #game-canvas {
+    display: block; margin: 0 auto; background: #4da6ff; image-rendering: pixelated;
+    width: 100%; height: auto; max-height: 100vh;
+  }
+
+  #rotate-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #0b0b1a;
+    color: #fff;
+    z-index: 200;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+  }
+  @media (orientation: portrait) {
+    #screen-game.active #rotate-overlay { display: flex; }
+    #screen-game.active #game-wrap { display: none; }
+  }
+
+  #hud {
+    position: absolute;
+    top: 10px; left: 10px;
+    font-size: 12px;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+    z-index: 5;
+  }
+
+  #touch-controls {
+    position: absolute;
+    bottom: 20px; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 5;
+  }
+  .touch-btn {
+    width: 64px; height: 64px;
+    background: rgba(255,255,255,0.25);
+    border: 3px solid #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #fff;
+    touch-action: none;
+  }
+  #dpad { display: flex; gap: 10px; }
+
+  .result-box {
+    background: #1a1a2e;
+    border: 4px solid #ffd93d;
+    padding: 30px 24px;
+    max-width: 480px;
+  }
+  #face-preview {
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    margin-bottom: 16px;
+    image-rendering: pixelated;
+  }
+</style>
+</head>
+<body>
+<!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
+<div id="dev-version">DEV BUILD v0.4</div>
+<div id="app" class="crt">
+
+  <!-- SCHERMATA 1: DISCLAIMER -->
+  <section id="screen-disclaimer" class="screen active">
+    <h1 class="title">ATTENZIONE<br>GIOCATORE</h1>
+    <p class="body-text">
+      Stai per ricevere un invito speciale.<br>
+      Per vivere l'esperienza come si deve:
+    </p>
+    <p class="warn blink">🔊 ALZA IL VOLUME DEL TELEFONO</p>
+    <p class="warn">📷 Ti verrà chiesto di scattare un selfie<br>per creare il tuo personaggio</p>
+    <input type="text" id="player-name" placeholder="INSERISCI IL TUO NOME" maxlength="16">
+    <button class="pixel-btn" id="btn-to-camera">PREMI START</button>
+  </section>
+
+  <!-- SCHERMATA 2: CAMERA -->
+  <section id="screen-camera" class="screen">
+    <h1 class="title" style="font-size:20px;">CREA IL TUO<br>PERSONAGGIO</h1>
+    <video id="video-preview" autoplay playsinline muted></video>
+    <canvas id="capture-canvas"></canvas>
+    <p class="body-text" id="camera-status">Inquadra il viso e sorridi.</p>
+    <button class="pixel-btn" id="btn-shoot">📸 SCATTA</button>
+    <button class="pixel-btn" id="btn-retake" style="display:none;">RIPETI</button>
+    <button class="pixel-btn" id="btn-confirm" style="display:none; background:#3bcb6f; box-shadow:4px 4px 0 #145c2b,-4px 4px 0 #145c2b,0 0 0 3px #fff inset;">CONFERMA E GIOCA</button>
+  </section>
+
+  <!-- SCHERMATA 3: GIOCO -->
+  <section id="screen-game" class="screen">
+    <div id="rotate-overlay">
+      <div style="font-size:40px;">📱</div>
+      <p class="body-text" style="margin-top:16px;">Gira il telefono in orizzontale per giocare</p>
+    </div>
+    <div id="game-wrap">
+      <div id="hud">
+        <div id="hud-name"></div>
+        <div id="hud-lives"></div>
+      </div>
+      <canvas id="game-canvas" width="480" height="270"></canvas>
+      <div id="touch-controls">
+        <div id="dpad">
+          <div class="touch-btn" id="btn-left">◀</div>
+          <div class="touch-btn" id="btn-right">▶</div>
+        </div>
+        <div class="touch-btn" id="btn-jump">▲</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCHERMATA 4: VITTORIA -->
+  <section id="screen-win" class="screen">
+    <div class="result-box">
+      <canvas id="face-preview"></canvas>
+      <h1 class="title" style="font-size:22px;">CE L'HAI FATTA!</h1>
+      <p class="body-text" id="win-message"></p>
+      <p class="body-text" style="margin-top:20px; color:#ffd93d;">
+        <!-- TODO-DATA / TODO-LUOGO -->
+        📅 SABATO 12 SETTEMBRE 2026 - ORE 19:00<br>
+        📍 Piazza dei Ricordi 1, Cantù
+      </p>
+      <button class="pixel-btn" onclick="window.open('https://forms.gle/TODO-RSVP','_blank')">CONFERMA LA TUA PRESENZA</button>
+    </div>
+  </section>
+
+  <!-- SCHERMATA 5: SCONFITTA -->
+  <section id="screen-lose" class="screen">
+    <div class="result-box">
+      <h1 class="title" style="font-size:22px; color:#ff4d6d; text-shadow:2px 2px 0 #000;">GAME OVER</h1>
+      <p class="body-text" id="lose-message"></p>
+      <button class="pixel-btn" id="btn-retry">RIPROVA</button>
+    </div>
+  </section>
+
+</div>
+
+<audio id="bgm" loop>
+  <!-- TODO-MUSICA: <source src="tua-musica-8bit.mp3" type="audio/mpeg"> -->
+</audio>
+
+<script>
+/* ============ STATO GLOBALE ============ */
+const state = {
+  name: '',
+  faceCanvas: null, // canvas 32x32 pixelato pronto per essere disegnato
+};
+
+/* ============ UTILS SCHERMATE ============ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ============ SCHERMATA 1: DISCLAIMER ============ */
+const bgm = document.getElementById('bgm');
+document.getElementById('btn-to-camera').addEventListener('click', () => {
+  const nameInput = document.getElementById('player-name').value.trim();
+  state.name = nameInput || 'Giocatore misterioso';
+  bgm.volume = 0.5;
+  bgm.play().catch(() => {}); // sblocco audio dopo interazione utente
+  showScreen('screen-camera');
+  startCamera();
+});
+
+/* ============ SCHERMATA 2: CAMERA ============ */
+const video = document.getElementById('video-preview');
+const captureCanvas = document.getElementById('capture-canvas');
+let mediaStream = null;
+
+async function startCamera() {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    video.srcObject = mediaStream;
+  } catch (err) {
+    document.getElementById('camera-status').textContent =
+      'Non riesco ad accedere alla fotocamera. Controlla i permessi del browser e ricarica la pagina.';
+  }
+}
+
+document.getElementById('btn-shoot').addEventListener('click', () => {
+  const w = video.videoWidth, h = video.videoHeight;
+  captureCanvas.width = w; captureCanvas.height = h;
+  const ctx = captureCanvas.getContext('2d');
+  ctx.translate(w, 0); ctx.scale(-1, 1); // effetto specchio naturale
+  ctx.drawImage(video, 0, 0, w, h);
+
+  video.style.display = 'none';
+  captureCanvas.style.display = 'block';
+  document.getElementById('btn-shoot').style.display = 'none';
+  document.getElementById('btn-retake').style.display = 'inline-block';
+  document.getElementById('btn-confirm').style.display = 'inline-block';
+  document.getElementById('camera-status').textContent = 'Ti piace? Puoi ripetere lo scatto.';
+});
+
+document.getElementById('btn-retake').addEventListener('click', () => {
+  video.style.display = 'block';
+  captureCanvas.style.display = 'none';
+  document.getElementById('btn-shoot').style.display = 'inline-block';
+  document.getElementById('btn-retake').style.display = 'none';
+  document.getElementById('btn-confirm').style.display = 'none';
+  document.getElementById('camera-status').textContent = 'Inquadra il viso e sorridi.';
+});
+
+document.getElementById('btn-confirm').addEventListener('click', () => {
+  state.faceCanvas = pixelateFace(captureCanvas);
+  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  document.getElementById('hud-name').textContent = state.name;
+  showScreen('screen-game');
+  initGame();
+});
+
+// Ritaglia un cerchio centrale dal selfie, mantenendo l'immagine nitida (nessuna pixelizzazione)
+function pixelateFace(sourceCanvas) {
+  const size = Math.min(sourceCanvas.width, sourceCanvas.height);
+  const sx = (sourceCanvas.width - size) / 2;
+  const sy = (sourceCanvas.height - size) / 2;
+
+  const out = document.createElement('canvas');
+  const RES = 96; // risoluzione dell'output: alta, per restare nitida anche ingrandita
+  out.width = RES; out.height = RES;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
+
+  octx.save();
+  octx.beginPath();
+  octx.arc(RES / 2, RES / 2, RES / 2, 0, Math.PI * 2);
+  octx.clip();
+  octx.drawImage(sourceCanvas, sx, sy, size, size, 0, 0, RES, RES);
+  octx.restore();
+
+  return out;
+}
+
+/* ============ SCHERMATA 3: GIOCO PLATFORM ============ */
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const GRAVITY = 0.5;
+const GROUND_Y = H - 32;
+
+let game = null;
+
+function initGame() {
+  game = {
+    keys: { left: false, right: false, jump: false },
+    lives: 3,
+    checkpointX: 20,
+    over: false,
+    won: false,
+    camX: 0,
+    frame: 0,
+    player: makePlayer(20),
+    platforms: buildLevel(),
+    enemies: buildEnemies(),
+    flagX: 2100,
+  };
+  document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
+  requestAnimationFrame(loop);
+}
+
+function makePlayer(x) {
+  return {
+    x, y: GROUND_Y - 28,
+    w: 20, h: 28,
+    vx: 0, vy: 0,
+    onGround: false,
+    facing: 1,
+    invulnUntil: 0,
+  };
+}
+
+// Livello: piattaforme e buche in stile "world 1-1" ma non copiato: layout originale
+function buildLevel() {
+  const p = [];
+  // terreno principale con un paio di buche (gap)
+  p.push({ x: 0, y: GROUND_Y, w: 420, h: 40 });
+  p.push({ x: 480, y: GROUND_Y, w: 260, h: 40 });      // dopo prima buca (420-480)
+  p.push({ x: 800, y: GROUND_Y, w: 300, h: 40 });      // seconda buca (740-800)
+  p.push({ x: 1160, y: GROUND_Y, w: 1400, h: 40 });    // resto fino alla bandiera e oltre (pizzeria)
+
+  // piattaforme sospese
+  p.push({ x: 560, y: GROUND_Y - 70, w: 90, h: 16 });
+  p.push({ x: 900, y: GROUND_Y - 60, w: 80, h: 16 });
+  p.push({ x: 1300, y: GROUND_Y - 80, w: 100, h: 16 });
+  p.push({ x: 1500, y: GROUND_Y - 50, w: 80, h: 16 });
+  p.push({ x: 1750, y: GROUND_Y - 90, w: 100, h: 16 });
+  return p;
+}
+
+function buildEnemies() {
+  return [
+    { x: 620, y: GROUND_Y - 20, w: 20, h: 20, dir: 1, minX: 560, maxX: 650, alive: true },
+    { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, dir: -1, minX: 950, maxX: 1080, alive: true },
+    { x: 1650, y: GROUND_Y - 20, w: 20, h: 20, dir: 1, minX: 1600, maxX: 1720, alive: true },
+  ];
+}
+
+/* --- input tastiera --- */
+window.addEventListener('keydown', e => {
+  if (!game) return;
+  if (e.code === 'ArrowLeft') game.keys.left = true;
+  if (e.code === 'ArrowRight') game.keys.right = true;
+  if (e.code === 'Space' || e.code === 'ArrowUp') game.keys.jump = true;
+});
+window.addEventListener('keyup', e => {
+  if (!game) return;
+  if (e.code === 'ArrowLeft') game.keys.left = false;
+  if (e.code === 'ArrowRight') game.keys.right = false;
+  if (e.code === 'Space' || e.code === 'ArrowUp') game.keys.jump = false;
+});
+
+/* --- input touch --- */
+function bindTouch(id, prop) {
+  const el = document.getElementById(id);
+  const set = v => e => { e.preventDefault(); if (game) game.keys[prop] = v; };
+  el.addEventListener('touchstart', set(true));
+  el.addEventListener('touchend', set(false));
+  el.addEventListener('mousedown', set(true));
+  el.addEventListener('mouseup', set(false));
+  el.addEventListener('mouseleave', set(false));
+}
+bindTouch('btn-left', 'left');
+bindTouch('btn-right', 'right');
+bindTouch('btn-jump', 'jump');
+
+/* --- game loop --- */
+function loop() {
+  if (!game || game.over || game.won) return;
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+function update() {
+  const p = game.player;
+  game.frame++;
+
+  // movimento orizzontale
+  const SPEED = 3;
+  if (game.keys.left) { p.vx = -SPEED; p.facing = -1; }
+  else if (game.keys.right) { p.vx = SPEED; p.facing = 1; }
+  else p.vx = 0;
+
+  // salto
+  if (game.keys.jump && p.onGround) {
+    p.vy = -10.5;
+    p.onGround = false;
+  }
+
+  p.vy += GRAVITY;
+  p.x += p.vx;
+  p.y += p.vy;
+  p.onGround = false;
+
+  // collisioni con piattaforme (semplice AABB, blocco solo da sopra o lati)
+  for (const plat of game.platforms) {
+    if (p.x + p.w > plat.x && p.x < plat.x + plat.w) {
+      // atterraggio da sopra
+      if (p.vy >= 0 && p.y + p.h - p.vy <= plat.y && p.y + p.h >= plat.y) {
+        p.y = plat.y - p.h;
+        p.vy = 0;
+        p.onGround = true;
+      }
+    }
+  }
+
+  // caduta in una buca -> perde una vita
+  if (p.y > H + 60) {
+    loseLife();
+    return;
+  }
+
+  // nemici
+  for (const en of game.enemies) {
+    if (!en.alive) continue;
+    en.x += en.dir * 1.2;
+    if (en.x < en.minX || en.x > en.maxX) en.dir *= -1;
+
+    const overlap = p.x < en.x + en.w && p.x + p.w > en.x && p.y < en.y + en.h && p.y + p.h > en.y;
+    if (overlap && game.frame > p.invulnUntil) {
+      const stomp = p.vy > 0 && (p.y + p.h - p.vy) <= en.y + 6;
+      if (stomp) {
+        en.alive = false;
+        p.vy = -7; // rimbalzo
+      } else {
+        loseLife();
+        return;
+      }
+    }
+  }
+
+  // limiti mappa
+  if (p.x < 0) p.x = 0;
+
+  // camera segue il giocatore
+  game.camX = Math.max(0, p.x - W / 2.5);
+
+  // traguardo
+  if (p.x > game.flagX) {
+    game.won = true;
+    onWin();
+  }
+}
+
+function loseLife() {
+  game.lives--;
+  document.getElementById('hud-lives').textContent = '♥'.repeat(Math.max(game.lives, 0));
+  if (game.lives <= 0) {
+    game.over = true;
+    onLose();
+  } else {
+    game.player = makePlayer(game.checkpointX);
+    game.player.invulnUntil = game.frame + 60;
+  }
+}
+
+/* --- rendering --- */
+function render() {
+  drawSky();
+  drawParallax();
+
+  ctx.save();
+  ctx.translate(-game.camX, 0);
+
+  // piattaforme con texture erba + terra
+  for (const plat of game.platforms) {
+    drawGroundBlock(plat);
+  }
+
+  // bandiera / traguardo
+  drawFlag(game.flagX);
+  drawArrivalBuilding(game.flagX + 60);
+
+  // nemici
+  for (const en of game.enemies) {
+    if (!en.alive) continue;
+    drawEnemy(en);
+  }
+
+  // player
+  drawPlayer(game.player);
+
+  ctx.restore();
+}
+
+function drawSky() {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#3a8dff');
+  grad.addColorStop(1, '#8fd3ff');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+}
+
+// Colline e nuvole in parallasse: pattern ripetuto ogni "spanW" px, effetto infinito
+function drawParallax() {
+  // collinette (parallasse lenta)
+  const hillOffset = (game.camX * 0.3) % 300;
+  ctx.fillStyle = '#2f9e5c';
+  for (let i = -1; i < 4; i++) {
+    const hx = i * 300 - hillOffset;
+    drawHill(hx, GROUND_Y + 4, 90, 40);
+    drawHill(hx + 160, GROUND_Y + 10, 70, 30);
+  }
+  // nuvole (parallasse molto lenta)
+  const cloudOffset = (game.camX * 0.15) % 260;
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  for (let i = -1; i < 4; i++) {
+    const cx = i * 260 - cloudOffset;
+    drawCloud(cx + 30, 40);
+    drawCloud(cx + 150, 70);
+  }
+}
+
+function drawHill(x, baseY, w, h) {
+  ctx.beginPath();
+  ctx.moveTo(x, baseY);
+  ctx.quadraticCurveTo(x + w / 2, baseY - h, x + w, baseY);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCloud(x, y) {
+  ctx.fillRect(x, y, 36, 12);
+  ctx.fillRect(x + 8, y - 8, 24, 10);
+  ctx.fillRect(x + 18, y + 8, 20, 8);
+}
+
+function drawGroundBlock(plat) {
+  // corpo terra: colore pieno + un paio di linee di profondità pulite (niente pattern casuali)
+  ctx.fillStyle = '#8a5a34';
+  ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.fillRect(plat.x, plat.y + 7, plat.w, 3);
+  ctx.fillRect(plat.x, plat.y + plat.h - 4, plat.w, 4);
+
+  // striscia erba in cima, con ciuffetti regolari
+  ctx.fillStyle = '#3fae4a';
+  ctx.fillRect(plat.x, plat.y, plat.w, 7);
+  ctx.fillStyle = '#2f8f3d';
+  for (let bx = 6; bx < plat.w - 4; bx += 18) {
+    ctx.fillRect(plat.x + bx, plat.y, 5, 3);
+  }
+}
+
+function drawFlag(flagX) {
+  ctx.fillStyle = '#d9d9d9';
+  ctx.fillRect(flagX + 10, GROUND_Y - 120, 4, 120);
+  ctx.fillStyle = '#ffd93d';
+  ctx.fillRect(flagX + 6, GROUND_Y - 124, 12, 6);
+  ctx.fillStyle = '#ff4d6d';
+  ctx.beginPath();
+  ctx.moveTo(flagX + 14, GROUND_Y - 116);
+  ctx.lineTo(flagX + 42, GROUND_Y - 104);
+  ctx.lineTo(flagX + 14, GROUND_Y - 92);
+  ctx.fill();
+}
+
+// Piccolo edificio decorativo dopo il traguardo, per dare la sensazione di "essere arrivati"
+function drawArrivalBuilding(x) {
+  const baseY = GROUND_Y;
+  const bw = 130, bh = 90;
+  // corpo edificio
+  ctx.fillStyle = '#d94f3c';
+  ctx.fillRect(x, baseY - bh, bw, bh);
+  // tetto
+  ctx.fillStyle = '#7a2e22';
+  ctx.fillRect(x - 6, baseY - bh - 14, bw + 12, 16);
+  // tenda/pensilina a righe
+  const stripeW = 14;
+  for (let i = 0; i * stripeW < bw; i++) {
+    ctx.fillStyle = i % 2 === 0 ? '#f4f1ea' : '#d94f3c';
+    ctx.fillRect(x + i * stripeW, baseY - bh + 18, stripeW, 10);
+  }
+  // porta
+  ctx.fillStyle = '#4a2c1a';
+  ctx.fillRect(x + bw / 2 - 12, baseY - 34, 24, 34);
+  // finestre
+  ctx.fillStyle = '#ffe9a8';
+  ctx.fillRect(x + 14, baseY - bh + 40, 22, 22);
+  ctx.fillRect(x + bw - 36, baseY - bh + 40, 22, 22);
+  // insegna
+  ctx.fillStyle = '#fff8e8';
+  ctx.fillRect(x + bw / 2 - 34, baseY - bh - 34, 68, 18);
+  ctx.fillStyle = '#7a2e22';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('PIZZA', x + bw / 2, baseY - bh - 21);
+}
+
+const enemySprite = new Image();
+let enemySpriteLoaded = false;
+enemySprite.onload = () => { enemySpriteLoaded = true; };
+// TODO: se disegni il tuo sprite nemico, salvalo come "nemico.png" nella stessa
+// cartella di questo file e questa riga lo caricherà automaticamente.
+// Dimensioni consigliate: 32x32px (o multipli), sfondo trasparente, stile pixel-art.
+enemySprite.src = 'nemico.png';
+
+function drawEnemy(en) {
+  if (enemySpriteLoaded) {
+    ctx.save();
+    if (en.dir < 0) {
+      ctx.translate(en.x + en.w, en.y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(enemySprite, 0, 0, en.w, en.h);
+    } else {
+      ctx.drawImage(enemySprite, en.x, en.y, en.w, en.h);
+    }
+    ctx.restore();
+    return;
+  }
   const t = game.frame * 0.2;
   const wobble = Math.sin(t) * 2;
   // corpo
