@@ -250,7 +250,7 @@
   <!-- SCHERMATA 5: SCONFITTA -->
   <section id="screen-lose" class="screen">
     <div class="result-box">
-      <h1 class="title" style="font-size:22px; color:#ff4d6d;">GAME OVER</h1>
+      <h1 class="title" style="font-size:22px; color:#ff4d6d; text-shadow:2px 2px 0 #000;">GAME OVER</h1>
       <p class="body-text" id="lose-message"></p>
       <button class="pixel-btn" id="btn-retry">RIPROVA</button>
     </div>
@@ -533,42 +533,29 @@ function loseLife() {
   } else {
     game.player = makePlayer(game.checkpointX);
     game.player.invulnUntil = game.frame + 60;
-    requestAnimationFrame(loop);
   }
 }
 
 /* --- rendering --- */
 function render() {
-  ctx.fillStyle = '#4da6ff';
-  ctx.fillRect(0, 0, W, H);
+  drawSky();
+  drawParallax();
 
   ctx.save();
   ctx.translate(-game.camX, 0);
 
-  // piattaforme
-  ctx.fillStyle = '#7a4a2b';
+  // piattaforme con texture erba + terra
   for (const plat of game.platforms) {
-    ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
-    ctx.fillStyle = '#3fae4a';
-    ctx.fillRect(plat.x, plat.y, plat.w, 6);
-    ctx.fillStyle = '#7a4a2b';
+    drawGroundBlock(plat);
   }
 
   // bandiera / traguardo
-  ctx.fillStyle = '#ccc';
-  ctx.fillRect(game.flagX + 10, GROUND_Y - 120, 4, 120);
-  ctx.fillStyle = '#ff4d6d';
-  ctx.beginPath();
-  ctx.moveTo(game.flagX + 14, GROUND_Y - 120);
-  ctx.lineTo(game.flagX + 44, GROUND_Y - 108);
-  ctx.lineTo(game.flagX + 14, GROUND_Y - 96);
-  ctx.fill();
+  drawFlag(game.flagX);
 
   // nemici
-  ctx.fillStyle = '#8b3a3a';
   for (const en of game.enemies) {
     if (!en.alive) continue;
-    ctx.fillRect(en.x, en.y, en.w, en.h);
+    drawEnemy(en);
   }
 
   // player
@@ -577,17 +564,131 @@ function render() {
   ctx.restore();
 }
 
-function drawPlayer(p) {
-  // corpo semplice stile pixel
-  ctx.fillStyle = '#2b6cff';
-  ctx.fillRect(p.x, p.y + 10, p.w, p.h - 10);
+function drawSky() {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#3a8dff');
+  grad.addColorStop(1, '#8fd3ff');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+}
+
+// Colline e nuvole in parallasse: pattern ripetuto ogni "spanW" px, effetto infinito
+function drawParallax() {
+  // collinette (parallasse lenta)
+  const hillOffset = (game.camX * 0.3) % 300;
+  ctx.fillStyle = '#2f9e5c';
+  for (let i = -1; i < 4; i++) {
+    const hx = i * 300 - hillOffset;
+    drawHill(hx, GROUND_Y + 4, 90, 40);
+    drawHill(hx + 160, GROUND_Y + 10, 70, 30);
+  }
+  // nuvole (parallasse molto lenta)
+  const cloudOffset = (game.camX * 0.15) % 260;
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  for (let i = -1; i < 4; i++) {
+    const cx = i * 260 - cloudOffset;
+    drawCloud(cx + 30, 40);
+    drawCloud(cx + 150, 70);
+  }
+}
+
+function drawHill(x, baseY, w, h) {
+  ctx.beginPath();
+  ctx.moveTo(x, baseY);
+  ctx.quadraticCurveTo(x + w / 2, baseY - h, x + w, baseY);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCloud(x, y) {
+  ctx.fillRect(x, y, 36, 12);
+  ctx.fillRect(x + 8, y - 8, 24, 10);
+  ctx.fillRect(x + 18, y + 8, 20, 8);
+}
+
+function drawGroundBlock(plat) {
+  // corpo terra con motivo "mattoni" pixel
+  ctx.fillStyle = '#8a5a34';
+  ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+  ctx.fillStyle = '#6e4527';
+  for (let bx = 0; bx < plat.w; bx += 16) {
+    for (let by = 8; by < plat.h; by += 10) {
+      ctx.fillRect(plat.x + bx + ((by / 10) % 2 ? 8 : 0), plat.y + by, 12, 5);
+    }
+  }
+  // striscia erba in cima
+  ctx.fillStyle = '#3fae4a';
+  ctx.fillRect(plat.x, plat.y, plat.w, 7);
+  ctx.fillStyle = '#2f8f3d';
+  for (let bx = 4; bx < plat.w; bx += 12) {
+    ctx.fillRect(plat.x + bx, plat.y, 4, 3);
+  }
+}
+
+function drawFlag(flagX) {
+  ctx.fillStyle = '#d9d9d9';
+  ctx.fillRect(flagX + 10, GROUND_Y - 120, 4, 120);
+  ctx.fillStyle = '#ffd93d';
+  ctx.fillRect(flagX + 6, GROUND_Y - 124, 12, 6);
+  ctx.fillStyle = '#ff4d6d';
+  ctx.beginPath();
+  ctx.moveTo(flagX + 14, GROUND_Y - 116);
+  ctx.lineTo(flagX + 42, GROUND_Y - 104);
+  ctx.lineTo(flagX + 14, GROUND_Y - 92);
+  ctx.fill();
+}
+
+function drawEnemy(en) {
+  const t = game.frame * 0.2;
+  const wobble = Math.sin(t) * 2;
+  // corpo
+  ctx.fillStyle = '#c0392b';
+  ctx.fillRect(en.x, en.y + 4 + wobble * 0, en.w, en.h - 4);
+  // pancia chiara
+  ctx.fillStyle = '#e8b4a0';
+  ctx.fillRect(en.x + 4, en.y + en.h - 9, en.w - 8, 6);
+  // occhi (guardano nella direzione di marcia)
+  ctx.fillStyle = '#fff';
+  const eyeX = en.dir > 0 ? en.x + en.w - 10 : en.x + 3;
+  ctx.fillRect(eyeX, en.y + 3, 6, 6);
   ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(p.x + 2, p.y + p.h - 6, 6, 6);
-  ctx.fillRect(p.x + p.w - 8, p.y + p.h - 6, 6, 6);
+  ctx.fillRect(eyeX + (en.dir > 0 ? 3 : 1), en.y + 5, 2, 3);
+  // sopracciglia arrabbiate
+  ctx.fillStyle = '#5c1a10';
+  ctx.fillRect(en.x + 2, en.y, en.w - 4, 3);
+}
+
+function drawPlayer(p) {
+  ctx.save();
+  const walking = Math.abs(p.vx) > 0 && p.onGround;
+  const legPhase = walking ? Math.sin(game.frame * 0.5) * 5 : 0;
+
+  // ombra a terra
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(p.x + p.w / 2, GROUND_Y + 3, p.w / 2, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // gambe (si muovono quando cammina)
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(p.x + 3, p.y + p.h - 8, 6, 8 + Math.max(0, legPhase));
+  ctx.fillRect(p.x + p.w - 9, p.y + p.h - 8, 6, 8 + Math.max(0, -legPhase));
+
+  // corpo / maglietta
+  const bodyGrad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+  bodyGrad.addColorStop(0, '#3b7dff');
+  bodyGrad.addColorStop(1, '#1f4fbf');
+  ctx.fillStyle = bodyGrad;
+  ctx.fillRect(p.x, p.y + 9, p.w, p.h - 17);
+
+  // braccia
+  ctx.fillStyle = '#1f4fbf';
+  const armLift = p.onGround ? 0 : -4;
+  ctx.fillRect(p.x - 2, p.y + 11 + armLift, 4, 10);
+  ctx.fillRect(p.x + p.w - 2, p.y + 11 + armLift, 4, 10);
 
   // faccia (selfie pixelato) sopra al corpo
   if (state.faceCanvas) {
-    ctx.save();
     if (p.facing === -1) {
       ctx.translate(p.x + p.w, p.y);
       ctx.scale(-1, 1);
@@ -595,11 +696,11 @@ function drawPlayer(p) {
     } else {
       ctx.drawImage(state.faceCanvas, p.x, p.y, p.w, 20);
     }
-    ctx.restore();
   } else {
     ctx.fillStyle = '#ffd6a5';
     ctx.fillRect(p.x, p.y, p.w, 20);
   }
+  ctx.restore();
 }
 
 /* ============ VITTORIA / SCONFITTA ============ */
