@@ -4,17 +4,14 @@
   INVITO COMPLETEO - PROTOTIPO PRE-ALPHA
   ================================================================
   COSE DA SOSTITUIRE PRIMA DI PUBBLICARE (cerca "TODO" nel file):
-  1. TODO-NOME     -> nome del festeggiato/a
+  1. [FATTO] nome del festeggiato -> Michele
   2. TODO-DATA     -> data e ora della festa
   3. TODO-LUOGO    -> indirizzo / luogo
-  4. TODO-MUSICA   -> aggiungi un file audio royalty-free tuo
-                      (NON usare musiche originali Nintendo/Mario:
-                      problemi di copyright. Cerca su
-                      freesound.org, incompetech.com o pixabay.com
-                      musica "8-bit"/"chiptune" free licence)
+  4. [FATTO] musica -> Coin-Block_Run.mp3
   5. TODO-RSVP     -> se vuoi raccogliere conferme, sostituisci
                       il bottone finale con un link Formspree/
                       Google Form
+  6. TODO-ICONA    -> icona home screen (vedi sotto, in attesa della foto)
   ================================================================
 -->
 <html lang="it">
@@ -25,6 +22,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0b0b1a">
+<!-- TODO-ICONA: carica i due file "icon-180.png" (180x180) e "icon-512.png" (512x512)
+     nella stessa cartella di questo index.html. Devono essere quadrati, la tua foto
+     ben inquadrata, sfondo pieno (non trasparente, iOS lo riempirebbe di nero). -->
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <title>Sei Invitato! - Premi Start</title>
 <style>
   @font-face {
@@ -267,7 +269,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v0.8</div>
+<div id="dev-version">DEV BUILD v0.9</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -498,7 +500,7 @@ const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 const GRAVITY = 0.5;
-const GROUND_Y = H - 32;
+const GROUND_Y = H - 44;
 
 // Adatta la dimensione visiva del canvas allo spazio realmente disponibile.
 // Usiamo visualViewport quando c'è (più affidabile di 100vh su iOS Safari,
@@ -928,7 +930,7 @@ function drawPlayer(p) {
 /* ============ VITTORIA / SCONFITTA ============ */
 function onWin() {
   document.getElementById('win-message').textContent =
-    `${state.name}, hai superato la prova! Preparati per una festa leggendaria.`;
+    `${state.name}, hai superato la prova! Preparati per la festa di Michele: sarà leggendaria.`;
   const preview = document.getElementById('face-preview');
   preview.width = 90; preview.height = 90;
   const pctx = preview.getContext('2d');
