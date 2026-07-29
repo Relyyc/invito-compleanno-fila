@@ -45,6 +45,20 @@
     align-items: center;
     justify-content: center;
   }
+  #dev-version {
+    position: fixed;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: #ffd93d;
+    font-family: 'PixelFont', 'Courier New', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid #ffd93d;
+    z-index: 999;
+    pointer-events: none;
+    letter-spacing: 1px;
+  }
   .screen {
     display: none;
     width: 100%;
@@ -188,6 +202,8 @@
 </style>
 </head>
 <body>
+<!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
+<div id="dev-version">DEV BUILD v0.3</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 1: DISCLAIMER -->
