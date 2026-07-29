@@ -147,6 +147,41 @@
     margin: 0;
     font-family: 'Courier New', monospace;
   }
+  .instructions-big {
+    max-width: 520px;
+  }
+  .instructions-big .instr-title {
+    font-size: clamp(15px, 3.2vw, 20px);
+  }
+  .instr-text-big {
+    color: #d6f3ff;
+    font-size: clamp(14px, 3vw, 19px);
+    line-height: 2.1;
+    margin: 0;
+    font-family: 'Courier New', monospace;
+  }
+  #device-choice-row {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .device-btn {
+    font-family: inherit;
+    background: #1a1a2e;
+    color: #fff;
+    border: 3px solid #ffd93d;
+    box-shadow: 4px 4px 0 #7a6a10;
+    padding: 18px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .device-btn:active { transform: translateY(3px); box-shadow: none; }
+  .device-icon { font-size: 34px; }
   input[type=text] {
     font-family: inherit;
     font-size: clamp(12px, 2.5vw, 16px);
@@ -275,26 +310,51 @@
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
   <section id="screen-addhome" class="screen active">
     <h1 class="title" style="font-size:clamp(18px,4.5vw,32px);">UN MOMENTO<br>PRIMA DI INIZIARE</h1>
-    <p class="body-text">
-      Per vivere questa esperienza come si deve,<br>
-      aggiungi questa pagina alla schermata Home<br>
-      del tuo telefono e riaprila da lì.
-    </p>
 
-    <div class="instructions-box">
+    <!-- STEP 1: scelta del dispositivo -->
+    <div id="addhome-choice">
+      <p class="body-text">
+        Per vivere questa esperienza come si deve,<br>
+        aggiungi questa pagina alla schermata Home<br>
+        del tuo telefono. Che dispositivo usi?
+      </p>
+      <div id="device-choice-row">
+        <button class="device-btn" id="btn-choose-ios">
+          <span class="device-icon">📱</span>
+          <span>iPhone</span>
+        </button>
+        <button class="device-btn" id="btn-choose-android">
+          <span class="device-icon">🤖</span>
+          <span>Android</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2a: istruzioni iOS -->
+    <div class="instructions-box instructions-big" id="instr-ios" style="display:none;">
       <p class="instr-title">📱 iPhone (Safari)</p>
-      <p class="instr-text">Tocca l'icona <b>Condividi</b> (il quadrato con la freccia in su) nella barra in basso, poi scorri e scegli <b>"Aggiungi a Home"</b>.</p>
+      <p class="instr-text-big">
+        1. Tocca l'icona <b>Condividi</b><br>(il quadrato con la freccia in su)<br>
+        2. Scorri e scegli <b>"Aggiungi a Home"</b><br>
+        3. Conferma in alto a destra
+      </p>
     </div>
 
-    <div class="instructions-box">
+    <!-- STEP 2b: istruzioni Android -->
+    <div class="instructions-box instructions-big" id="instr-android" style="display:none;">
       <p class="instr-title">🤖 Android (Chrome)</p>
-      <p class="instr-text">Tocca i <b>tre puntini</b> in alto a destra, poi scegli <b>"Aggiungi a schermata Home"</b> (o "Installa app").</p>
+      <p class="instr-text-big">
+        1. Tocca i <b>tre puntini</b><br>in alto a destra<br>
+        2. Scegli <b>"Aggiungi a schermata Home"</b><br>(o "Installa app")<br>
+        3. Conferma
+      </p>
     </div>
 
-    <p class="body-text" style="font-size:12px; opacity:0.8;">
+    <p class="body-text" id="addhome-final-hint" style="display:none; font-size:13px; opacity:0.85;">
       Fatto questo, apri l'icona comparsa sulla tua Home e prosegui da lì.
     </p>
-    <button class="pixel-btn" id="btn-addhome-done">FATTO, CONTINUA</button>
+    <button class="pixel-btn" id="btn-change-device" style="display:none; background:transparent; box-shadow:none; text-decoration:underline; font-size:11px;">Ho un altro dispositivo</button>
+    <button class="pixel-btn" id="btn-addhome-done" style="display:none;">FATTO, CONTINUA</button>
   </section>
 
   <!-- SCHERMATA 1: DISCLAIMER -->
