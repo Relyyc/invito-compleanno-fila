@@ -21,6 +21,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0b1a">
 <title>Sei Invitato! - Premi Start</title>
 <style>
   @font-face {
@@ -39,6 +43,7 @@
     position: relative;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     background: #0b0b1a;
     color: #fff;
     display: flex;
@@ -115,6 +120,26 @@
     color: #ffd93d;
     margin: 20px 0;
     font-size: clamp(11px, 2.2vw, 14px);
+  }
+  .instructions-box {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid #4dd6ff;
+    padding: 14px 16px;
+    margin: 12px 0;
+    max-width: 480px;
+    text-align: left;
+  }
+  .instr-title {
+    color: #4dd6ff;
+    font-size: clamp(11px, 2.2vw, 14px);
+    margin: 0 0 8px;
+  }
+  .instr-text {
+    color: #d6f3ff;
+    font-size: clamp(10px, 2vw, 13px);
+    line-height: 1.8;
+    margin: 0;
+    font-family: 'Courier New', monospace;
   }
   input[type=text] {
     font-family: inherit;
@@ -223,11 +248,36 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v0.5</div>
+<div id="dev-version">DEV BUILD v0.7</div>
 <div id="app" class="crt">
 
+  <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
+  <section id="screen-addhome" class="screen active">
+    <h1 class="title" style="font-size:clamp(18px,4.5vw,32px);">UN MOMENTO<br>PRIMA DI INIZIARE</h1>
+    <p class="body-text">
+      Per vivere questa esperienza come si deve,<br>
+      aggiungi questa pagina alla schermata Home<br>
+      del tuo telefono e riaprila da lì.
+    </p>
+
+    <div class="instructions-box">
+      <p class="instr-title">📱 iPhone (Safari)</p>
+      <p class="instr-text">Tocca l'icona <b>Condividi</b> (il quadrato con la freccia in su) nella barra in basso, poi scorri e scegli <b>"Aggiungi a Home"</b>.</p>
+    </div>
+
+    <div class="instructions-box">
+      <p class="instr-title">🤖 Android (Chrome)</p>
+      <p class="instr-text">Tocca i <b>tre puntini</b> in alto a destra, poi scegli <b>"Aggiungi a schermata Home"</b> (o "Installa app").</p>
+    </div>
+
+    <p class="body-text" style="font-size:12px; opacity:0.8;">
+      Fatto questo, apri l'icona comparsa sulla tua Home e prosegui da lì.
+    </p>
+    <button class="pixel-btn" id="btn-addhome-done">FATTO, CONTINUA</button>
+  </section>
+
   <!-- SCHERMATA 1: DISCLAIMER -->
-  <section id="screen-disclaimer" class="screen active">
+  <section id="screen-disclaimer" class="screen">
     <h1 class="title">ATTENZIONE<br>GIOCATORE</h1>
     <p class="body-text">
       Stai per ricevere un invito speciale.<br>
@@ -308,6 +358,32 @@ const state = {
   name: '',
   faceCanvas: null, // canvas 32x32 pixelato pronto per essere disegnato
 };
+
+// Forza l'altezza reale e visibile di #app: su iOS Safari 100vh/100dvh non
+// sempre corrispondono allo spazio davvero visibile quando compaiono le
+// barre del browser. Misuriamo lo spazio vero e lo applichiamo a mano.
+const appEl = document.getElementById('app');
+function setRealAppHeight() {
+  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  appEl.style.height = h + 'px';
+}
+window.addEventListener('resize', setRealAppHeight);
+window.addEventListener('orientationchange', () => setTimeout(setRealAppHeight, 150));
+if (window.visualViewport) window.visualViewport.addEventListener('resize', setRealAppHeight);
+setRealAppHeight();
+
+/* ============ SCHERMATA 0: AGGIUNGI ALLA HOME ============ */
+document.getElementById('btn-addhome-done').addEventListener('click', () => {
+  showScreen('screen-disclaimer');
+});
+
+// Se il sito è già aperto dall'icona sulla schermata Home (modalità standalone),
+// vuol dire che il passaggio "aggiungi alla home" è già stato fatto: saltiamolo.
+const isStandalone = window.navigator.standalone === true ||
+  window.matchMedia('(display-mode: standalone)').matches;
+if (isStandalone) {
+  showScreen('screen-disclaimer');
+}
 
 /* ============ UTILS SCHERMATE ============ */
 function showScreen(id) {
