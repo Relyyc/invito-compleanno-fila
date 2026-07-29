@@ -304,7 +304,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v0.9</div>
+<div id="dev-version">DEV BUILD v1.1</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -455,16 +455,43 @@ if (window.visualViewport) window.visualViewport.addEventListener('resize', setR
 setRealAppHeight();
 
 /* ============ SCHERMATA 0: AGGIUNGI ALLA HOME ============ */
+function showDeviceInstructions(device) {
+  document.getElementById('addhome-choice').style.display = 'none';
+  document.getElementById('instr-ios').style.display = device === 'ios' ? 'block' : 'none';
+  document.getElementById('instr-android').style.display = device === 'android' ? 'block' : 'none';
+  document.getElementById('addhome-final-hint').style.display = 'block';
+  document.getElementById('btn-change-device').style.display = 'inline-block';
+  document.getElementById('btn-addhome-done').style.display = 'inline-block';
+}
+
+document.getElementById('btn-choose-ios').addEventListener('click', () => showDeviceInstructions('ios'));
+document.getElementById('btn-choose-android').addEventListener('click', () => showDeviceInstructions('android'));
+
+document.getElementById('btn-change-device').addEventListener('click', () => {
+  document.getElementById('addhome-choice').style.display = 'block';
+  document.getElementById('instr-ios').style.display = 'none';
+  document.getElementById('instr-android').style.display = 'none';
+  document.getElementById('addhome-final-hint').style.display = 'none';
+  document.getElementById('btn-change-device').style.display = 'none';
+  document.getElementById('btn-addhome-done').style.display = 'none';
+});
+
 document.getElementById('btn-addhome-done').addEventListener('click', () => {
   showScreen('screen-disclaimer');
 });
 
 // Se il sito è già aperto dall'icona sulla schermata Home (modalità standalone),
 // vuol dire che il passaggio "aggiungi alla home" è già stato fatto: saltiamolo.
-const isStandalone = window.navigator.standalone === true ||
-  window.matchMedia('(display-mode: standalone)').matches;
-if (isStandalone) {
-  showScreen('screen-disclaimer');
+// Avvolto in try/catch: se questo controllo fallisse su qualche browser
+// particolare, non deve MAI bloccare il resto del sito.
+try {
+  const isStandalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if (isStandalone) {
+    showScreen('screen-disclaimer');
+  }
+} catch (e) {
+  console.warn('Controllo standalone fallito, proseguo normalmente:', e);
 }
 
 /* ============ UTILS SCHERMATE ============ */
