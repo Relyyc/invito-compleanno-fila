@@ -304,7 +304,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v1.5</div>
+<div id="dev-version">DEV BUILD v1.6</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -659,10 +659,9 @@ function buildLevel() {
   // piattaforme sospese "vecchie" (invariate, restano sopra terreno solido)
   p.push({ x: 560,  y: GROUND_Y - 70, w: 90,  h: 16 });
   p.push({ x: 900,  y: GROUND_Y - 60, w: 80,  h: 16 });
-  p.push({ x: 1300, y: GROUND_Y - 80, w: 100, h: 16 });
-  // (rimossa la piattaforma a x=1500: permetteva di saltare in aria da
-  // una piattaforma all'altra scavalcando il primo sparafuoco senza mai
-  // scendere a terra, rendendolo aggirabile senza rischio)
+  // (rimosse le piattaforme a x=1300 e x=1500: anche solo camminando fuori
+  // dal bordo di x=1300 la caduta naturale portava già oltre il nemico
+  // sparafuoco senza mai toccare terra, rendendolo aggirabile a costo zero)
   p.push({ x: 1750, y: GROUND_Y - 90, w: 100, h: 16 });
 
   // piattaforme sospese "nuove", ora più strette e sopra un vero vuoto
@@ -681,8 +680,8 @@ function buildEnemies() {
     // nemici "sparafuoco": fermi, sparano palle infuocate da schivare saltando.
     // Posizionati con spazio libero sopra la testa, altrimenti diventa
     // impossibile saltarci sopra per schiacciarli (il salto è alto).
-    { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, fireRate: 100, lastShot: -1000 },
-    { x: 1890, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, fireRate: 85, lastShot: -1000 },
+    { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, nextShotFrame: 60, burstRemaining: 0 },
+    { x: 1890, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, nextShotFrame: 90, burstRemaining: 0 },
   ];
 }
 
@@ -766,10 +765,19 @@ function update() {
     if (!en.alive) continue;
 
     if (en.type === 'fire') {
-      // fermo, spara periodicamente una palla di fuoco verso il giocatore
-      if (game.frame - en.lastShot > en.fireRate) {
-        en.lastShot = game.frame;
+      // spara a raffiche casuali: 1, 2 o 3 colpi consecutivi ravvicinati,
+      // poi una pausa più lunga prima della raffica successiva
+      if (game.frame >= en.nextShotFrame) {
+        if (en.burstRemaining <= 0) {
+          en.burstRemaining = 1 + Math.floor(Math.random() * 3); // 1, 2 o 3
+        }
         game.fireballs.push({ x: en.x - 4, y: en.y + 4, w: 10, h: 10, vx: -5.5 });
+        en.burstRemaining--;
+        if (en.burstRemaining > 0) {
+          en.nextShotFrame = game.frame + 14; // colpi ravvicinati nella stessa raffica
+        } else {
+          en.nextShotFrame = game.frame + 45 + Math.floor(Math.random() * 20); // pausa tra raffiche
+        }
       }
     } else {
       en.x += en.dir * 1.2;
