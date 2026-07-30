@@ -304,7 +304,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v1.2</div>
+<div id="dev-version">DEV BUILD v1.3</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -619,6 +619,7 @@ function initGame() {
     player: makePlayer(20),
     platforms: buildLevel(),
     enemies: buildEnemies(),
+    fireballs: [],
     flagX: 2100,
   };
   document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
@@ -646,19 +647,26 @@ function buildLevel() {
   p.push({ x: 1160, y: GROUND_Y, w: 1400, h: 40 });    // resto fino alla bandiera e oltre (pizzeria)
 
   // piattaforme sospese
+  p.push({ x: 250, y: GROUND_Y - 55, w: 70, h: 16 });
   p.push({ x: 560, y: GROUND_Y - 70, w: 90, h: 16 });
   p.push({ x: 900, y: GROUND_Y - 60, w: 80, h: 16 });
+  p.push({ x: 1080, y: GROUND_Y - 110, w: 70, h: 16 });
   p.push({ x: 1300, y: GROUND_Y - 80, w: 100, h: 16 });
   p.push({ x: 1500, y: GROUND_Y - 50, w: 80, h: 16 });
+  p.push({ x: 1650, y: GROUND_Y - 130, w: 70, h: 16 });
   p.push({ x: 1750, y: GROUND_Y - 90, w: 100, h: 16 });
+  p.push({ x: 1950, y: GROUND_Y - 60, w: 90, h: 16 });
   return p;
 }
 
 function buildEnemies() {
   return [
-    { x: 620, y: GROUND_Y - 20, w: 20, h: 20, dir: 1, minX: 560, maxX: 650, alive: true },
-    { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, dir: -1, minX: 950, maxX: 1080, alive: true },
-    { x: 1650, y: GROUND_Y - 20, w: 20, h: 20, dir: 1, minX: 1600, maxX: 1720, alive: true },
+    { x: 620, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 560, maxX: 650, alive: true },
+    { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: -1, minX: 950, maxX: 1080, alive: true },
+    { x: 1650, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 1600, maxX: 1720, alive: true },
+    // nemici "sparafuoco": fermi, sparano palle infuocate da schivare saltando
+    { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, fireRate: 100, lastShot: -1000 },
+    { x: 1980, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, fireRate: 85, lastShot: -1000 },
   ];
 }
 
@@ -740,8 +748,17 @@ function update() {
   // nemici
   for (const en of game.enemies) {
     if (!en.alive) continue;
-    en.x += en.dir * 1.2;
-    if (en.x < en.minX || en.x > en.maxX) en.dir *= -1;
+
+    if (en.type === 'fire') {
+      // fermo, spara periodicamente una palla di fuoco verso il giocatore
+      if (game.frame - en.lastShot > en.fireRate) {
+        en.lastShot = game.frame;
+        game.fireballs.push({ x: en.x - 4, y: en.y + 4, w: 10, h: 10, vx: -3.4 });
+      }
+    } else {
+      en.x += en.dir * 1.2;
+      if (en.x < en.minX || en.x > en.maxX) en.dir *= -1;
+    }
 
     const overlap = p.x < en.x + en.w && p.x + p.w > en.x && p.y < en.y + en.h && p.y + p.h > en.y;
     if (overlap && game.frame > p.invulnUntil) {
@@ -753,6 +770,23 @@ function update() {
         loseLife();
         return;
       }
+    }
+  }
+
+  // palle infuocate: movimento e collisione col giocatore
+  for (let i = game.fireballs.length - 1; i >= 0; i--) {
+    const fb = game.fireballs[i];
+    fb.x += fb.vx;
+
+    const hit = p.x < fb.x + fb.w && p.x + p.w > fb.x && p.y < fb.y + fb.h && p.y + p.h > fb.y;
+    if (hit && game.frame > p.invulnUntil) {
+      game.fireballs.splice(i, 1);
+      loseLife();
+      return;
+    }
+    // rimuovi quando esce ampiamente dallo schermo
+    if (fb.x < game.camX - 60 || fb.x > game.camX + W + 60) {
+      game.fireballs.splice(i, 1);
     }
   }
 
@@ -802,6 +836,11 @@ function render() {
   for (const en of game.enemies) {
     if (!en.alive) continue;
     drawEnemy(en);
+  }
+
+  // palle infuocate
+  for (const fb of game.fireballs) {
+    drawFireball(fb);
   }
 
   // player
@@ -957,6 +996,11 @@ function drawEnemy(en) {
       ctx.drawImage(enemySprite, en.x, en.y, en.w, en.h);
     }
     ctx.restore();
+    if (en.type === 'fire') drawFireIndicator(en);
+    return;
+  }
+  if (en.type === 'fire') {
+    drawFireTurret(en);
     return;
   }
   const t = game.frame * 0.2;
@@ -976,6 +1020,50 @@ function drawEnemy(en) {
   // sopracciglia arrabbiate
   ctx.fillStyle = '#5c1a10';
   ctx.fillRect(en.x + 2, en.y, en.w - 4, 3);
+}
+
+// Nemico sparafuoco: fermo, colore scuro con una fiamma pulsante sopra la testa
+function drawFireTurret(en) {
+  const pulse = Math.sin(game.frame * 0.15) * 2;
+  // corpo
+  ctx.fillStyle = '#4a2c2c';
+  ctx.fillRect(en.x, en.y + 8, en.w, en.h - 8);
+  // occhi
+  ctx.fillStyle = '#ffcf4d';
+  const eyeX = en.dir > 0 ? en.x + en.w - 10 : en.x + 4;
+  ctx.fillRect(eyeX, en.y + 12, 6, 5);
+  drawFireIndicator(en, pulse);
+}
+
+// Piccola fiamma disegnata sopra il nemico, per segnalare che spara
+function drawFireIndicator(en, pulseOverride) {
+  const pulse = pulseOverride !== undefined ? pulseOverride : Math.sin(game.frame * 0.15) * 2;
+  const cx = en.x + en.w / 2;
+  const topY = en.y - 6 - pulse;
+  ctx.fillStyle = '#ff8a3d';
+  ctx.beginPath();
+  ctx.moveTo(cx, topY);
+  ctx.quadraticCurveTo(cx + 7, topY + 10, cx, topY + 16);
+  ctx.quadraticCurveTo(cx - 7, topY + 10, cx, topY);
+  ctx.fill();
+  ctx.fillStyle = '#ffe27a';
+  ctx.beginPath();
+  ctx.moveTo(cx, topY + 5);
+  ctx.quadraticCurveTo(cx + 3.5, topY + 10, cx, topY + 13);
+  ctx.quadraticCurveTo(cx - 3.5, topY + 10, cx, topY + 5);
+  ctx.fill();
+}
+
+// Palla di fuoco lanciata dai nemici sparafuoco
+function drawFireball(fb) {
+  ctx.fillStyle = '#ff5a1f';
+  ctx.beginPath();
+  ctx.arc(fb.x + fb.w / 2, fb.y + fb.h / 2, fb.w / 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffe27a';
+  ctx.beginPath();
+  ctx.arc(fb.x + fb.w / 2, fb.y + fb.h / 2, fb.w / 4, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawPlayer(p) {
