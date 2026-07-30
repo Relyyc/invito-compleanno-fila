@@ -304,7 +304,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v1.4</div>
+<div id="dev-version">DEV BUILD v1.5</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -660,7 +660,9 @@ function buildLevel() {
   p.push({ x: 560,  y: GROUND_Y - 70, w: 90,  h: 16 });
   p.push({ x: 900,  y: GROUND_Y - 60, w: 80,  h: 16 });
   p.push({ x: 1300, y: GROUND_Y - 80, w: 100, h: 16 });
-  p.push({ x: 1500, y: GROUND_Y - 50, w: 80,  h: 16 });
+  // (rimossa la piattaforma a x=1500: permetteva di saltare in aria da
+  // una piattaforma all'altra scavalcando il primo sparafuoco senza mai
+  // scendere a terra, rendendolo aggirabile senza rischio)
   p.push({ x: 1750, y: GROUND_Y - 90, w: 100, h: 16 });
 
   // piattaforme sospese "nuove", ora più strette e sopra un vero vuoto
@@ -674,7 +676,7 @@ function buildLevel() {
 function buildEnemies() {
   return [
     { x: 620, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 560, maxX: 650, alive: true },
-    { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: -1, minX: 950, maxX: 1080, alive: true },
+    { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: -1, minX: 850, maxX: 1030, alive: true },
     { x: 1800, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 1760, maxX: 1840, alive: true },
     // nemici "sparafuoco": fermi, sparano palle infuocate da schivare saltando.
     // Posizionati con spazio libero sopra la testa, altrimenti diventa
@@ -767,7 +769,7 @@ function update() {
       // fermo, spara periodicamente una palla di fuoco verso il giocatore
       if (game.frame - en.lastShot > en.fireRate) {
         en.lastShot = game.frame;
-        game.fireballs.push({ x: en.x - 4, y: en.y + 4, w: 10, h: 10, vx: -3.4 });
+        game.fireballs.push({ x: en.x - 4, y: en.y + 4, w: 10, h: 10, vx: -5.5 });
       }
     } else {
       en.x += en.dir * 1.2;
