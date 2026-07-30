@@ -435,10 +435,10 @@ const state = {
   faceCanvas: null,
 };
 
-// Inizializzazione AudioContext Web Audio API per suoni retro sintetizzati
+// Inizializzazione e sblocco AudioContext Web Audio API
 let audioCtx = null;
 
-function getAudioContext() {
+function unlockAudio() {
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (AudioContextClass) {
@@ -448,6 +448,13 @@ function getAudioContext() {
   if (audioCtx && audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
+}
+window.addEventListener('click', unlockAudio);
+window.addEventListener('touchstart', unlockAudio);
+window.addEventListener('keydown', unlockAudio);
+
+function getAudioContext() {
+  unlockAudio();
   return audioCtx;
 }
 
@@ -458,15 +465,15 @@ function playJumpSound() {
     if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(150, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(140, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(420, ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.12, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
     osc.start();
-    osc.stop(ctx.currentTime + 0.12);
+    osc.stop(ctx.currentTime + 0.15);
   } catch(e) {}
 }
 
@@ -476,15 +483,15 @@ function playStompSound() {
     if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(320, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+    osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.14);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.14);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
     osc.start();
-    osc.stop(ctx.currentTime + 0.1);
+    osc.stop(ctx.currentTime + 0.14);
   } catch(e) {}
 }
 
@@ -494,15 +501,15 @@ function playHurtSound() {
     if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(240, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(50, ctx.currentTime + 0.28);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.28);
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(180, ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(60, ctx.currentTime + 0.25);
-    gain.gain.setValueAtTime(0.25, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
     osc.start();
-    osc.stop(ctx.currentTime + 0.25);
+    osc.stop(ctx.currentTime + 0.28);
   } catch(e) {}
 }
 
@@ -512,15 +519,15 @@ function playFireballSound() {
     if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(480, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(90, ctx.currentTime + 0.16);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.16);
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(350, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
     osc.start();
-    osc.stop(ctx.currentTime + 0.15);
+    osc.stop(ctx.currentTime + 0.16);
   } catch(e) {}
 }
 
@@ -528,18 +535,25 @@ function playWinSound() {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
-    const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
-    notes.forEach((freq, i) => {
+    const notes = [
+      { f: 261.63, d: 0.10, t: 0.00 },
+      { f: 329.63, d: 0.10, t: 0.10 },
+      { f: 392.00, d: 0.10, t: 0.20 },
+      { f: 523.25, d: 0.15, t: 0.30 },
+      { f: 392.00, d: 0.10, t: 0.45 },
+      { f: 523.25, d: 0.40, t: 0.55 },
+    ];
+    notes.forEach(n => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(n.f, ctx.currentTime + n.t);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + n.t);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + n.t + n.d);
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
-      gain.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.12);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.18);
-      osc.start(ctx.currentTime + i * 0.12);
-      osc.stop(ctx.currentTime + i * 0.12 + 0.18);
+      osc.start(ctx.currentTime + n.t);
+      osc.stop(ctx.currentTime + n.t + n.d);
     });
   } catch(e) {}
 }
@@ -548,18 +562,23 @@ function playGameOverSound() {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
-    const notes = [300, 260, 220, 180];
-    notes.forEach((freq, i) => {
+    const notes = [
+      { f: 380, d: 0.15, t: 0.00 },
+      { f: 320, d: 0.15, t: 0.15 },
+      { f: 260, d: 0.15, t: 0.30 },
+      { f: 180, d: 0.45, t: 0.45 }
+    ];
+    notes.forEach(n => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(n.f, ctx.currentTime + n.t);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime + n.t);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + n.t + n.d);
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.15);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.2);
-      osc.start(ctx.currentTime + i * 0.15);
-      osc.stop(ctx.currentTime + i * 0.15 + 0.2);
+      osc.start(ctx.currentTime + n.t);
+      osc.stop(ctx.currentTime + n.t + n.d);
     });
   } catch(e) {}
 }
@@ -730,14 +749,35 @@ function initGame() {
     won: false,
     camX: 0,
     frame: 0,
+    shakeTimer: 0,
+    screenFlash: 0,
     player: makePlayer(20),
     platforms: buildLevel(),
     enemies: buildEnemies(),
+    squishedEnemies: [],
     fireballs: [],
+    particles: [],
     flagX: 2100,
   };
   document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
   requestAnimationFrame(loop);
+}
+
+function spawnParticles(x, y, color, count, speed) {
+  if (!game) return;
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = (Math.random() * 0.8 + 0.2) * speed;
+    game.particles.push({
+      x: x,
+      y: y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      color: color,
+      life: 15 + Math.floor(Math.random() * 10),
+      size: Math.random() > 0.5 ? 3 : 2
+    });
+  }
 }
 
 function makePlayer(x) {
@@ -884,6 +924,9 @@ function update() {
         en.alive = false;
         p.vy = -7;
         playStompSound();
+        // Effetto Visivo Schiacciamento Nemico
+        game.squishedEnemies.push({ x: en.x, y: en.y + en.h - 5, w: en.w, h: 5, timer: 20 });
+        spawnParticles(en.x + en.w / 2, en.y + en.h / 2, '#c0392b', 12, 3);
       } else {
         loseLife();
         return;
@@ -895,8 +938,22 @@ function update() {
     const fb = game.fireballs[i];
     fb.x += fb.vx;
 
+    // Scia di particelle per le palle di fuoco
+    if (game.frame % 2 === 0) {
+      game.particles.push({
+        x: fb.x + fb.w / 2,
+        y: fb.y + fb.h / 2,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        color: Math.random() > 0.5 ? '#ff5a1f' : '#ffe27a',
+        life: 10,
+        size: Math.random() > 0.5 ? 3 : 2
+      });
+    }
+
     const hit = p.x < fb.x + fb.w && p.x + p.w > fb.x && p.y < fb.y + fb.h && p.y + p.h > fb.y;
     if (hit && game.frame > p.invulnUntil) {
+      spawnParticles(fb.x + fb.w / 2, fb.y + fb.h / 2, '#ff5a1f', 12, 3);
       game.fireballs.splice(i, 1);
       loseLife();
       return;
@@ -918,6 +975,9 @@ function update() {
 function loseLife() {
   playHurtSound();
   game.lives--;
+  game.screenFlash = 12; // Lampo rosso di danno
+  game.shakeTimer = 10;   // Tremo della telecamera
+  spawnParticles(game.player.x + game.player.w / 2, game.player.y + game.player.h / 2, '#ff4d6d', 16, 4);
   document.getElementById('hud-lives').textContent = '♥'.repeat(Math.max(game.lives, 0));
   if (game.lives <= 0) {
     game.over = true;
@@ -936,7 +996,15 @@ function render() {
   drawParallax();
 
   ctx.save();
-  ctx.translate(-game.camX, 0);
+  // Tremo della fotocamera in caso di danno
+  let shakeX = 0, shakeY = 0;
+  if (game.shakeTimer > 0) {
+    shakeX = (Math.random() - 0.5) * 8;
+    shakeY = (Math.random() - 0.5) * 8;
+    game.shakeTimer--;
+  }
+
+  ctx.translate(-game.camX + shakeX, shakeY);
 
   for (const plat of game.platforms) {
     drawGroundBlock(plat);
@@ -944,6 +1012,15 @@ function render() {
 
   drawFlag(game.flagX);
   drawArrivalBuilding(game.flagX + 60);
+
+  // Disegna nemici schiacciati (effetto visivo schiacciamento)
+  for (let i = game.squishedEnemies.length - 1; i >= 0; i--) {
+    const sq = game.squishedEnemies[i];
+    ctx.fillStyle = '#c0392b';
+    ctx.fillRect(sq.x, sq.y, sq.w, sq.h);
+    sq.timer--;
+    if (sq.timer <= 0) game.squishedEnemies.splice(i, 1);
+  }
 
   for (const en of game.enemies) {
     if (!en.alive) continue;
@@ -954,8 +1031,32 @@ function render() {
     drawFireball(fb);
   }
 
-  drawPlayer(game.player);
+  // Disegna particelle (stelle / scie di fuoco / esplosioni)
+  for (let i = game.particles.length - 1; i >= 0; i--) {
+    const pt = game.particles[i];
+    ctx.fillStyle = pt.color;
+    ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
+    pt.x += pt.vx;
+    pt.y += pt.vy;
+    pt.life--;
+    if (pt.life <= 0) game.particles.splice(i, 1);
+  }
+
+  // Giocatore con effetto lampeggiante durante l'invulnerabilità
+  const p = game.player;
+  const isInvuln = game.frame < p.invulnUntil;
+  if (!isInvuln || Math.floor(game.frame / 4) % 2 === 0) {
+    drawPlayer(p);
+  }
+  
   ctx.restore();
+
+  // Effetto Visivo Schermata Rossa su Danno
+  if (game.screenFlash > 0) {
+    ctx.fillStyle = `rgba(255, 0, 50, ${game.screenFlash / 20})`;
+    ctx.fillRect(0, 0, W, H);
+    game.screenFlash--;
+  }
 
   positionFaceOverlay();
 }
