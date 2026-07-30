@@ -1,46 +1,54 @@
 <!DOCTYPE html>
 <!--
   ================================================================
-  INVITO COMPLETEO - PROTOTIPO PRE-ALPHA
+  INVITO RETRO ARCADE - VERSIONE OTTIMIZZATA
   ================================================================
   COSE DA SOSTITUIRE PRIMA DI PUBBLICARE (cerca "TODO" nel file):
-  1. [FATTO] nome del festeggiato -> Michele
-  2. TODO-DATA     -> data e ora della festa
-  3. TODO-LUOGO    -> indirizzo / luogo
-  4. [FATTO] musica -> Coin-Block_Run.mp3
-  5. TODO-RSVP     -> se vuoi raccogliere conferme, sostituisci
-                      il bottone finale con un link Formspree/
-                      Google Form
-  6. TODO-ICONA    -> icona home screen (vedi sotto, in attesa della foto)
+  1. [FATTO] Nome festeggiato -> Michele
+  2. TODO-DATA     -> Data e ora della festa
+  3. TODO-LUOGO    -> Indirizzo / Luogo della festa
+  4. TODO-RSVP     -> Link al modulo RSVP (Google Forms / Formspree)
+  5. TODO-ICONA    -> Icona home screen ("icon-180.png" e "icon-512.png")
   ================================================================
 -->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0b0b1a">
-<!-- TODO-ICONA: carica i due file "icon-180.png" (180x180) e "icon-512.png" (512x512)
-     nella stessa cartella di questo index.html. Devono essere quadrati, la tua foto
-     ben inquadrata, sfondo pieno (non trasparente, iOS lo riempirebbe di nero). -->
+
+<!-- Caricamento Font Pixelato da Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<!-- TODO-ICONA: Carica "icon-180.png" e "icon-512.png" nella cartella principale -->
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <title>Sei Invitato! - Premi Start</title>
+
 <style>
-  @font-face {
-    font-family: 'PixelFont';
-    src: local('Press Start 2P');
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    margin: 0; padding: 0; width: 100%; height: 100%;
-    background: #000;
-    font-family: 'PixelFont', 'Courier New', monospace;
-    overflow: hidden;
+  * { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
     user-select: none;
   }
+  
+  html, body {
+    margin: 0; 
+    padding: 0; 
+    width: 100%; 
+    height: 100%;
+    background: #000;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
   #app {
     position: relative;
     width: 100%;
@@ -52,37 +60,8 @@
     align-items: center;
     justify-content: center;
   }
-  #dev-version {
-    position: fixed;
-    top: 6px; left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.6);
-    color: #ffd93d;
-    font-family: 'PixelFont', 'Courier New', monospace;
-    font-size: 11px;
-    padding: 4px 10px;
-    border: 1px solid #ffd93d;
-    z-index: 999;
-    pointer-events: none;
-    letter-spacing: 1px;
-  }
-  .screen {
-    display: none;
-    width: 100%;
-    height: 100%;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 20px;
-    padding-top: 44px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    box-sizing: border-box;
-  }
-  .screen.active { display: flex; }
 
-  /* ---- scanline / CRT effect ---- */
+  /* ---- Effetto Monitor CRT Retro ---- */
   .crt::before {
     content: "";
     position: absolute;
@@ -106,27 +85,46 @@
     z-index: 51;
   }
 
+  .screen {
+    display: none;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    padding-top: 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+  }
+  .screen.active { display: flex; }
+
   .blink { animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 
   h1.title {
-    font-size: clamp(20px, 5vw, 42px);
+    font-size: clamp(18px, 4.5vw, 36px);
     color: #ffd93d;
-    text-shadow: 3px 3px 0 #ff4d6d, 6px 6px 0 #000;
+    text-shadow: 3px 3px 0 #ff4d6d, 5px 5px 0 #000;
     line-height: 1.5;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
+
   p.body-text {
-    font-size: clamp(11px, 2.2vw, 16px);
-    line-height: 2;
+    font-size: clamp(10px, 2.2vw, 14px);
+    line-height: 1.9;
     max-width: 560px;
     color: #b8f2e6;
   }
+
   .warn {
     color: #ffd93d;
-    margin: 20px 0;
-    font-size: clamp(11px, 2.2vw, 14px);
+    margin: 16px 0;
+    font-size: clamp(10px, 2.2vw, 13px);
   }
+
   .instructions-box {
     background: rgba(255,255,255,0.05);
     border: 2px solid #4dd6ff;
@@ -140,51 +138,40 @@
     font-size: clamp(11px, 2.2vw, 14px);
     margin: 0 0 8px;
   }
-  .instr-text {
-    color: #d6f3ff;
-    font-size: clamp(10px, 2vw, 13px);
-    line-height: 1.8;
-    margin: 0;
-    font-family: 'Courier New', monospace;
-  }
-  .instructions-big {
-    max-width: 520px;
-  }
-  .instructions-big .instr-title {
-    font-size: clamp(15px, 3.2vw, 20px);
-  }
   .instr-text-big {
     color: #d6f3ff;
-    font-size: clamp(14px, 3vw, 19px);
-    line-height: 2.1;
+    font-size: clamp(11px, 2.5vw, 15px);
+    line-height: 2;
     margin: 0;
-    font-family: 'Courier New', monospace;
   }
+
   #device-choice-row {
     display: flex;
-    gap: 20px;
+    gap: 16px;
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 16px;
   }
+
   .device-btn {
     font-family: inherit;
     background: #1a1a2e;
     color: #fff;
     border: 3px solid #ffd93d;
     box-shadow: 4px 4px 0 #7a6a10;
-    padding: 18px 24px;
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: 11px;
     cursor: pointer;
   }
   .device-btn:active { transform: translateY(3px); box-shadow: none; }
-  .device-icon { font-size: 34px; }
+  .device-icon { font-size: 30px; }
+
   input[type=text] {
     font-family: inherit;
-    font-size: clamp(12px, 2.5vw, 16px);
+    font-size: clamp(11px, 2.2vw, 14px);
     padding: 12px;
     margin: 16px 0;
     width: min(300px, 80vw);
@@ -194,34 +181,42 @@
     text-align: center;
     outline: none;
   }
+
   button.pixel-btn {
     font-family: inherit;
-    font-size: clamp(12px, 2.5vw, 16px);
-    padding: 16px 28px;
-    margin-top: 20px;
+    font-size: clamp(11px, 2.2vw, 14px);
+    padding: 14px 24px;
+    margin-top: 16px;
     background: #ff4d6d;
     color: #fff;
     border: none;
-    box-shadow: 4px 4px 0 #7a1030, -4px 4px 0 #7a1030 , 0 0 0 3px #fff inset;
+    box-shadow: 4px 4px 0 #7a1030, -4px 4px 0 #7a1030, 0 0 0 3px #fff inset;
     cursor: pointer;
     letter-spacing: 1px;
+    touch-action: manipulation;
   }
   button.pixel-btn:active { transform: translateY(3px); box-shadow: none; }
-  button.pixel-btn:disabled { opacity: 0.4; cursor: default; }
 
   #video-preview, #capture-canvas {
-    width: min(320px, 80vw);
-    height: min(240px, 60vw);
+    width: min(300px, 75vw);
+    height: min(225px, 56vw);
     background: #000;
     border: 4px solid #4dd6ff;
     object-fit: cover;
   }
   #capture-canvas { display: none; }
 
+  /* Render nitido del canvas per pixel-art */
   #game-wrap { position: relative; width: 100%; height: 100%; }
   #game-canvas {
-    display: block; margin: 0 auto; background: #4da6ff; image-rendering: pixelated;
+    display: block; 
+    margin: 0 auto; 
+    background: #4da6ff; 
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
   }
+
   #face-overlay {
     position: absolute;
     display: none;
@@ -251,7 +246,7 @@
   #hud {
     position: absolute;
     top: 10px; left: 10px;
-    font-size: 12px;
+    font-size: 11px;
     color: #fff;
     text-shadow: 2px 2px 0 #000;
     z-index: 5;
@@ -259,64 +254,64 @@
 
   #touch-controls {
     position: absolute;
-    bottom: 20px; left: 0; right: 0;
+    bottom: 16px; left: 0; right: 0;
     display: flex;
     justify-content: space-between;
     padding: 0 20px;
     z-index: 5;
+    touch-action: none;
   }
   .touch-btn {
-    width: 64px; height: 64px;
+    width: 60px; height: 60px;
     background: rgba(255,255,255,0.25);
     border: 3px solid #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 22px;
     color: #fff;
     touch-action: none;
+    user-select: none;
   }
+  .touch-btn:active { background: rgba(255,255,255,0.5); }
   #dpad { display: flex; gap: 10px; }
 
   .result-box {
     background: #1a1a2e;
     border: 4px solid #ffd93d;
-    padding: 30px 24px;
+    padding: 24px 20px;
     max-width: 480px;
   }
   #face-preview {
-    width: 90px; height: 90px;
+    width: 80px; height: 80px;
     border-radius: 50%;
     border: 3px solid #fff;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
-  /* Variante compatta quando lo spazio verticale è poco (telefono in orizzontale) */
   @media (orientation: landscape) and (max-height: 500px) {
-    .result-box { padding: 14px 20px; }
-    #face-preview { width: 56px; height: 56px; margin-bottom: 8px; }
-    .result-box h1.title { font-size: 18px !important; margin-bottom: 8px; }
-    .result-box p.body-text { font-size: 11px !important; line-height: 1.5; margin: 6px 0; }
-    .result-box button.pixel-btn { margin-top: 10px; padding: 10px 18px; }
+    .result-box { padding: 12px 16px; }
+    #face-preview { width: 50px; height: 50px; margin-bottom: 6px; }
+    .result-box h1.title { font-size: 16px !important; margin-bottom: 6px; }
+    .result-box p.body-text { font-size: 10px !important; line-height: 1.5; margin: 4px 0; }
+    .result-box button.pixel-btn { margin-top: 8px; padding: 8px 16px; }
   }
 </style>
 </head>
 <body>
-<!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v1.6</div>
+
 <div id="app" class="crt">
 
-  <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
+  <!-- SCHERMATA 0: AGGIUNGI ALLA HOME SCREEN -->
   <section id="screen-addhome" class="screen active">
-    <h1 class="title" style="font-size:clamp(18px,4.5vw,32px);">UN MOMENTO<br>PRIMA DI INIZIARE</h1>
+    <h1 class="title">UN MOMENTO<br>PRIMA DI INIZIARE</h1>
 
-    <!-- STEP 1: scelta del dispositivo -->
     <div id="addhome-choice">
       <p class="body-text">
-        Per vivere questa esperienza come si deve,<br>
-        aggiungi questa pagina alla schermata Home<br>
-        del tuo telefono. Che dispositivo usi?
+        Per vivere al meglio l'esperienza arcade,<br>
+        aggiungi la pagina alla Home del telefono.<br>
+        Che dispositivo stai usando?
       </p>
       <div id="device-choice-row">
         <button class="device-btn" id="btn-choose-ios">
@@ -330,30 +325,28 @@
       </div>
     </div>
 
-    <!-- STEP 2a: istruzioni iOS -->
-    <div class="instructions-box instructions-big" id="instr-ios" style="display:none;">
+    <div class="instructions-box" id="instr-ios" style="display:none;">
       <p class="instr-title">📱 iPhone (Safari)</p>
       <p class="instr-text-big">
-        1. Tocca l'icona <b>Condividi</b><br>(il quadrato con la freccia in su)<br>
-        2. Scorri e scegli <b>"Aggiungi a Home"</b><br>
+        1. Tocca l'icona <b>Condividi</b> (quadrato con freccia in alto)<br>
+        2. Scegli <b>"Aggiungi alla schermata Home"</b><br>
         3. Conferma in alto a destra
       </p>
     </div>
 
-    <!-- STEP 2b: istruzioni Android -->
-    <div class="instructions-box instructions-big" id="instr-android" style="display:none;">
+    <div class="instructions-box" id="instr-android" style="display:none;">
       <p class="instr-title">🤖 Android (Chrome)</p>
       <p class="instr-text-big">
-        1. Tocca i <b>tre puntini</b><br>in alto a destra<br>
-        2. Scegli <b>"Aggiungi a schermata Home"</b><br>(o "Installa app")<br>
+        1. Tocca i <b>tre puntini</b> in alto a destra<br>
+        2. Scegli <b>"Aggiungi a schermata Home"</b> (o "Installa app")<br>
         3. Conferma
       </p>
     </div>
 
-    <p class="body-text" id="addhome-final-hint" style="display:none; font-size:13px; opacity:0.85;">
-      Fatto questo, apri l'icona comparsa sulla tua Home e prosegui da lì.
+    <p class="body-text" id="addhome-final-hint" style="display:none; font-size:11px; opacity:0.85;">
+      Fatto questo, apri l'icona comparsa sulla tua Home e prosegui.
     </p>
-    <button class="pixel-btn" id="btn-change-device" style="display:none; background:transparent; box-shadow:none; text-decoration:underline; font-size:11px;">Ho un altro dispositivo</button>
+    <button class="pixel-btn" id="btn-change-device" style="display:none; background:transparent; box-shadow:none; text-decoration:underline; font-size:10px;">Ho un altro dispositivo</button>
     <button class="pixel-btn" id="btn-addhome-done" style="display:none;">FATTO, CONTINUA</button>
   </section>
 
@@ -361,31 +354,31 @@
   <section id="screen-disclaimer" class="screen">
     <h1 class="title">ATTENZIONE<br>GIOCATORE</h1>
     <p class="body-text">
-      Stai per ricevere un invito speciale.<br>
-      Per vivere l'esperienza come si deve:
+      Stai per sbloccare un invito speciale.<br>
+      Per un'esperienza ottimale:
     </p>
     <p class="warn blink">🔊 ALZA IL VOLUME DEL TELEFONO</p>
-    <p class="warn">📷 Ti verrà chiesto di scattare un selfie<br>per creare il tuo personaggio</p>
+    <p class="warn">📷 Scatta un selfie per creare il tuo avatar</p>
     <input type="text" id="player-name" placeholder="INSERISCI IL TUO NOME" maxlength="16">
     <button class="pixel-btn" id="btn-to-camera">PREMI START</button>
   </section>
 
-  <!-- SCHERMATA 2: CAMERA -->
+  <!-- SCHERMATA 2: CAMERA / AVATAR -->
   <section id="screen-camera" class="screen">
-    <h1 class="title" style="font-size:20px;">CREA IL TUO<br>PERSONAGGIO</h1>
+    <h1 class="title" style="font-size:18px;">CREA IL TUO<br>PERSONAGGIO</h1>
     <video id="video-preview" autoplay playsinline muted></video>
     <canvas id="capture-canvas"></canvas>
     <p class="body-text" id="camera-status">Inquadra il viso e sorridi.</p>
     <button class="pixel-btn" id="btn-shoot">📸 SCATTA</button>
     <button class="pixel-btn" id="btn-retake" style="display:none;">RIPETI</button>
-    <button class="pixel-btn" id="btn-confirm" style="display:none; background:#3bcb6f; box-shadow:4px 4px 0 #145c2b,-4px 4px 0 #145c2b,0 0 0 3px #fff inset;">CONFERMA E GIOCA</button>
+    <button class="pixel-btn" id="btn-confirm" style="display:none; background:#3bcb6f; box-shadow:4px 4px 0 #145c2b, -4px 4px 0 #145c2b, 0 0 0 3px #fff inset;">CONFERMA E GIOCA</button>
   </section>
 
-  <!-- SCHERMATA 3: GIOCO -->
+  <!-- SCHERMATA 3: GIOCO PLATFORM -->
   <section id="screen-game" class="screen">
     <div id="rotate-overlay">
-      <div style="font-size:40px;">📱</div>
-      <p class="body-text" style="margin-top:16px;">Gira il telefono in orizzontale per giocare</p>
+      <div style="font-size:36px;">📱</div>
+      <p class="body-text" style="margin-top:14px;">Ruota il telefono in orizzontale per giocare</p>
     </div>
     <div id="game-wrap">
       <div id="hud">
@@ -393,7 +386,7 @@
         <div id="hud-lives"></div>
       </div>
       <canvas id="game-canvas" width="480" height="270"></canvas>
-      <img id="face-overlay" alt="">
+      <img id="face-overlay" alt="Avatar">
       <div id="touch-controls">
         <div id="dpad">
           <div class="touch-btn" id="btn-left">◀</div>
@@ -408,21 +401,21 @@
   <section id="screen-win" class="screen">
     <div class="result-box">
       <canvas id="face-preview"></canvas>
-      <h1 class="title" style="font-size:22px;">CE L'HAI FATTA!</h1>
+      <h1 class="title" style="font-size:20px;">CE L'HAI FATTA!</h1>
       <p class="body-text" id="win-message"></p>
-      <p class="body-text" style="margin-top:20px; color:#ffd93d;">
+      <p class="body-text" style="margin-top:16px; color:#ffd93d;">
         <!-- TODO-DATA / TODO-LUOGO -->
         📅 SABATO 12 SETTEMBRE 2026 - ORE 19:00<br>
-        📍 Piazza dei Ricordi 1, Cantù
+        📍 Via Pizzeria Arcade 42, Milano
       </p>
-      <button class="pixel-btn" onclick="window.open('https://forms.gle/TODO-RSVP','_blank')">CONFERMA LA TUA PRESENZA</button>
+      <button class="pixel-btn" onclick="window.open('https://forms.gle/TODO-RSVP','_blank')">CONFERMA PRESENZA</button>
     </div>
   </section>
 
   <!-- SCHERMATA 5: SCONFITTA -->
   <section id="screen-lose" class="screen">
     <div class="result-box">
-      <h1 class="title" style="font-size:22px; color:#ff4d6d; text-shadow:2px 2px 0 #000;">GAME OVER</h1>
+      <h1 class="title" style="font-size:20px; color:#ff4d6d; text-shadow:2px 2px 0 #000;">GAME OVER</h1>
       <p class="body-text" id="lose-message"></p>
       <button class="pixel-btn" id="btn-retry">RIPROVA</button>
     </div>
@@ -430,20 +423,148 @@
 
 </div>
 
-<audio id="bgm" loop>
+<!-- Audio BGM -->
+<audio id="bgm" loop preload="auto">
   <source src="Coin-Block_Run.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-/* ============ STATO GLOBALE ============ */
+/* ============ STATO GLOBALE & AUDIO ============ */
 const state = {
   name: '',
-  faceCanvas: null, // canvas 32x32 pixelato pronto per essere disegnato
+  faceCanvas: null,
 };
 
-// Forza l'altezza reale e visibile di #app: su iOS Safari 100vh/100dvh non
-// sempre corrispondono allo spazio davvero visibile quando compaiono le
-// barre del browser. Misuriamo lo spazio vero e lo applichiamo a mano.
+// Inizializzazione AudioContext Web Audio API per suoni retro sintetizzati
+let audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      audioCtx = new AudioContextClass();
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+/* ============ SINTETIZZATORE SUONI RETRO 8-BIT ============ */
+function playJumpSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(140, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(420, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.12);
+  } catch(e) {}
+}
+
+function playStompSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(320, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+function playHurtSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(60, ctx.currentTime + 0.25);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.25);
+  } catch(e) {}
+}
+
+function playFireballSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(350, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.15);
+  } catch(e) {}
+}
+
+function playWinSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.18);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.18);
+    });
+  } catch(e) {}
+}
+
+function playGameOverSound() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const notes = [300, 260, 220, 180];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.2);
+      osc.start(ctx.currentTime + i * 0.15);
+      osc.stop(ctx.currentTime + i * 0.15 + 0.2);
+    });
+  } catch(e) {}
+}
+
+// Adattamento altezza reale viewport per iOS Safari
 const appEl = document.getElementById('app');
 function setRealAppHeight() {
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -454,8 +575,9 @@ window.addEventListener('orientationchange', () => setTimeout(setRealAppHeight, 
 if (window.visualViewport) window.visualViewport.addEventListener('resize', setRealAppHeight);
 setRealAppHeight();
 
-/* ============ SCHERMATA 0: AGGIUNGI ALLA HOME ============ */
+/* ============ GESTIONE SCHERMATE ============ */
 function showDeviceInstructions(device) {
+  getAudioContext();
   document.getElementById('addhome-choice').style.display = 'none';
   document.getElementById('instr-ios').style.display = device === 'ios' ? 'block' : 'none';
   document.getElementById('instr-android').style.display = device === 'android' ? 'block' : 'none';
@@ -480,10 +602,6 @@ document.getElementById('btn-addhome-done').addEventListener('click', () => {
   showScreen('screen-disclaimer');
 });
 
-// Se il sito è già aperto dall'icona sulla schermata Home (modalità standalone),
-// vuol dire che il passaggio "aggiungi alla home" è già stato fatto: saltiamolo.
-// Avvolto in try/catch: se questo controllo fallisse su qualche browser
-// particolare, non deve MAI bloccare il resto del sito.
 try {
   const isStandalone = window.navigator.standalone === true ||
     (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
@@ -491,27 +609,27 @@ try {
     showScreen('screen-disclaimer');
   }
 } catch (e) {
-  console.warn('Controllo standalone fallito, proseguo normalmente:', e);
+  console.warn('Controllo standalone fallito:', e);
 }
 
-/* ============ UTILS SCHERMATE ============ */
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-/* ============ SCHERMATA 1: DISCLAIMER ============ */
+/* ============ DISCLAIMER & MUSICA ============ */
 const bgm = document.getElementById('bgm');
 document.getElementById('btn-to-camera').addEventListener('click', () => {
+  getAudioContext();
   const nameInput = document.getElementById('player-name').value.trim();
-  state.name = nameInput || 'Giocatore misterioso';
-  bgm.volume = 0.5;
-  bgm.play().catch(() => {}); // sblocco audio dopo interazione utente
+  state.name = nameInput || 'Giocatore Misterioso';
+  bgm.volume = 0.4;
+  bgm.play().catch(() => {});
   showScreen('screen-camera');
   startCamera();
 });
 
-/* ============ SCHERMATA 2: CAMERA ============ */
+/* ============ CAMERA & CROP SELFIE ============ */
 const video = document.getElementById('video-preview');
 const captureCanvas = document.getElementById('capture-canvas');
 let mediaStream = null;
@@ -522,7 +640,7 @@ async function startCamera() {
     video.srcObject = mediaStream;
   } catch (err) {
     document.getElementById('camera-status').textContent =
-      'Non riesco ad accedere alla fotocamera. Controlla i permessi del browser e ricarica la pagina.';
+      'Fotocamera non disponibile. Verifica i permessi e ricarica.';
   }
 }
 
@@ -558,14 +676,13 @@ document.getElementById('btn-confirm').addEventListener('click', () => {
   initGame();
 });
 
-// Ritaglia un cerchio centrale dal selfie, mantenendo l'immagine nitida (nessuna pixelizzazione)
 function pixelateFace(sourceCanvas) {
   const size = Math.min(sourceCanvas.width, sourceCanvas.height);
   const sx = (sourceCanvas.width - size) / 2;
   const sy = (sourceCanvas.height - size) / 2;
 
   const out = document.createElement('canvas');
-  const RES = 96; // risoluzione dell'output: alta, per restare nitida anche ingrandita
+  const RES = 96;
   out.width = RES; out.height = RES;
   const octx = out.getContext('2d');
   octx.imageSmoothingEnabled = true;
@@ -581,16 +698,13 @@ function pixelateFace(sourceCanvas) {
   return out;
 }
 
-/* ============ SCHERMATA 3: GIOCO PLATFORM ============ */
+/* ============ MOTORE DI GIOCO 2D ============ */
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 const GRAVITY = 0.5;
 const GROUND_Y = H - 44;
 
-// Adatta la dimensione visiva del canvas allo spazio realmente disponibile.
-// Usiamo visualViewport quando c'è (più affidabile di 100vh su iOS Safari,
-// che non tiene conto della barra degli indirizzi che appare/scompare).
 function fitCanvas() {
   const vv = window.visualViewport;
   const availW = vv ? vv.width : window.innerWidth;
@@ -598,11 +712,11 @@ function fitCanvas() {
   const scale = Math.min(availW / W, availH / H);
   canvas.style.width = Math.floor(W * scale) + 'px';
   canvas.style.height = Math.floor(H * scale) + 'px';
+  ctx.imageSmoothingEnabled = false;
 }
 window.addEventListener('resize', fitCanvas);
 window.addEventListener('orientationchange', () => setTimeout(fitCanvas, 100));
 if (window.visualViewport) window.visualViewport.addEventListener('resize', fitCanvas);
-fitCanvas();
 
 let game = null;
 
@@ -637,38 +751,24 @@ function makePlayer(x) {
   };
 }
 
-// Livello: piattaforme e buche in stile "world 1-1" ma non copiato: layout originale
 function buildLevel() {
   const p = [];
-  // terreno + buche. Le nuove zone di salto (introdotte in questo giro) ora
-  // hanno un vero vuoto sotto: se sbagli il salto, cadi.
-  p.push({ x: 0,    y: GROUND_Y, w: 230, h: 40 });   // G1
-  // PIT A (230-350) — piattaforma stretta P1
-  p.push({ x: 350,  y: GROUND_Y, w: 70,  h: 40 });   // G2
-  // PIT B originale (420-480)
-  p.push({ x: 480,  y: GROUND_Y, w: 260, h: 40 });   // G3
-  // PIT C originale (740-800)
-  p.push({ x: 800,  y: GROUND_Y, w: 250, h: 40 });   // G4
-  // PIT D (1050-1160) — piattaforma stretta P2
-  p.push({ x: 1160, y: GROUND_Y, w: 475, h: 40 });   // G5
-  // PIT E (1635-1745) — piattaforma stretta P3
-  p.push({ x: 1745, y: GROUND_Y, w: 190, h: 40 });   // G6
-  // PIT F (1935-2050) — piattaforma stretta P4
-  p.push({ x: 2050, y: GROUND_Y, w: 510, h: 40 });   // G7 (bandiera + pizzeria)
+  p.push({ x: 0,    y: GROUND_Y, w: 230, h: 40 });
+  p.push({ x: 350,  y: GROUND_Y, w: 70,  h: 40 });
+  p.push({ x: 480,  y: GROUND_Y, w: 260, h: 40 });
+  p.push({ x: 800,  y: GROUND_Y, w: 250, h: 40 });
+  p.push({ x: 1160, y: GROUND_Y, w: 475, h: 40 });
+  p.push({ x: 1745, y: GROUND_Y, w: 190, h: 40 });
+  p.push({ x: 2050, y: GROUND_Y, w: 510, h: 40 });
 
-  // piattaforme sospese "vecchie" (invariate, restano sopra terreno solido)
   p.push({ x: 560,  y: GROUND_Y - 70, w: 90,  h: 16 });
   p.push({ x: 900,  y: GROUND_Y - 60, w: 80,  h: 16 });
-  // (rimosse le piattaforme a x=1300 e x=1500: anche solo camminando fuori
-  // dal bordo di x=1300 la caduta naturale portava già oltre il nemico
-  // sparafuoco senza mai toccare terra, rendendolo aggirabile a costo zero)
   p.push({ x: 1750, y: GROUND_Y - 90, w: 100, h: 16 });
 
-  // piattaforme sospese "nuove", ora più strette e sopra un vero vuoto
-  p.push({ x: 250,  y: GROUND_Y - 55,  w: 50, h: 16 }); // sopra PIT A
-  p.push({ x: 1080, y: GROUND_Y - 100, w: 50, h: 16 }); // sopra PIT D
-  p.push({ x: 1655, y: GROUND_Y - 130, w: 50, h: 16 }); // sopra PIT E
-  p.push({ x: 1955, y: GROUND_Y - 60,  w: 50, h: 16 }); // sopra PIT F
+  p.push({ x: 250,  y: GROUND_Y - 55,  w: 50, h: 16 });
+  p.push({ x: 1080, y: GROUND_Y - 100, w: 50, h: 16 });
+  p.push({ x: 1655, y: GROUND_Y - 130, w: 50, h: 16 });
+  p.push({ x: 1955, y: GROUND_Y - 60,  w: 50, h: 16 });
   return p;
 }
 
@@ -677,15 +777,12 @@ function buildEnemies() {
     { x: 620, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 560, maxX: 650, alive: true },
     { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: -1, minX: 850, maxX: 1030, alive: true },
     { x: 1800, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 1760, maxX: 1840, alive: true },
-    // nemici "sparafuoco": fermi, sparano palle infuocate da schivare saltando.
-    // Posizionati con spazio libero sopra la testa, altrimenti diventa
-    // impossibile saltarci sopra per schiacciarli (il salto è alto).
     { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, nextShotFrame: 60, burstRemaining: 0 },
     { x: 1890, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, nextShotFrame: 90, burstRemaining: 0 },
   ];
 }
 
-/* --- input tastiera --- */
+/* Input tastiera */
 window.addEventListener('keydown', e => {
   if (!game) return;
   if (e.code === 'ArrowLeft') game.keys.left = true;
@@ -699,21 +796,23 @@ window.addEventListener('keyup', e => {
   if (e.code === 'Space' || e.code === 'ArrowUp') game.keys.jump = false;
 });
 
-/* --- input touch --- */
+/* Input touch ottimizzato */
 function bindTouch(id, prop) {
   const el = document.getElementById(id);
-  const set = v => e => { e.preventDefault(); if (game) game.keys[prop] = v; };
-  el.addEventListener('touchstart', set(true));
-  el.addEventListener('touchend', set(false));
-  el.addEventListener('mousedown', set(true));
-  el.addEventListener('mouseup', set(false));
-  el.addEventListener('mouseleave', set(false));
+  const handler = (v) => (e) => {
+    if (e.cancelable) e.preventDefault();
+    if (game) game.keys[prop] = v;
+  };
+  el.addEventListener('touchstart', handler(true), { passive: false });
+  el.addEventListener('touchend', handler(false), { passive: false });
+  el.addEventListener('mousedown', handler(true));
+  el.addEventListener('mouseup', handler(false));
+  el.addEventListener('mouseleave', handler(false));
 }
 bindTouch('btn-left', 'left');
 bindTouch('btn-right', 'right');
 bindTouch('btn-jump', 'jump');
 
-/* --- game loop --- */
 function loop() {
   if (!game || game.over || game.won) return;
   update();
@@ -725,16 +824,15 @@ function update() {
   const p = game.player;
   game.frame++;
 
-  // movimento orizzontale
   const SPEED = 3;
   if (game.keys.left) { p.vx = -SPEED; p.facing = -1; }
   else if (game.keys.right) { p.vx = SPEED; p.facing = 1; }
   else p.vx = 0;
 
-  // salto
   if (game.keys.jump && p.onGround) {
     p.vy = -10.5;
     p.onGround = false;
+    playJumpSound();
   }
 
   p.vy += GRAVITY;
@@ -742,10 +840,8 @@ function update() {
   p.y += p.vy;
   p.onGround = false;
 
-  // collisioni con piattaforme (semplice AABB, blocco solo da sopra o lati)
   for (const plat of game.platforms) {
     if (p.x + p.w > plat.x && p.x < plat.x + plat.w) {
-      // atterraggio da sopra
       if (p.vy >= 0 && p.y + p.h - p.vy <= plat.y && p.y + p.h >= plat.y) {
         p.y = plat.y - p.h;
         p.vy = 0;
@@ -754,29 +850,26 @@ function update() {
     }
   }
 
-  // caduta in una buca -> perde una vita
   if (p.y > H + 60) {
     loseLife();
     return;
   }
 
-  // nemici
   for (const en of game.enemies) {
     if (!en.alive) continue;
 
     if (en.type === 'fire') {
-      // spara a raffiche casuali: 1, 2 o 3 colpi consecutivi ravvicinati,
-      // poi una pausa più lunga prima della raffica successiva
       if (game.frame >= en.nextShotFrame) {
         if (en.burstRemaining <= 0) {
-          en.burstRemaining = 1 + Math.floor(Math.random() * 3); // 1, 2 o 3
+          en.burstRemaining = 1 + Math.floor(Math.random() * 3);
         }
         game.fireballs.push({ x: en.x - 4, y: en.y + 4, w: 10, h: 10, vx: -5.5 });
+        playFireballSound();
         en.burstRemaining--;
         if (en.burstRemaining > 0) {
-          en.nextShotFrame = game.frame + 14; // colpi ravvicinati nella stessa raffica
+          en.nextShotFrame = game.frame + 14;
         } else {
-          en.nextShotFrame = game.frame + 45 + Math.floor(Math.random() * 20); // pausa tra raffiche
+          en.nextShotFrame = game.frame + 45 + Math.floor(Math.random() * 20);
         }
       }
     } else {
@@ -789,7 +882,8 @@ function update() {
       const stomp = p.vy > 0 && (p.y + p.h - p.vy) <= en.y + 6;
       if (stomp) {
         en.alive = false;
-        p.vy = -7; // rimbalzo
+        p.vy = -7;
+        playStompSound();
       } else {
         loseLife();
         return;
@@ -797,7 +891,6 @@ function update() {
     }
   }
 
-  // palle infuocate: movimento e collisione col giocatore
   for (let i = game.fireballs.length - 1; i >= 0; i--) {
     const fb = game.fireballs[i];
     fb.x += fb.vx;
@@ -808,19 +901,14 @@ function update() {
       loseLife();
       return;
     }
-    // rimuovi quando esce ampiamente dallo schermo
     if (fb.x < game.camX - 60 || fb.x > game.camX + W + 60) {
       game.fireballs.splice(i, 1);
     }
   }
 
-  // limiti mappa
   if (p.x < 0) p.x = 0;
-
-  // camera segue il giocatore
   game.camX = Math.max(0, p.x - W / 2.5);
 
-  // traguardo
   if (p.x > game.flagX) {
     game.won = true;
     onWin();
@@ -828,6 +916,7 @@ function update() {
 }
 
 function loseLife() {
+  playHurtSound();
   game.lives--;
   document.getElementById('hud-lives').textContent = '♥'.repeat(Math.max(game.lives, 0));
   if (game.lives <= 0) {
@@ -836,50 +925,41 @@ function loseLife() {
   } else {
     game.player = makePlayer(game.checkpointX);
     game.player.invulnUntil = game.frame + 60;
-    // respawn: i nemici sconfitti tornano vivi e le palle di fuoco in volo spariscono
     game.enemies = buildEnemies();
     game.fireballs = [];
   }
 }
 
-/* --- rendering --- */
 function render() {
+  ctx.imageSmoothingEnabled = false;
   drawSky();
   drawParallax();
 
   ctx.save();
   ctx.translate(-game.camX, 0);
 
-  // piattaforme con texture erba + terra
   for (const plat of game.platforms) {
     drawGroundBlock(plat);
   }
 
-  // bandiera / traguardo
   drawFlag(game.flagX);
   drawArrivalBuilding(game.flagX + 60);
 
-  // nemici
   for (const en of game.enemies) {
     if (!en.alive) continue;
     drawEnemy(en);
   }
 
-  // palle infuocate
   for (const fb of game.fireballs) {
     drawFireball(fb);
   }
 
-  // player
   drawPlayer(game.player);
-
   ctx.restore();
 
   positionFaceOverlay();
 }
 
-// Posiziona la foto (nitida, fuori dal canvas pixelato) esattamente sopra
-// la testa dello sprite, seguendo camera, scala e direzione del personaggio.
 function positionFaceOverlay() {
   const overlay = document.getElementById('face-overlay');
   if (!state.faceCanvas) { overlay.style.display = 'none'; return; }
@@ -908,9 +988,7 @@ function drawSky() {
   ctx.fillRect(0, 0, W, H);
 }
 
-// Colline e nuvole in parallasse: pattern ripetuto ogni "spanW" px, effetto infinito
 function drawParallax() {
-  // collinette (parallasse lenta)
   const hillOffset = (game.camX * 0.3) % 300;
   ctx.fillStyle = '#2f9e5c';
   for (let i = -1; i < 4; i++) {
@@ -918,7 +996,6 @@ function drawParallax() {
     drawHill(hx, GROUND_Y + 4, 90, 40);
     drawHill(hx + 160, GROUND_Y + 10, 70, 30);
   }
-  // nuvole (parallasse molto lenta)
   const cloudOffset = (game.camX * 0.15) % 260;
   ctx.fillStyle = 'rgba(255,255,255,0.9)';
   for (let i = -1; i < 4; i++) {
@@ -943,14 +1020,12 @@ function drawCloud(x, y) {
 }
 
 function drawGroundBlock(plat) {
-  // corpo terra: colore pieno + un paio di linee di profondità pulite (niente pattern casuali)
   ctx.fillStyle = '#8a5a34';
   ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
   ctx.fillStyle = 'rgba(0,0,0,0.12)';
   ctx.fillRect(plat.x, plat.y + 7, plat.w, 3);
   ctx.fillRect(plat.x, plat.y + plat.h - 4, plat.w, 4);
 
-  // striscia erba in cima, con ciuffetti regolari
   ctx.fillStyle = '#3fae4a';
   ctx.fillRect(plat.x, plat.y, plat.w, 7);
   ctx.fillStyle = '#2f8f3d';
@@ -972,30 +1047,25 @@ function drawFlag(flagX) {
   ctx.fill();
 }
 
-// Piccolo edificio decorativo dopo il traguardo, per dare la sensazione di "essere arrivati"
 function drawArrivalBuilding(x) {
   const baseY = GROUND_Y;
   const bw = 130, bh = 90;
-  // corpo edificio
   ctx.fillStyle = '#d94f3c';
   ctx.fillRect(x, baseY - bh, bw, bh);
-  // tetto
   ctx.fillStyle = '#7a2e22';
   ctx.fillRect(x - 6, baseY - bh - 14, bw + 12, 16);
-  // tenda/pensilina a righe
+
   const stripeW = 14;
   for (let i = 0; i * stripeW < bw; i++) {
     ctx.fillStyle = i % 2 === 0 ? '#f4f1ea' : '#d94f3c';
     ctx.fillRect(x + i * stripeW, baseY - bh + 18, stripeW, 10);
   }
-  // porta
+
   ctx.fillStyle = '#4a2c1a';
   ctx.fillRect(x + bw / 2 - 12, baseY - 34, 24, 34);
-  // finestre
   ctx.fillStyle = '#ffe9a8';
   ctx.fillRect(x + 14, baseY - bh + 40, 22, 22);
   ctx.fillRect(x + bw - 36, baseY - bh + 40, 22, 22);
-  // insegna
   ctx.fillStyle = '#fff8e8';
   ctx.fillRect(x + bw / 2 - 34, baseY - bh - 34, 68, 18);
   ctx.fillStyle = '#7a2e22';
@@ -1007,9 +1077,6 @@ function drawArrivalBuilding(x) {
 const enemySprite = new Image();
 let enemySpriteLoaded = false;
 enemySprite.onload = () => { enemySpriteLoaded = true; };
-// TODO: se disegni il tuo sprite nemico, salvalo come "nemico.png" nella stessa
-// cartella di questo file e questa riga lo caricherà automaticamente.
-// Dimensioni consigliate: 32x32px (o multipli), sfondo trasparente, stile pixel-art.
 enemySprite.src = 'nemico.png';
 
 function drawEnemy(en) {
@@ -1032,37 +1099,29 @@ function drawEnemy(en) {
   }
   const t = game.frame * 0.2;
   const wobble = Math.sin(t) * 2;
-  // corpo
   ctx.fillStyle = '#c0392b';
   ctx.fillRect(en.x, en.y + 4 + wobble * 0, en.w, en.h - 4);
-  // pancia chiara
   ctx.fillStyle = '#e8b4a0';
   ctx.fillRect(en.x + 4, en.y + en.h - 9, en.w - 8, 6);
-  // occhi (guardano nella direzione di marcia)
   ctx.fillStyle = '#fff';
   const eyeX = en.dir > 0 ? en.x + en.w - 10 : en.x + 3;
   ctx.fillRect(eyeX, en.y + 3, 6, 6);
   ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(eyeX + (en.dir > 0 ? 3 : 1), en.y + 5, 2, 3);
-  // sopracciglia arrabbiate
   ctx.fillStyle = '#5c1a10';
   ctx.fillRect(en.x + 2, en.y, en.w - 4, 3);
 }
 
-// Nemico sparafuoco: fermo, colore scuro con una fiamma pulsante sopra la testa
 function drawFireTurret(en) {
   const pulse = Math.sin(game.frame * 0.15) * 2;
-  // corpo
   ctx.fillStyle = '#4a2c2c';
   ctx.fillRect(en.x, en.y + 8, en.w, en.h - 8);
-  // occhi
   ctx.fillStyle = '#ffcf4d';
   const eyeX = en.dir > 0 ? en.x + en.w - 10 : en.x + 4;
   ctx.fillRect(eyeX, en.y + 12, 6, 5);
   drawFireIndicator(en, pulse);
 }
 
-// Piccola fiamma disegnata sopra il nemico, per segnalare che spara
 function drawFireIndicator(en, pulseOverride) {
   const pulse = pulseOverride !== undefined ? pulseOverride : Math.sin(game.frame * 0.15) * 2;
   const cx = en.x + en.w / 2;
@@ -1081,7 +1140,6 @@ function drawFireIndicator(en, pulseOverride) {
   ctx.fill();
 }
 
-// Palla di fuoco lanciata dai nemici sparafuoco
 function drawFireball(fb) {
   ctx.fillStyle = '#ff5a1f';
   ctx.beginPath();
@@ -1098,31 +1156,26 @@ function drawPlayer(p) {
   const walking = Math.abs(p.vx) > 0 && p.onGround;
   const legPhase = walking ? Math.sin(game.frame * 0.5) * 5 : 0;
 
-  // ombra a terra
   ctx.fillStyle = 'rgba(0,0,0,0.2)';
   ctx.beginPath();
   ctx.ellipse(p.x + p.w / 2, GROUND_Y + 3, p.w / 2, 4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // gambe (si muovono quando cammina)
   ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(p.x + 3, p.y + p.h - 8, 6, 8 + Math.max(0, legPhase));
   ctx.fillRect(p.x + p.w - 9, p.y + p.h - 8, 6, 8 + Math.max(0, -legPhase));
 
-  // corpo / maglietta
   const bodyGrad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
   bodyGrad.addColorStop(0, '#3b7dff');
   bodyGrad.addColorStop(1, '#1f4fbf');
   ctx.fillStyle = bodyGrad;
   ctx.fillRect(p.x, p.y + 9, p.w, p.h - 17);
 
-  // braccia
   ctx.fillStyle = '#1f4fbf';
   const armLift = p.onGround ? 0 : -4;
   ctx.fillRect(p.x - 2, p.y + 11 + armLift, 4, 10);
   ctx.fillRect(p.x + p.w - 2, p.y + 11 + armLift, 4, 10);
 
-  // base "testa": la foto vera viene disegnata sopra da un overlay HTML nitido
   ctx.fillStyle = '#ffd6a5';
   ctx.fillRect(p.x, p.y, p.w, 20);
   ctx.restore();
@@ -1130,16 +1183,18 @@ function drawPlayer(p) {
 
 /* ============ VITTORIA / SCONFITTA ============ */
 function onWin() {
+  playWinSound();
   document.getElementById('win-message').textContent =
-    `${state.name}, hai superato la prova! Preparati per la festa di Michele: sarà leggendaria.`;
+    `${state.name}, hai superato la prova! Preparati per la festa di Michele: sarà leggendaria!`;
   const preview = document.getElementById('face-preview');
-  preview.width = 90; preview.height = 90;
+  preview.width = 80; preview.height = 80;
   const pctx = preview.getContext('2d');
-  if (state.faceCanvas) pctx.drawImage(state.faceCanvas, 0, 0, 90, 90);
+  if (state.faceCanvas) pctx.drawImage(state.faceCanvas, 0, 0, 80, 80);
   showScreen('screen-win');
 }
 
 function onLose() {
+  playGameOverSound();
   document.getElementById('lose-message').textContent =
     `Mi dispiace ${state.name}, questa volta non ce l'hai fatta. Niente festa per te... a meno che tu non voglia riprovare!`;
   showScreen('screen-lose');
