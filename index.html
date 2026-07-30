@@ -530,7 +530,6 @@ document.getElementById('btn-shoot').addEventListener('click', () => {
   const w = video.videoWidth, h = video.videoHeight;
   captureCanvas.width = w; captureCanvas.height = h;
   const ctx = captureCanvas.getContext('2d');
-  ctx.translate(w, 0); ctx.scale(-1, 1); // effetto specchio naturale
   ctx.drawImage(video, 0, 0, w, h);
 
   video.style.display = 'none';
