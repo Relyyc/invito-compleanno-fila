@@ -304,7 +304,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v1.3</div>
+<div id="dev-version">DEV BUILD v1.4</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -640,22 +640,34 @@ function makePlayer(x) {
 // Livello: piattaforme e buche in stile "world 1-1" ma non copiato: layout originale
 function buildLevel() {
   const p = [];
-  // terreno principale con un paio di buche (gap)
-  p.push({ x: 0, y: GROUND_Y, w: 420, h: 40 });
-  p.push({ x: 480, y: GROUND_Y, w: 260, h: 40 });      // dopo prima buca (420-480)
-  p.push({ x: 800, y: GROUND_Y, w: 300, h: 40 });      // seconda buca (740-800)
-  p.push({ x: 1160, y: GROUND_Y, w: 1400, h: 40 });    // resto fino alla bandiera e oltre (pizzeria)
+  // terreno + buche. Le nuove zone di salto (introdotte in questo giro) ora
+  // hanno un vero vuoto sotto: se sbagli il salto, cadi.
+  p.push({ x: 0,    y: GROUND_Y, w: 230, h: 40 });   // G1
+  // PIT A (230-350) — piattaforma stretta P1
+  p.push({ x: 350,  y: GROUND_Y, w: 70,  h: 40 });   // G2
+  // PIT B originale (420-480)
+  p.push({ x: 480,  y: GROUND_Y, w: 260, h: 40 });   // G3
+  // PIT C originale (740-800)
+  p.push({ x: 800,  y: GROUND_Y, w: 250, h: 40 });   // G4
+  // PIT D (1050-1160) — piattaforma stretta P2
+  p.push({ x: 1160, y: GROUND_Y, w: 475, h: 40 });   // G5
+  // PIT E (1635-1745) — piattaforma stretta P3
+  p.push({ x: 1745, y: GROUND_Y, w: 190, h: 40 });   // G6
+  // PIT F (1935-2050) — piattaforma stretta P4
+  p.push({ x: 2050, y: GROUND_Y, w: 510, h: 40 });   // G7 (bandiera + pizzeria)
 
-  // piattaforme sospese
-  p.push({ x: 250, y: GROUND_Y - 55, w: 70, h: 16 });
-  p.push({ x: 560, y: GROUND_Y - 70, w: 90, h: 16 });
-  p.push({ x: 900, y: GROUND_Y - 60, w: 80, h: 16 });
-  p.push({ x: 1080, y: GROUND_Y - 110, w: 70, h: 16 });
+  // piattaforme sospese "vecchie" (invariate, restano sopra terreno solido)
+  p.push({ x: 560,  y: GROUND_Y - 70, w: 90,  h: 16 });
+  p.push({ x: 900,  y: GROUND_Y - 60, w: 80,  h: 16 });
   p.push({ x: 1300, y: GROUND_Y - 80, w: 100, h: 16 });
-  p.push({ x: 1500, y: GROUND_Y - 50, w: 80, h: 16 });
-  p.push({ x: 1650, y: GROUND_Y - 130, w: 70, h: 16 });
+  p.push({ x: 1500, y: GROUND_Y - 50, w: 80,  h: 16 });
   p.push({ x: 1750, y: GROUND_Y - 90, w: 100, h: 16 });
-  p.push({ x: 1950, y: GROUND_Y - 60, w: 90, h: 16 });
+
+  // piattaforme sospese "nuove", ora più strette e sopra un vero vuoto
+  p.push({ x: 250,  y: GROUND_Y - 55,  w: 50, h: 16 }); // sopra PIT A
+  p.push({ x: 1080, y: GROUND_Y - 100, w: 50, h: 16 }); // sopra PIT D
+  p.push({ x: 1655, y: GROUND_Y - 130, w: 50, h: 16 }); // sopra PIT E
+  p.push({ x: 1955, y: GROUND_Y - 60,  w: 50, h: 16 }); // sopra PIT F
   return p;
 }
 
@@ -663,10 +675,12 @@ function buildEnemies() {
   return [
     { x: 620, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 560, maxX: 650, alive: true },
     { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: -1, minX: 950, maxX: 1080, alive: true },
-    { x: 1650, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 1600, maxX: 1720, alive: true },
-    // nemici "sparafuoco": fermi, sparano palle infuocate da schivare saltando
+    { x: 1800, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 1760, maxX: 1840, alive: true },
+    // nemici "sparafuoco": fermi, sparano palle infuocate da schivare saltando.
+    // Posizionati con spazio libero sopra la testa, altrimenti diventa
+    // impossibile saltarci sopra per schiacciarli (il salto è alto).
     { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, fireRate: 100, lastShot: -1000 },
-    { x: 1980, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, fireRate: 85, lastShot: -1000 },
+    { x: 1890, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, fireRate: 85, lastShot: -1000 },
   ];
 }
 
@@ -812,6 +826,9 @@ function loseLife() {
   } else {
     game.player = makePlayer(game.checkpointX);
     game.player.invulnUntil = game.frame + 60;
+    // respawn: i nemici sconfitti tornano vivi e le palle di fuoco in volo spariscono
+    game.enemies = buildEnemies();
+    game.fireballs = [];
   }
 }
 
