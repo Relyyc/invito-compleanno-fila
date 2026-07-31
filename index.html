@@ -332,7 +332,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v2.1</div>
+<div id="dev-version">DEV BUILD v2.2</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -787,7 +787,7 @@ function shootBullet() {
   const p = game.player;
   game.bullets.push({
     x: p.facing > 0 ? p.x + p.w : p.x - 8,
-    y: p.y + 10, w: 8, h: 4,
+    y: p.y + 10, w: 11, h: 6,
     vx: p.facing * 7,
   });
 }
@@ -918,6 +918,7 @@ function update() {
     if (overlapGun) {
       gp.collected = true;
       game.hasGun = true;
+      game.checkpointX = gp.x; // da qui in poi si respawna alla pistola, non dall'inizio
       document.getElementById('btn-shoot-gun').style.display = 'flex';
     }
   }
@@ -962,9 +963,8 @@ function update() {
       if (progress >= 1) {
         boss.state = 'active';
         boss.nextMissileFrame = game.frame + 70;
-        // la barra vitale si mostra solo durante la comparsa: a scontro
-        // iniziato si nasconde, il combattimento si "sente" dai colpi
-        document.getElementById('boss-hp-wrap').style.display = 'none';
+        // la barra resta visibile anche a combattimento iniziato: senza,
+        // non si capisce se i colpi vanno a segno
       }
     }
 
@@ -1045,16 +1045,24 @@ function loseLife() {
   } else {
     game.player = makePlayer(game.checkpointX);
     game.player.invulnUntil = game.frame + 60;
-    // respawn: nemici, boss, pistola e proiettili tornano tutti allo stato iniziale
+
+    const gunAlreadyEarned = game.checkpointX > 20;
+
+    // respawn: nemici, boss, missili e proiettili tornano allo stato iniziale.
+    // La pistola invece resta se il checkpoint (raggiunto ottenendola) è già
+    // stato superato, altrimenti si perde e va ripresa come le altre volte.
     game.enemies = buildEnemies();
+    if (gunAlreadyEarned) {
+      game.enemies.forEach(e => { if (e.type === 'fire') e.alive = false; });
+    }
     game.fireballs = [];
-    game.hasGun = false;
-    game.gunPickup = { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: false };
+    game.hasGun = gunAlreadyEarned;
+    game.gunPickup = { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: gunAlreadyEarned };
     game.bullets = [];
     game.boss = buildBoss();
     game.bossParticles = [];
     game.missiles = [];
-    document.getElementById('btn-shoot-gun').style.display = 'none';
+    document.getElementById('btn-shoot-gun').style.display = gunAlreadyEarned ? 'flex' : 'none';
   }
 }
 
@@ -1352,8 +1360,15 @@ function drawGunPickup(gp) {
 
 // Proiettile sparato dal giocatore
 function drawBullet(b) {
+  // scia dietro al proiettile, nella direzione opposta al movimento
+  const trailX = b.vx > 0 ? b.x - 10 : b.x + b.w;
+  ctx.fillStyle = 'rgba(255, 226, 122, 0.4)';
+  ctx.fillRect(trailX, b.y - 1, 10, b.h + 2);
+  // proiettile vero e proprio, con un piccolo bagliore
   ctx.fillStyle = '#ffe27a';
-  ctx.fillRect(b.x, b.y, b.w, b.h);
+  ctx.fillRect(b.x - 1, b.y - 1, b.w + 2, b.h + 2);
+  ctx.fillStyle = '#fff8d6';
+  ctx.fillRect(b.x + 1, b.y, b.w - 2, b.h);
 }
 
 // Missile sparato dal boss
