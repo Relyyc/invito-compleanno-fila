@@ -332,7 +332,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v2.2</div>
+<div id="dev-version">DEV BUILD v2.3</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -733,6 +733,7 @@ function buildEnemies() {
 // Ha 3 stati: 'dormant' (non ancora attivato) -> 'spawning' (animazione di
 // comparsa dal terreno) -> 'active' (combattimento vero e proprio).
 const BOSS_TRIGGER_X = 2320; // punto in cui, camminando, si attiva lo spawn
+const FIRE_GATE_X = 1930; // muro prima della buca F: si apre solo a sparafuoco sconfitti
 const BOSS_SPAWN_DURATION = 60; // frame dell'animazione di comparsa
 
 function buildBoss() {
@@ -910,6 +911,13 @@ function update() {
     }
   }
 
+  // muro prima dell'arena: impedisce di procedere (e quindi di arrivare
+  // impreparati al boss) finché non sono sconfitti entrambi gli sparafuoco
+  const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
+  if (!firesDefeatedForGate && p.x + p.w > FIRE_GATE_X) {
+    p.x = FIRE_GATE_X - p.w;
+  }
+
   // pistola: raccoglibile solo dopo aver sconfitto entrambi gli sparafuoco
   if (!game.hasGun && !game.gunPickup.collected) {
     const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
@@ -979,7 +987,7 @@ function update() {
       if (game.frame >= boss.nextMissileFrame) {
         game.missiles.push({
           x: boss.x - 6, y: boss.y + boss.h - 30, w: 14, h: 10,
-          vx: -3, vy: 0,
+          vx: -3, vy: 0, spawnFrame: game.frame,
         });
         boss.nextMissileFrame = game.frame + 80 + Math.floor(Math.random() * 40);
       }
@@ -996,18 +1004,26 @@ function update() {
     if (pt.life <= 0) game.bossParticles.splice(i, 1);
   }
 
-  // missili del boss: seguono il giocatore con una sterzata graduale (schivabili)
+  // missili del boss: inseguono solo per una breve finestra iniziale, poi
+  // proseguono dritti — altrimenti, sterzando all'infinito, sono impossibili
+  // da schivare per definizione (ti raggiungono sempre, prima o poi)
+  const HOMING_WINDOW = 40; // frame di inseguimento prima di "sganciarsi"
   for (let i = game.missiles.length - 1; i >= 0; i--) {
     const m = game.missiles[i];
-    const targetX = (p.x + p.w / 2) - m.x;
-    const targetY = (p.y + p.h / 2) - m.y;
-    const dist = Math.hypot(targetX, targetY) || 1;
-    const speed = 4;
-    const desiredVx = (targetX / dist) * speed;
-    const desiredVy = (targetY / dist) * speed;
-    const turn = 0.045; // più basso = più facile da schivare con un cambio di direzione
-    m.vx += (desiredVx - m.vx) * turn;
-    m.vy += (desiredVy - m.vy) * turn;
+    const homing = (game.frame - m.spawnFrame) < HOMING_WINDOW;
+    if (homing) {
+      const targetX = (p.x + p.w / 2) - m.x;
+      const targetY = (p.y + p.h / 2) - m.y;
+      const dist = Math.hypot(targetX, targetY) || 1;
+      const speed = 4;
+      const desiredVx = (targetX / dist) * speed;
+      const desiredVy = (targetY / dist) * speed;
+      const turn = 0.05;
+      m.vx += (desiredVx - m.vx) * turn;
+      m.vy += (desiredVy - m.vy) * turn;
+    }
+    // oltre la finestra di inseguimento, vx/vy restano quelli dell'ultimo
+    // istante e il missile continua dritto in quella direzione
     m.x += m.vx;
     m.y += m.vy;
 
@@ -1098,6 +1114,12 @@ function render() {
   // palle infuocate
   for (const fb of game.fireballs) {
     drawFireball(fb);
+  }
+
+  // barriera d'avvertimento: visibile finché non sono sconfitti gli sparafuoco
+  {
+    const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
+    if (!firesDefeatedForGate) drawFireGate(FIRE_GATE_X);
   }
 
   // pistola a terra (solo se sbloccabile e non ancora raccolta)
@@ -1344,6 +1366,22 @@ function drawFireball(fb) {
 }
 
 // Pistola a terra, con una leggera oscillazione per farla notare
+// Barriera che blocca il passaggio finché non sono sconfitti gli sparafuoco:
+// un muro semitrasparente con strisce d'allerta, ben visibile
+function drawFireGate(x) {
+  const pulse = 0.5 + Math.sin(game.frame * 0.1) * 0.15;
+  ctx.save();
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle = '#ff4d6d';
+  ctx.fillRect(x - 6, GROUND_Y - 130, 12, 130);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#ffd93d';
+  for (let y = GROUND_Y - 130; y < GROUND_Y; y += 20) {
+    ctx.fillRect(x - 6, y, 12, 10);
+  }
+  ctx.restore();
+}
+
 function drawGunPickup(gp) {
   const bob = Math.sin(game.frame * 0.1) * 3;
   const y = gp.y + bob;
