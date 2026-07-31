@@ -278,6 +278,34 @@
     touch-action: none;
   }
   #dpad { display: flex; gap: 10px; }
+  #right-controls { display: flex; gap: 14px; align-items: center; }
+
+  #boss-hp-wrap {
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    text-align: center;
+  }
+  .boss-hp-label {
+    color: #ff4d6d;
+    font-size: 11px;
+    text-shadow: 2px 2px 0 #000;
+    margin-bottom: 3px;
+    letter-spacing: 2px;
+  }
+  #boss-hp-bar-bg {
+    width: 180px;
+    height: 14px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #fff;
+  }
+  #boss-hp-bar-fill {
+    height: 100%;
+    background: #ff4d6d;
+    width: 100%;
+    transition: width 0.15s ease-out;
+  }
 
   .result-box {
     background: #1a1a2e;
@@ -304,7 +332,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v1.6</div>
+<div id="dev-version">DEV BUILD v2.0</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -392,6 +420,10 @@
         <div id="hud-name"></div>
         <div id="hud-lives"></div>
       </div>
+      <div id="boss-hp-wrap" style="display:none;">
+        <div class="boss-hp-label">BOSS</div>
+        <div id="boss-hp-bar-bg"><div id="boss-hp-bar-fill"></div></div>
+      </div>
       <canvas id="game-canvas" width="480" height="270"></canvas>
       <img id="face-overlay" alt="">
       <div id="touch-controls">
@@ -399,7 +431,10 @@
           <div class="touch-btn" id="btn-left">◀</div>
           <div class="touch-btn" id="btn-right">▶</div>
         </div>
-        <div class="touch-btn" id="btn-jump">▲</div>
+        <div id="right-controls">
+          <div class="touch-btn" id="btn-shoot-gun" style="display:none;">🔫</div>
+          <div class="touch-btn" id="btn-jump">▲</div>
+        </div>
       </div>
     </div>
   </section>
@@ -609,7 +644,7 @@ let game = null;
 function initGame() {
   fitCanvas();
   game = {
-    keys: { left: false, right: false, jump: false },
+    keys: { left: false, right: false, jump: false, shoot: false },
     lives: 3,
     checkpointX: 20,
     over: false,
@@ -620,8 +655,15 @@ function initGame() {
     platforms: buildLevel(),
     enemies: buildEnemies(),
     fireballs: [],
-    flagX: 2100,
+    hasGun: false,
+    gunPickup: { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: false },
+    bullets: [],
+    boss: buildBoss(),
+    missiles: [],
+    flagX: 2400,
   };
+  document.getElementById('btn-shoot-gun').style.display = 'none';
+  document.getElementById('boss-hp-wrap').style.display = 'none';
   document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
   requestAnimationFrame(loop);
 }
@@ -654,7 +696,7 @@ function buildLevel() {
   // PIT E (1635-1745) — piattaforma stretta P3
   p.push({ x: 1745, y: GROUND_Y, w: 190, h: 40 });   // G6
   // PIT F (1935-2050) — piattaforma stretta P4
-  p.push({ x: 2050, y: GROUND_Y, w: 510, h: 40 });   // G7 (bandiera + pizzeria)
+  p.push({ x: 2050, y: GROUND_Y, w: 750, h: 40 });   // G7 (arena del boss + bandiera + pizzeria)
 
   // piattaforme sospese "vecchie" (invariate, restano sopra terreno solido)
   p.push({ x: 560,  y: GROUND_Y - 70, w: 90,  h: 16 });
@@ -685,12 +727,25 @@ function buildEnemies() {
   ];
 }
 
+// Boss finale: molto più grande, fermo, blocca il passaggio finché è vivo
+// e spara missili da schivare. Si sconfigge solo con la pistola.
+function buildBoss() {
+  return {
+    x: 2220, y: GROUND_Y - 90, w: 74, h: 90,
+    hp: 10, maxHp: 10,
+    alive: true,
+    dir: -1,
+    nextMissileFrame: 130,
+  };
+}
+
 /* --- input tastiera --- */
 window.addEventListener('keydown', e => {
   if (!game) return;
   if (e.code === 'ArrowLeft') game.keys.left = true;
   if (e.code === 'ArrowRight') game.keys.right = true;
   if (e.code === 'Space' || e.code === 'ArrowUp') game.keys.jump = true;
+  if (e.code === 'KeyX' || e.code === 'KeyZ') shootBullet();
 });
 window.addEventListener('keyup', e => {
   if (!game) return;
@@ -698,6 +753,21 @@ window.addEventListener('keyup', e => {
   if (e.code === 'ArrowRight') game.keys.right = false;
   if (e.code === 'Space' || e.code === 'ArrowUp') game.keys.jump = false;
 });
+
+// Spara un proiettile nella direzione in cui guarda il personaggio
+// (solo se ha la pistola, con un piccolo cooldown per evitare lo spam).
+let lastShotFrame = -1000;
+function shootBullet() {
+  if (!game || !game.hasGun) return;
+  if (game.frame - lastShotFrame < 14) return;
+  lastShotFrame = game.frame;
+  const p = game.player;
+  game.bullets.push({
+    x: p.facing > 0 ? p.x + p.w : p.x - 8,
+    y: p.y + 10, w: 8, h: 4,
+    vx: p.facing * 7,
+  });
+}
 
 /* --- input touch --- */
 function bindTouch(id, prop) {
@@ -712,6 +782,9 @@ function bindTouch(id, prop) {
 bindTouch('btn-left', 'left');
 bindTouch('btn-right', 'right');
 bindTouch('btn-jump', 'jump');
+
+document.getElementById('btn-shoot-gun').addEventListener('touchstart', e => { e.preventDefault(); shootBullet(); });
+document.getElementById('btn-shoot-gun').addEventListener('mousedown', e => { e.preventDefault(); shootBullet(); });
 
 /* --- game loop --- */
 function loop() {
@@ -814,6 +887,73 @@ function update() {
     }
   }
 
+  // pistola: raccoglibile solo dopo aver sconfitto entrambi gli sparafuoco
+  if (!game.hasGun && !game.gunPickup.collected) {
+    const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
+    const gp = game.gunPickup;
+    const overlapGun = firesDefeated && p.x < gp.x + gp.w && p.x + p.w > gp.x && p.y < gp.y + gp.h && p.y + p.h > gp.y;
+    if (overlapGun) {
+      gp.collected = true;
+      game.hasGun = true;
+      document.getElementById('btn-shoot-gun').style.display = 'flex';
+    }
+  }
+
+  // proiettili del giocatore: movimento e collisione col boss
+  for (let i = game.bullets.length - 1; i >= 0; i--) {
+    const b = game.bullets[i];
+    b.x += b.vx;
+    if (game.boss.alive) {
+      const boss = game.boss;
+      const hitBoss = b.x < boss.x + boss.w && b.x + b.w > boss.x && b.y < boss.y + boss.h && b.y + b.h > boss.y;
+      if (hitBoss) {
+        boss.hp--;
+        game.bullets.splice(i, 1);
+        updateBossHpBar();
+        if (boss.hp <= 0) {
+          boss.alive = false;
+          document.getElementById('boss-hp-wrap').style.display = 'none';
+        }
+        continue;
+      }
+    }
+    if (b.x < game.camX - 40 || b.x > game.camX + W + 40) {
+      game.bullets.splice(i, 1);
+    }
+  }
+
+  // boss: blocca il passaggio finché è vivo e spara missili
+  if (game.boss.alive) {
+    const boss = game.boss;
+    document.getElementById('boss-hp-wrap').style.display = 'block';
+
+    // muro invisibile: non si può oltrepassare finché non è sconfitto
+    if (p.x + p.w > boss.x && p.x < boss.x + boss.w) {
+      p.x = boss.x - p.w;
+    }
+
+    // missili verso il giocatore, da schivare saltando
+    if (game.frame >= boss.nextMissileFrame) {
+      game.missiles.push({ x: boss.x - 6, y: boss.y + boss.h - 30, w: 14, h: 10, vx: -4.5 });
+      boss.nextMissileFrame = game.frame + 80 + Math.floor(Math.random() * 40);
+    }
+  }
+
+  // missili del boss: movimento e collisione col giocatore
+  for (let i = game.missiles.length - 1; i >= 0; i--) {
+    const m = game.missiles[i];
+    m.x += m.vx;
+    const hitPlayer = p.x < m.x + m.w && p.x + p.w > m.x && p.y < m.y + m.h && p.y + p.h > m.y;
+    if (hitPlayer && game.frame > p.invulnUntil) {
+      game.missiles.splice(i, 1);
+      loseLife();
+      return;
+    }
+    if (m.x < game.camX - 60 || m.x > game.camX + W + 60) {
+      game.missiles.splice(i, 1);
+    }
+  }
+
   // limiti mappa
   if (p.x < 0) p.x = 0;
 
@@ -828,6 +968,7 @@ function update() {
 }
 
 function loseLife() {
+  document.getElementById('boss-hp-wrap').style.display = 'none';
   game.lives--;
   document.getElementById('hud-lives').textContent = '♥'.repeat(Math.max(game.lives, 0));
   if (game.lives <= 0) {
@@ -836,10 +977,22 @@ function loseLife() {
   } else {
     game.player = makePlayer(game.checkpointX);
     game.player.invulnUntil = game.frame + 60;
-    // respawn: i nemici sconfitti tornano vivi e le palle di fuoco in volo spariscono
+    // respawn: nemici, boss, pistola e proiettili tornano tutti allo stato iniziale
     game.enemies = buildEnemies();
     game.fireballs = [];
+    game.hasGun = false;
+    game.gunPickup = { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: false };
+    game.bullets = [];
+    game.boss = buildBoss();
+    game.missiles = [];
+    document.getElementById('btn-shoot-gun').style.display = 'none';
   }
+}
+
+function updateBossHpBar() {
+  const boss = game.boss;
+  const pct = Math.max(0, boss.hp / boss.maxHp) * 100;
+  document.getElementById('boss-hp-bar-fill').style.width = pct + '%';
 }
 
 /* --- rendering --- */
@@ -869,6 +1022,21 @@ function render() {
   for (const fb of game.fireballs) {
     drawFireball(fb);
   }
+
+  // pistola a terra (solo se sbloccabile e non ancora raccolta)
+  if (!game.gunPickup.collected) {
+    const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
+    if (firesDefeated) drawGunPickup(game.gunPickup);
+  }
+
+  // boss
+  if (game.boss.alive) drawBoss(game.boss);
+
+  // missili del boss
+  for (const m of game.missiles) drawMissile(m);
+
+  // proiettili del giocatore
+  for (const b of game.bullets) drawBullet(b);
 
   // player
   drawPlayer(game.player);
@@ -1091,6 +1259,66 @@ function drawFireball(fb) {
   ctx.beginPath();
   ctx.arc(fb.x + fb.w / 2, fb.y + fb.h / 2, fb.w / 4, 0, Math.PI * 2);
   ctx.fill();
+}
+
+// Pistola a terra, con una leggera oscillazione per farla notare
+function drawGunPickup(gp) {
+  const bob = Math.sin(game.frame * 0.1) * 3;
+  const y = gp.y + bob;
+  ctx.fillStyle = 'rgba(255,217,61,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(gp.x + gp.w / 2, gp.y + gp.h + 6, 14, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#3a3a3a';
+  ctx.fillRect(gp.x, y + 8, gp.w, 6);
+  ctx.fillRect(gp.x + gp.w - 6, y, 6, 12);
+  ctx.fillStyle = '#7a5a2a';
+  ctx.fillRect(gp.x, y + 12, 6, 10);
+}
+
+// Proiettile sparato dal giocatore
+function drawBullet(b) {
+  ctx.fillStyle = '#ffe27a';
+  ctx.fillRect(b.x, b.y, b.w, b.h);
+}
+
+// Missile sparato dal boss
+function drawMissile(m) {
+  ctx.fillStyle = '#7a2e22';
+  ctx.fillRect(m.x, m.y, m.w, m.h);
+  ctx.fillStyle = '#ff8a3d';
+  ctx.beginPath();
+  ctx.moveTo(m.x, m.y + m.h / 2);
+  ctx.lineTo(m.x - 8, m.y);
+  ctx.lineTo(m.x - 8, m.y + m.h);
+  ctx.fill();
+}
+
+// Boss finale: molto più grande, usa la stessa "faccia" degli altri nemici
+// (lo sprite personalizzato nemico.png, se caricato) scalata su un corpo enorme.
+function drawBoss(boss) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(boss.x + boss.w / 2, GROUND_Y + 3, boss.w / 2, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (enemySpriteLoaded) {
+    ctx.drawImage(enemySprite, boss.x, boss.y, boss.w, boss.h);
+  } else {
+    ctx.fillStyle = '#5c1a10';
+    ctx.fillRect(boss.x, boss.y + 14, boss.w, boss.h - 14);
+    ctx.fillStyle = '#c0392b';
+    ctx.fillRect(boss.x + 6, boss.y + boss.h - 20, boss.w - 12, 14);
+    // occhi grandi e minacciosi
+    ctx.fillStyle = '#ffcf4d';
+    ctx.fillRect(boss.x + 10, boss.y + 20, 14, 12);
+    ctx.fillRect(boss.x + boss.w - 24, boss.y + 20, 14, 12);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(boss.x + 14, boss.y + 24, 6, 6);
+    ctx.fillRect(boss.x + boss.w - 20, boss.y + 24, 6, 6);
+  }
+  ctx.restore();
 }
 
 function drawPlayer(p) {
