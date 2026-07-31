@@ -332,7 +332,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v2.0</div>
+<div id="dev-version">DEV BUILD v2.1</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -421,7 +421,7 @@
         <div id="hud-lives"></div>
       </div>
       <div id="boss-hp-wrap" style="display:none;">
-        <div class="boss-hp-label">BOSS</div>
+        <div class="boss-hp-label">FILA</div>
         <div id="boss-hp-bar-bg"><div id="boss-hp-bar-fill"></div></div>
       </div>
       <canvas id="game-canvas" width="480" height="270"></canvas>
@@ -660,7 +660,8 @@ function initGame() {
     bullets: [],
     boss: buildBoss(),
     missiles: [],
-    flagX: 2400,
+    bossParticles: [],
+    flagX: 2650,
   };
   document.getElementById('btn-shoot-gun').style.display = 'none';
   document.getElementById('boss-hp-wrap').style.display = 'none';
@@ -696,7 +697,7 @@ function buildLevel() {
   // PIT E (1635-1745) — piattaforma stretta P3
   p.push({ x: 1745, y: GROUND_Y, w: 190, h: 40 });   // G6
   // PIT F (1935-2050) — piattaforma stretta P4
-  p.push({ x: 2050, y: GROUND_Y, w: 750, h: 40 });   // G7 (arena del boss + bandiera + pizzeria)
+  p.push({ x: 2050, y: GROUND_Y, w: 900, h: 40 });   // G7: lungo cammino verso l'arena + bandiera + pizzeria
 
   // piattaforme sospese "vecchie" (invariate, restano sopra terreno solido)
   p.push({ x: 560,  y: GROUND_Y - 70, w: 90,  h: 16 });
@@ -729,14 +730,36 @@ function buildEnemies() {
 
 // Boss finale: molto più grande, fermo, blocca il passaggio finché è vivo
 // e spara missili da schivare. Si sconfigge solo con la pistola.
+// Ha 3 stati: 'dormant' (non ancora attivato) -> 'spawning' (animazione di
+// comparsa dal terreno) -> 'active' (combattimento vero e proprio).
+const BOSS_TRIGGER_X = 2320; // punto in cui, camminando, si attiva lo spawn
+const BOSS_SPAWN_DURATION = 60; // frame dell'animazione di comparsa
+
 function buildBoss() {
   return {
-    x: 2220, y: GROUND_Y - 90, w: 74, h: 90,
+    x: 2380, y: GROUND_Y - 90, w: 74, h: 90,
     hp: 10, maxHp: 10,
     alive: true,
+    state: 'dormant',
+    spawnStartFrame: 0,
     dir: -1,
-    nextMissileFrame: 130,
+    nextMissileFrame: 0,
   };
+}
+
+// Crea le schegge di terra che "esplodono" quando il boss emerge dal suolo
+function spawnGroundCrack(cx) {
+  for (let i = 0; i < 16; i++) {
+    game.bossParticles.push({
+      x: cx + (Math.random() - 0.5) * 70,
+      y: GROUND_Y - Math.random() * 8,
+      vx: (Math.random() - 0.5) * 3.5,
+      vy: -3 - Math.random() * 3,
+      size: 4 + Math.random() * 5,
+      life: 30 + Math.random() * 20,
+      maxLife: 45,
+    });
+  }
 }
 
 /* --- input tastiera --- */
@@ -903,7 +926,7 @@ function update() {
   for (let i = game.bullets.length - 1; i >= 0; i--) {
     const b = game.bullets[i];
     b.x += b.vx;
-    if (game.boss.alive) {
+    if (game.boss.alive && game.boss.state === 'active') {
       const boss = game.boss;
       const hitBoss = b.x < boss.x + boss.w && b.x + b.w > boss.x && b.y < boss.y + boss.h && b.y + b.h > boss.y;
       if (hitBoss) {
@@ -922,34 +945,79 @@ function update() {
     }
   }
 
-  // boss: blocca il passaggio finché è vivo e spara missili
+  // boss: si attiva camminando, emerge dal terreno, poi blocca il passaggio e spara missili
   if (game.boss.alive) {
     const boss = game.boss;
-    document.getElementById('boss-hp-wrap').style.display = 'block';
+
+    if (boss.state === 'dormant' && p.x > BOSS_TRIGGER_X) {
+      boss.state = 'spawning';
+      boss.spawnStartFrame = game.frame;
+      spawnGroundCrack(boss.x + boss.w / 2);
+      document.getElementById('boss-hp-wrap').style.display = 'block';
+      updateBossHpBar();
+    }
+
+    if (boss.state === 'spawning') {
+      const progress = (game.frame - boss.spawnStartFrame) / BOSS_SPAWN_DURATION;
+      if (progress >= 1) {
+        boss.state = 'active';
+        boss.nextMissileFrame = game.frame + 70;
+        // la barra vitale si mostra solo durante la comparsa: a scontro
+        // iniziato si nasconde, il combattimento si "sente" dai colpi
+        document.getElementById('boss-hp-wrap').style.display = 'none';
+      }
+    }
 
     // muro invisibile: non si può oltrepassare finché non è sconfitto
-    if (p.x + p.w > boss.x && p.x < boss.x + boss.w) {
+    // (attivo sia durante la comparsa sia durante il combattimento)
+    if (boss.state !== 'dormant' && p.x + p.w > boss.x && p.x < boss.x + boss.w) {
       p.x = boss.x - p.w;
     }
 
-    // missili verso il giocatore, da schivare saltando
-    if (game.frame >= boss.nextMissileFrame) {
-      game.missiles.push({ x: boss.x - 6, y: boss.y + boss.h - 30, w: 14, h: 10, vx: -4.5 });
-      boss.nextMissileFrame = game.frame + 80 + Math.floor(Math.random() * 40);
+    // missili che seguono il giocatore, solo a combattimento iniziato
+    if (boss.state === 'active') {
+      if (game.frame >= boss.nextMissileFrame) {
+        game.missiles.push({
+          x: boss.x - 6, y: boss.y + boss.h - 30, w: 14, h: 10,
+          vx: -3, vy: 0,
+        });
+        boss.nextMissileFrame = game.frame + 80 + Math.floor(Math.random() * 40);
+      }
     }
   }
 
-  // missili del boss: movimento e collisione col giocatore
+  // particelle di terra spaccata (comparsa del boss)
+  for (let i = game.bossParticles.length - 1; i >= 0; i--) {
+    const pt = game.bossParticles[i];
+    pt.vy += 0.25;
+    pt.x += pt.vx;
+    pt.y += pt.vy;
+    pt.life--;
+    if (pt.life <= 0) game.bossParticles.splice(i, 1);
+  }
+
+  // missili del boss: seguono il giocatore con una sterzata graduale (schivabili)
   for (let i = game.missiles.length - 1; i >= 0; i--) {
     const m = game.missiles[i];
+    const targetX = (p.x + p.w / 2) - m.x;
+    const targetY = (p.y + p.h / 2) - m.y;
+    const dist = Math.hypot(targetX, targetY) || 1;
+    const speed = 4;
+    const desiredVx = (targetX / dist) * speed;
+    const desiredVy = (targetY / dist) * speed;
+    const turn = 0.045; // più basso = più facile da schivare con un cambio di direzione
+    m.vx += (desiredVx - m.vx) * turn;
+    m.vy += (desiredVy - m.vy) * turn;
     m.x += m.vx;
+    m.y += m.vy;
+
     const hitPlayer = p.x < m.x + m.w && p.x + p.w > m.x && p.y < m.y + m.h && p.y + p.h > m.y;
     if (hitPlayer && game.frame > p.invulnUntil) {
       game.missiles.splice(i, 1);
       loseLife();
       return;
     }
-    if (m.x < game.camX - 60 || m.x > game.camX + W + 60) {
+    if (m.x < game.camX - 80 || m.x > game.camX + W + 80) {
       game.missiles.splice(i, 1);
     }
   }
@@ -984,6 +1052,7 @@ function loseLife() {
     game.gunPickup = { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: false };
     game.bullets = [];
     game.boss = buildBoss();
+    game.bossParticles = [];
     game.missiles = [];
     document.getElementById('btn-shoot-gun').style.display = 'none';
   }
@@ -1029,8 +1098,13 @@ function render() {
     if (firesDefeated) drawGunPickup(game.gunPickup);
   }
 
-  // boss
-  if (game.boss.alive) drawBoss(game.boss);
+  // particelle di terra spaccata
+  for (const pt of game.bossParticles) drawGroundCrackParticle(pt);
+
+  // boss (con animazione di comparsa dal terreno)
+  if (game.boss.alive && game.boss.state !== 'dormant') {
+    drawBossWithSpawn(game.boss);
+  }
 
   // missili del boss
   for (const m of game.missiles) drawMissile(m);
@@ -1296,7 +1370,9 @@ function drawMissile(m) {
 
 // Boss finale: molto più grande, usa la stessa "faccia" degli altri nemici
 // (lo sprite personalizzato nemico.png, se caricato) scalata su un corpo enorme.
-function drawBoss(boss) {
+// drawY separato da boss.y per poter animare la risalita dal terreno.
+function drawBoss(boss, drawY) {
+  const y = drawY !== undefined ? drawY : boss.y;
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.25)';
   ctx.beginPath();
@@ -1304,21 +1380,49 @@ function drawBoss(boss) {
   ctx.fill();
 
   if (enemySpriteLoaded) {
-    ctx.drawImage(enemySprite, boss.x, boss.y, boss.w, boss.h);
+    ctx.drawImage(enemySprite, boss.x, y, boss.w, boss.h);
   } else {
     ctx.fillStyle = '#5c1a10';
-    ctx.fillRect(boss.x, boss.y + 14, boss.w, boss.h - 14);
+    ctx.fillRect(boss.x, y + 14, boss.w, boss.h - 14);
     ctx.fillStyle = '#c0392b';
-    ctx.fillRect(boss.x + 6, boss.y + boss.h - 20, boss.w - 12, 14);
+    ctx.fillRect(boss.x + 6, y + boss.h - 20, boss.w - 12, 14);
     // occhi grandi e minacciosi
     ctx.fillStyle = '#ffcf4d';
-    ctx.fillRect(boss.x + 10, boss.y + 20, 14, 12);
-    ctx.fillRect(boss.x + boss.w - 24, boss.y + 20, 14, 12);
+    ctx.fillRect(boss.x + 10, y + 20, 14, 12);
+    ctx.fillRect(boss.x + boss.w - 24, y + 20, 14, 12);
     ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(boss.x + 14, boss.y + 24, 6, 6);
-    ctx.fillRect(boss.x + boss.w - 20, boss.y + 24, 6, 6);
+    ctx.fillRect(boss.x + 14, y + 24, 6, 6);
+    ctx.fillRect(boss.x + boss.w - 20, y + 24, 6, 6);
   }
   ctx.restore();
+}
+
+// Gestisce l'animazione di comparsa: prima solo schegge di terra, poi il
+// boss risale dal suolo fino alla sua posizione finale (con un clip per
+// nascondere la parte ancora "sepolta").
+function drawBossWithSpawn(boss) {
+  if (boss.state === 'active') {
+    drawBoss(boss);
+    return;
+  }
+  const progress = Math.min(1, (game.frame - boss.spawnStartFrame) / BOSS_SPAWN_DURATION);
+  if (progress < 0.3) return; // solo le particelle, il boss non è ancora visibile
+  const emerge = (progress - 0.3) / 0.7;
+  const drawY = GROUND_Y - (GROUND_Y - boss.y) * emerge;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(boss.x - 20, -2000, boss.w + 40, 2000 + GROUND_Y);
+  ctx.clip();
+  drawBoss(boss, drawY);
+  ctx.restore();
+}
+
+// Singola scheggia di terra durante la comparsa del boss
+function drawGroundCrackParticle(pt) {
+  ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+  ctx.fillStyle = '#7a5a34';
+  ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
+  ctx.globalAlpha = 1;
 }
 
 function drawPlayer(p) {
@@ -1349,6 +1453,18 @@ function drawPlayer(p) {
   const armLift = p.onGround ? 0 : -4;
   ctx.fillRect(p.x - 2, p.y + 11 + armLift, 4, 10);
   ctx.fillRect(p.x + p.w - 2, p.y + 11 + armLift, 4, 10);
+
+  // pistola in mano, una volta ottenuta
+  if (game.hasGun) {
+    ctx.fillStyle = '#2a2a2a';
+    if (p.facing === -1) {
+      ctx.fillRect(p.x - 10, p.y + 12 + armLift, 10, 5);
+      ctx.fillRect(p.x - 6, p.y + 16 + armLift, 5, 6);
+    } else {
+      ctx.fillRect(p.x + p.w, p.y + 12 + armLift, 10, 5);
+      ctx.fillRect(p.x + p.w + 1, p.y + 16 + armLift, 5, 6);
+    }
+  }
 
   // base "testa": la foto vera viene disegnata sopra da un overlay HTML nitido
   ctx.fillStyle = '#ffd6a5';
