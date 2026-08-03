@@ -332,7 +332,7 @@
 </head>
 <body>
 <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-<div id="dev-version">DEV BUILD v2.3</div>
+<div id="dev-version">DEV BUILD v2.4</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -661,7 +661,8 @@ function initGame() {
     boss: buildBoss(),
     missiles: [],
     bossParticles: [],
-    flagX: 2650,
+    arenaEntered: false,
+    flagX: 2900,
   };
   document.getElementById('btn-shoot-gun').style.display = 'none';
   document.getElementById('boss-hp-wrap').style.display = 'none';
@@ -697,7 +698,7 @@ function buildLevel() {
   // PIT E (1635-1745) — piattaforma stretta P3
   p.push({ x: 1745, y: GROUND_Y, w: 190, h: 40 });   // G6
   // PIT F (1935-2050) — piattaforma stretta P4
-  p.push({ x: 2050, y: GROUND_Y, w: 900, h: 40 });   // G7: lungo cammino verso l'arena + bandiera + pizzeria
+  p.push({ x: 2050, y: GROUND_Y, w: 1150, h: 40 });   // G7: lungo cammino verso l'arena + bandiera + pizzeria
 
   // piattaforme sospese "vecchie" (invariate, restano sopra terreno solido)
   p.push({ x: 560,  y: GROUND_Y - 70, w: 90,  h: 16 });
@@ -732,13 +733,14 @@ function buildEnemies() {
 // e spara missili da schivare. Si sconfigge solo con la pistola.
 // Ha 3 stati: 'dormant' (non ancora attivato) -> 'spawning' (animazione di
 // comparsa dal terreno) -> 'active' (combattimento vero e proprio).
-const BOSS_TRIGGER_X = 2320; // punto in cui, camminando, si attiva lo spawn
+const ARENA_ENTRY_X = 2500; // punto di non ritorno: oltrepassato, non si torna indietro
+const BOSS_TRIGGER_X = 2530; // punto in cui, camminando, si attiva lo spawn
 const FIRE_GATE_X = 1930; // muro prima della buca F: si apre solo a sparafuoco sconfitti
 const BOSS_SPAWN_DURATION = 60; // frame dell'animazione di comparsa
 
 function buildBoss() {
   return {
-    x: 2380, y: GROUND_Y - 90, w: 74, h: 90,
+    x: 2800, y: GROUND_Y - 90, w: 74, h: 90, // vicino al bordo destro: tutta l'arena è spazio utile
     hp: 10, maxHp: 10,
     alive: true,
     state: 'dormant',
@@ -918,6 +920,15 @@ function update() {
     p.x = FIRE_GATE_X - p.w;
   }
 
+  // punto di non ritorno: una volta entrati nell'arena non si può più
+  // tornare indietro a riusare le piattaforme superate in precedenza
+  if (!game.arenaEntered && p.x > ARENA_ENTRY_X) {
+    game.arenaEntered = true;
+  }
+  if (game.arenaEntered && p.x < ARENA_ENTRY_X) {
+    p.x = ARENA_ENTRY_X;
+  }
+
   // pistola: raccoglibile solo dopo aver sconfitto entrambi gli sparafuoco
   if (!game.hasGun && !game.gunPickup.collected) {
     const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
@@ -1077,6 +1088,8 @@ function loseLife() {
     game.bullets = [];
     game.boss = buildBoss();
     game.bossParticles = [];
+    game.arenaEntered = false;
+    lastShotFrame = -1000; // reset di sicurezza del cooldown di sparo
     game.missiles = [];
     document.getElementById('btn-shoot-gun').style.display = gunAlreadyEarned ? 'flex' : 'none';
   }
