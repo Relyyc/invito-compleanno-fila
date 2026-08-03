@@ -674,14 +674,13 @@
       const status = document.getElementById('creation-status');
       let frame = 0;
 
-      // Omino 2D dettagliato
       const guy = {
         x: -50,
         y: 120,
         bodyW: 34,
         bodyH: 44,
-        headSize: 26,
-        headY: 78,
+        headSize: 28,     // ora uguale alla dimensione dell'immagine
+        headY: 78,        // posizione fissa della testa (sopra il corpo)
         legLen: 18,
         armLen: 16,
         facing: 1,
@@ -692,10 +691,9 @@
         scale: 1,
         alpha: 1,
         breathe: 0,
+        faceScale: 0,     // per l'animazione di zoom
+        attachTimer: 0,
       };
-
-      // Particelle del portale
-      let portalParticles = [];
 
       function drawDetailedGuy(gx, gy) {
         const s = guy.scale;
@@ -716,7 +714,6 @@
         const legSwing = guy.state === 'walking' ? Math.sin(frame * 0.08) * 7 : 0;
         const legSwing2 = guy.state === 'walking' ? Math.sin(frame * 0.08 + Math.PI) * 7 : 0;
 
-        // Gamba sinistra
         ctx.fillStyle = '#1a2a4a';
         ctx.beginPath();
         ctx.moveTo(10, guy.bodyH - 4);
@@ -725,7 +722,6 @@
         ctx.quadraticCurveTo(12 + legSwing*0.5, guy.bodyH + guy.legLen/2, 14, guy.bodyH - 4);
         ctx.fill();
 
-        // Gamba destra
         ctx.fillStyle = '#1a2a4a';
         ctx.beginPath();
         ctx.moveTo(guy.bodyW - 10, guy.bodyH - 4);
@@ -734,7 +730,6 @@
         ctx.quadraticCurveTo(guy.bodyW - 12 + legSwing2*0.5, guy.bodyH + guy.legLen/2, guy.bodyW - 14, guy.bodyH - 4);
         ctx.fill();
 
-        // Scarpe
         ctx.fillStyle = '#1a1a2a';
         ctx.fillRect(6 + legSwing*0.5, guy.bodyH + guy.legLen - 3, 10, 5);
         ctx.fillRect(guy.bodyW - 16 + legSwing2*0.5, guy.bodyH + guy.legLen - 3, 10, 5);
@@ -750,7 +745,6 @@
         ctx.roundRect(4, 8 + breatheOffset, guy.bodyW - 8, guy.bodyH - 14, 6);
         ctx.fill();
 
-        // Dettaglio maglietta (colletto)
         ctx.fillStyle = '#1f4fbf';
         ctx.beginPath();
         ctx.moveTo(8, 10 + breatheOffset);
@@ -758,7 +752,6 @@
         ctx.lineTo(guy.bodyW - 8, 10 + breatheOffset);
         ctx.fill();
 
-        // Cintura
         ctx.fillStyle = '#1a3a7a';
         ctx.fillRect(6, guy.bodyH - 16, guy.bodyW - 12, 4);
 
@@ -766,7 +759,6 @@
         const armSwing = guy.state === 'walking' ? Math.sin(frame * 0.08) * 5 : 0;
         const armSwing2 = guy.state === 'walking' ? Math.sin(frame * 0.08 + Math.PI) * 5 : 0;
 
-        // Braccio sinistro
         ctx.fillStyle = '#2a5abf';
         ctx.beginPath();
         ctx.moveTo(4, 14 + breatheOffset);
@@ -775,7 +767,6 @@
         ctx.quadraticCurveTo(2 + armSwing*0.5, 22 + breatheOffset, 6, 14 + breatheOffset);
         ctx.fill();
 
-        // Braccio destro
         ctx.fillStyle = '#2a5abf';
         ctx.beginPath();
         ctx.moveTo(guy.bodyW - 4, 14 + breatheOffset);
@@ -790,10 +781,10 @@
 
         // ---- TESTA ----
         const headX = guy.bodyW/2 - guy.headSize/2;
-        const headY = guy.headY + breatheOffset;
+        const headY = guy.headY + breatheOffset; // headY è fisso a 78
 
         if (guy.state === 'walking') {
-          // Testa vuota (contorno)
+          // Testa vuota
           ctx.strokeStyle = '#ffd6a5';
           ctx.lineWidth = 2.5;
           ctx.beginPath();
@@ -801,17 +792,20 @@
           ctx.stroke();
           ctx.fillStyle = 'rgba(255,214,165,0.15)';
           ctx.fill();
-          // Punto interrogativo
           ctx.fillStyle = 'rgba(255,255,255,0.3)';
           ctx.font = '18px monospace';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('?', guy.bodyW/2, headY + guy.headSize/2 + 1);
-        } else if (guy.state === 'attaching' || guy.state === 'portal' || guy.state === 'fading') {
-          // Disegna la faccia
-          const fx = headX + (guy.headSize - 28) / 2;
-          const fy = headY + (guy.headSize - 28) / 2;
-          ctx.drawImage(faceImg, fx, fy, 28, 28);
+        } else {
+          // Disegna la faccia con effetto zoom durante l'attaccamento
+          const scale = guy.state === 'attaching' ? Math.min(1, guy.faceScale) : 1;
+          const fx = headX + (guy.headSize - 28 * scale) / 2;
+          const fy = headY + (guy.headSize - 28 * scale) / 2;
+          ctx.save();
+          ctx.globalAlpha = guy.attached ? 1 : (guy.state === 'attaching' ? Math.min(1, guy.faceScale) : 1);
+          ctx.drawImage(faceImg, fx, fy, 28 * scale, 28 * scale);
+          ctx.restore();
 
           // Bordo luminoso se attaccato
           if (guy.attached) {
@@ -830,7 +824,6 @@
         const radius = 18 + progress * 25;
         ctx.save();
 
-        // Glow esterno
         const glow = ctx.createRadialGradient(px, py, 0, px, py, radius + 20);
         glow.addColorStop(0, 'rgba(77,214,255,0)');
         glow.addColorStop(0.7, `rgba(77,214,255,${0.1 * progress})`);
@@ -840,7 +833,6 @@
         ctx.arc(px, py, radius + 20, 0, Math.PI*2);
         ctx.fill();
 
-        // Anelli del portale
         for (let i = 0; i < 4; i++) {
           const r = radius - i * 6 - 2;
           if (r < 4) continue;
@@ -854,7 +846,6 @@
           ctx.stroke();
         }
 
-        // Anello esterno pulsante
         ctx.globalAlpha = 0.2 + Math.sin(frame * 0.05) * 0.1;
         ctx.strokeStyle = `rgba(255,215,61,${0.2 + Math.sin(frame*0.04)*0.1})`;
         ctx.lineWidth = 2;
@@ -862,7 +853,6 @@
         ctx.arc(px, py, radius + 4, 0, Math.PI*2);
         ctx.stroke();
 
-        // Particelle aspirate
         for (let i = 0; i < 12; i++) {
           const angle = (i / 12) * Math.PI * 2 + frame * 0.03;
           const dist = radius * 0.3 + Math.sin(frame * 0.05 + i) * radius * 0.2;
@@ -878,7 +868,6 @@
         ctx.restore();
       }
 
-      // ---- ANIMAZIONE PRINCIPALE ----
       function animate() {
         ctx.clearRect(0, 0, W, H);
 
@@ -890,13 +879,12 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // Terreno
         ctx.fillStyle = '#2a3a2a';
         ctx.fillRect(0, H-18, W, 18);
         ctx.fillStyle = '#3a5a3a';
         ctx.fillRect(0, H-20, W, 4);
 
-        // Particelle luccicanti (magia)
+        // Particelle luccicanti
         for (let i=0; i<25; i++) {
           const x = (Math.sin(i*137.5 + frame*0.02) * 0.5 + 0.5) * W;
           const y = (Math.cos(i*97.3 + frame*0.015) * 0.5 + 0.5) * (H-30) + 10;
@@ -907,16 +895,15 @@
         }
         ctx.globalAlpha = 1;
 
-        // ---- PORTALE (dietro l'omino) ----
+        // Portale
         const portalX = W - 40;
         const portalY = 120;
         const portalProgress = Math.min(1, Math.max(0, (guy.x - 80) / 150));
-
         if (portalProgress > 0.1) {
           drawPortal(portalX, portalY, Math.min(1, portalProgress * 1.5));
         }
 
-        // ---- DISEGNA OMINO ----
+        // Omino
         drawDetailedGuy(guy.x, guy.y);
 
         // ---- GESTIONE STATI ----
@@ -927,12 +914,15 @@
             guy.state = 'attaching';
             status.textContent = '✨ Incastro in corso...';
             sfx.creation();
+            guy.faceScale = 0;
           }
         } else if (guy.state === 'attaching') {
-          // La testa scende e si attacca
-          const targetY = guy.y + 2;
-          guy.headY += (targetY - guy.headY) * 0.06;
-          if (Math.abs(guy.headY - targetY) < 0.3) {
+          // Animazione di zoom della faccia
+          if (guy.faceScale < 1) {
+            guy.faceScale += 0.05;
+          }
+          guy.attachTimer++;
+          if (guy.attachTimer > 40) { // dopo ~0.7 secondi
             guy.attached = true;
             guy.state = 'portal';
             status.textContent = '🌀 Portale magico...';
@@ -940,23 +930,17 @@
             guy.flashTimer = 20;
           }
         } else if (guy.state === 'portal') {
-          // L'omino cammina verso il portale
           guy.x += 1.2;
-
-          // Si rimpicciolisce man mano che si avvicina
           const distToPortal = (portalX - guy.x);
           if (distToPortal < 60) {
             guy.scale = 0.4 + (distToPortal / 60) * 0.6;
             guy.alpha = 0.3 + (distToPortal / 60) * 0.7;
           }
-
-          // Quando arriva al portale
           if (guy.x > portalX - 20) {
             guy.state = 'fading';
             status.textContent = '✨ Teletrasporto in corso...';
             sfx.teleport();
 
-            // Effetto flash
             let flashFrame = 0;
             const flashInterval = setInterval(() => {
               flashFrame++;
@@ -964,18 +948,15 @@
               ctx.fillRect(0, 0, W, H);
               if (flashFrame > 15) {
                 clearInterval(flashInterval);
-                // Chiudi overlay e avvia gioco
                 document.getElementById('creation-overlay').classList.remove('active');
-                // Reset flag per permettere il riavvio
                 gameInitialized = false;
                 initGame();
               }
             }, 30);
-            return; // Esce dall'animazione
+            return;
           }
         }
 
-        // Flash
         if (guy.flashTimer > 0) {
           ctx.fillStyle = `rgba(255,255,255,${guy.flashTimer / 30})`;
           ctx.fillRect(0, 0, W, H);
