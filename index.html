@@ -1747,186 +1747,168 @@
     }
 
     function drawPlayer(p) {
-      ctx.save();
-      
-      // Calcola le dimensioni relative al canvas di gioco
-      const scaleX = p.w / 20; // 20 è la larghezza originale del personaggio
-      const scaleY = p.h / 28; // 28 è l'altezza originale
-      
-      // Posizione del personaggio (centro alla base)
+      const ctx = canvas.getContext('2d');
       const px = p.x;
-      const py = p.y + p.h;
-      
-      // Leggera traslazione per centrare il personaggio
-      ctx.translate(px + p.w/2, py);
-      
-      // Applica la scala
-      ctx.scale(scaleX * 1.2, scaleY * 1.2);
-      
-      // Leggera rotazione per effetto "vivo"
-      const breathe = Math.sin(game.frame * 0.03) * 0.3;
-      
-      // ---- OMBRA ----
+      const py = p.y;
+      const w = p.w;
+      const h = p.h;
+
+      ctx.save();
+
+      // ---- ANIMAZIONI ----
+      const walking = Math.abs(p.vx) > 0.5 && p.onGround;
+      const jumping = !p.onGround && p.vy < 0;
+      const falling = !p.onGround && p.vy >= 0;
+      const frame = game.frame;
+
+      // ---- OMBRA (fissa a terra) ----
       ctx.fillStyle = 'rgba(0,0,0,0.2)';
       ctx.beginPath();
-      ctx.ellipse(0, 4, 14, 4, 0, 0, Math.PI*2);
+      ctx.ellipse(px + w/2, GROUND_Y + 2, w/2 + 2, 4, 0, 0, Math.PI * 2);
       ctx.fill();
-      
+
       // ---- GAMBE ----
-      const walking = Math.abs(p.vx) > 0 && p.onGround;
-      const legSwing = walking ? Math.sin(game.frame * 0.08) * 5 : 0;
-      const legSwing2 = walking ? Math.sin(game.frame * 0.08 + Math.PI) * 5 : 0;
-      
+      const legSwing = walking ? Math.sin(frame * 0.12) * 4 : 0;
+      const legSwing2 = walking ? Math.sin(frame * 0.12 + Math.PI) * 4 : 0;
+      // In salto/caduta, gambe leggermente piegate
+      const jumpBend = jumping ? -2 : (falling ? 2 : 0);
+
       ctx.fillStyle = '#1a2a4a';
       // Gamba sinistra
       ctx.beginPath();
-      ctx.moveTo(-5, 0);
-      ctx.quadraticCurveTo(-6 + legSwing, 8 + legSwing*0.5, -5 + legSwing*0.4, 14 + legSwing*0.3);
-      ctx.lineTo(-3 + legSwing*0.4, 14 + legSwing*0.3);
-      ctx.quadraticCurveTo(-4 + legSwing*0.4, 8 + legSwing*0.5, -3, 0);
+      ctx.moveTo(px + 5, py + h - 6);
+      ctx.lineTo(px + 3 + legSwing, py + h + 2 + jumpBend);
+      ctx.lineTo(px + 6 + legSwing, py + h + 2 + jumpBend);
+      ctx.lineTo(px + 7, py + h - 6);
       ctx.fill();
-      
       // Gamba destra
       ctx.beginPath();
-      ctx.moveTo(5, 0);
-      ctx.quadraticCurveTo(6 + legSwing2, 8 + legSwing2*0.5, 5 + legSwing2*0.4, 14 + legSwing2*0.3);
-      ctx.lineTo(3 + legSwing2*0.4, 14 + legSwing2*0.3);
-      ctx.quadraticCurveTo(4 + legSwing2*0.4, 8 + legSwing2*0.5, 3, 0);
+      ctx.moveTo(px + 15, py + h - 6);
+      ctx.lineTo(px + 17 + legSwing2, py + h + 2 + jumpBend);
+      ctx.lineTo(px + 14 + legSwing2, py + h + 2 + jumpBend);
+      ctx.lineTo(px + 13, py + h - 6);
       ctx.fill();
-      
+
       // Scarpe
       ctx.fillStyle = '#1a1a2a';
-      ctx.fillRect(-7 + legSwing*0.4, 13 + legSwing*0.3, 6, 3);
-      ctx.fillRect(1 + legSwing2*0.4, 13 + legSwing2*0.3, 6, 3);
-      
+      ctx.fillRect(px + 1 + legSwing, py + h + 1 + jumpBend, 6, 3);
+      ctx.fillRect(px + 13 + legSwing2, py + h + 1 + jumpBend, 6, 3);
+
       // ---- BUSTO ----
-      const breatheOffset = walking ? 0 : breathe;
-      const bodyGrad = ctx.createLinearGradient(0, -2, 0, 14);
+      const breathe = walking ? 0 : Math.sin(frame * 0.04) * 0.5;
+      const bodyY = py + 6 + breathe;
+
+      const bodyGrad = ctx.createLinearGradient(px, bodyY, px, bodyY + 14);
       bodyGrad.addColorStop(0, '#4a8aff');
       bodyGrad.addColorStop(0.5, '#3b7dff');
       bodyGrad.addColorStop(1, '#1f4fbf');
       ctx.fillStyle = bodyGrad;
-      
-      // Busto arrotondato
       ctx.beginPath();
-      ctx.moveTo(-10 + breatheOffset, -2 + breatheOffset);
-      ctx.quadraticCurveTo(-12 + breatheOffset, 2 + breatheOffset, -10 + breatheOffset, 6 + breatheOffset);
-      ctx.quadraticCurveTo(-8 + breatheOffset, 12 + breatheOffset, -6 + breatheOffset, 14 + breatheOffset);
-      ctx.lineTo(6 + breatheOffset, 14 + breatheOffset);
-      ctx.quadraticCurveTo(8 + breatheOffset, 12 + breatheOffset, 10 + breatheOffset, 6 + breatheOffset);
-      ctx.quadraticCurveTo(12 + breatheOffset, 2 + breatheOffset, 10 + breatheOffset, -2 + breatheOffset);
-      ctx.lineTo(-10 + breatheOffset, -2 + breatheOffset);
+      ctx.roundRect(px + 2, bodyY, w - 4, 14, 4);
       ctx.fill();
-      
+
       // Colletto
       ctx.fillStyle = '#1f4fbf';
       ctx.beginPath();
-      ctx.moveTo(-6, -2 + breatheOffset);
-      ctx.lineTo(0, -5 + breatheOffset);
-      ctx.lineTo(6, -2 + breatheOffset);
+      ctx.moveTo(px + 4, bodyY);
+      ctx.lineTo(px + w/2, bodyY - 3);
+      ctx.lineTo(px + 16, bodyY);
       ctx.fill();
-      
+
       // Cintura
       ctx.fillStyle = '#1a3a7a';
-      ctx.fillRect(-8, 11 + breatheOffset, 16, 3);
-      
+      ctx.fillRect(px + 3, bodyY + 10, w - 6, 3);
+
       // ---- BRACCIA ----
-      const armSwing = walking ? Math.sin(game.frame * 0.08) * 4 : 0;
-      const armSwing2 = walking ? Math.sin(game.frame * 0.08 + Math.PI) * 4 : 0;
-      
+      const armSwing = walking ? Math.sin(frame * 0.12) * 3 : 0;
+      const armSwing2 = walking ? Math.sin(frame * 0.12 + Math.PI) * 3 : 0;
+      const armLift = jumping ? -6 : 0;
+
       ctx.fillStyle = '#2a5abf';
       // Braccio sinistro
       ctx.beginPath();
-      ctx.moveTo(-10, 2 + breatheOffset);
-      ctx.quadraticCurveTo(-13 + armSwing, 6 + breatheOffset, -11 + armSwing*0.4, 12 + breatheOffset);
-      ctx.lineTo(-9 + armSwing*0.4, 12 + breatheOffset);
-      ctx.quadraticCurveTo(-11 + armSwing*0.4, 6 + breatheOffset, -8, 2 + breatheOffset);
+      ctx.moveTo(px + 2, bodyY + 2);
+      ctx.lineTo(px - 1 + armSwing, bodyY + 6 + armLift);
+      ctx.lineTo(px + 1 + armSwing, bodyY + 10 + armLift);
+      ctx.lineTo(px + 3, bodyY + 2);
       ctx.fill();
-      
       // Braccio destro
       ctx.beginPath();
-      ctx.moveTo(10, 2 + breatheOffset);
-      ctx.quadraticCurveTo(13 + armSwing2, 6 + breatheOffset, 11 + armSwing2*0.4, 12 + breatheOffset);
-      ctx.lineTo(9 + armSwing2*0.4, 12 + breatheOffset);
-      ctx.quadraticCurveTo(11 + armSwing2*0.4, 6 + breatheOffset, 8, 2 + breatheOffset);
+      ctx.moveTo(px + 18, bodyY + 2);
+      ctx.lineTo(px + 21 + armSwing2, bodyY + 6 + armLift);
+      ctx.lineTo(px + 19 + armSwing2, bodyY + 10 + armLift);
+      ctx.lineTo(px + 17, bodyY + 2);
       ctx.fill();
-      
+
       // ---- PISTOLA (se ce l'ha) ----
       if (game.hasGun) {
         ctx.fillStyle = '#2a2a2a';
         if (p.facing === -1) {
-          // Pistola a sinistra
-          ctx.fillRect(-16, 4 + armSwing*0.5, 8, 3);
-          ctx.fillRect(-14, 5 + armSwing*0.5, 3, 4);
+          ctx.fillRect(px - 4, bodyY + 2 + armSwing, 6, 3);
+          ctx.fillRect(px - 3, bodyY + 3 + armSwing, 3, 4);
         } else {
-          // Pistola a destra
-          ctx.fillRect(8, 4 + armSwing2*0.5, 8, 3);
-          ctx.fillRect(11, 5 + armSwing2*0.5, 3, 4);
+          ctx.fillRect(px + 18, bodyY + 2 + armSwing2, 6, 3);
+          ctx.fillRect(px + 20, bodyY + 3 + armSwing2, 3, 4);
         }
       }
-      
+
       // ---- COLLO ----
       ctx.fillStyle = '#ffd6a5';
-      ctx.fillRect(-3, -6 + breatheOffset, 6, 4);
-      
-      // ---- TESTA CON LA FOTO ----
+      ctx.fillRect(px + w/2 - 3, py + 2 + breathe, 6, 4);
+
+      // ---- TESTA (con la foto) ----
       const headSize = 14;
-      const headY = -headSize + breatheOffset - 2;
-      const headX = -headSize/2;
-      
-      // Se abbiamo la foto, la disegniamo
+      const headX = px + w/2 - headSize/2;
+      const headY = py - headSize + 2 + breathe;
+
       if (state.faceDataURL) {
-        // Carica l'immagine (la prima volta) e disegnala
+        // Usa l'immagine caricata una volta
         if (!window._faceImg) {
           window._faceImg = new Image();
           window._faceImg.src = state.faceDataURL;
         }
-        if (window._faceImg.complete && window._faceImg.naturalWidth > 0) {
+        const img = window._faceImg;
+        if (img.complete && img.naturalWidth > 0) {
           ctx.save();
           ctx.beginPath();
-          ctx.arc(0, headY + headSize/2, headSize/2, 0, Math.PI*2);
+          ctx.arc(px + w/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
           ctx.clip();
-          ctx.drawImage(window._faceImg, headX, headY, headSize, headSize);
+          ctx.drawImage(img, headX, headY, headSize, headSize);
           ctx.restore();
         } else {
-          // Fallback se l'immagine non è ancora caricata
+          // Fallback (cerchio vuoto)
           ctx.fillStyle = '#ffd6a5';
           ctx.beginPath();
-          ctx.arc(0, headY + headSize/2, headSize/2, 0, Math.PI*2);
+          ctx.arc(px + w/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
           ctx.fill();
-          ctx.strokeStyle = '#ffd93d';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.arc(0, headY + headSize/2, headSize/2, 0, Math.PI*2);
-          ctx.stroke();
         }
       } else {
         // Testa di fallback
         ctx.fillStyle = '#ffd6a5';
         ctx.beginPath();
-        ctx.arc(0, headY + headSize/2, headSize/2, 0, Math.PI*2);
+        ctx.arc(px + w/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = '#ffd93d';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.arc(0, headY + headSize/2, headSize/2, 0, Math.PI*2);
+        ctx.arc(px + w/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
         ctx.stroke();
-        // Occhi di fallback
+        // Occhietti
         ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(-4, headY + headSize/2 - 3, 2, 2);
-        ctx.fillRect(2, headY + headSize/2 - 3, 2, 2);
+        ctx.fillRect(px + w/2 - 4, headY + headSize/2 - 2, 2, 2);
+        ctx.fillRect(px + w/2 + 2, headY + headSize/2 - 2, 2, 2);
       }
-      
-      // Bordo luminoso attorno alla testa
+
+      // Bordo luminoso (solo se c'è la foto)
       if (state.faceDataURL) {
-        ctx.strokeStyle = `rgba(255,215,61,${0.15 + Math.sin(game.frame*0.05)*0.1})`;
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = `rgba(255,215,61,${0.15 + Math.sin(frame * 0.05) * 0.1})`;
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.arc(0, headY + headSize/2, headSize/2 + 2, 0, Math.PI*2);
+        ctx.arc(px + w/2, headY + headSize/2, headSize/2 + 2, 0, Math.PI * 2);
         ctx.stroke();
       }
-      
-      ctx.restore(); // restore da translate/scale
+
+      ctx.restore();
     }
     
     function positionFaceOverlay() {
@@ -2198,12 +2180,17 @@
     }
 
     document.getElementById('btn-retry').addEventListener('click', () => {
+      // Resetta tutto e ricomincia dal gioco senza passare dalla creazione
       showScreen('screen-game');
+      // Resetta le variabili di gioco
       gameInitialized = false;
+      if (game) game.over = false;
+      // Nascondi eventuali overlay
       document.getElementById('gift-overlay').classList.remove('active');
       document.getElementById('final-screen').classList.remove('active');
       document.getElementById('boss-dialogue').classList.remove('show');
-      startCreationSequence();
+      // Avvia direttamente il gioco (senza portale)
+      initGame();
     });
 
     console.log('🎮 FILA v3.3 - Omino 2D dettagliato + Portale fisico con transizione fluida!');
