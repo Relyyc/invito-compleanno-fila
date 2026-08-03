@@ -1,9 +1,4 @@
 <!DOCTYPE html>
-<!--
-  ================================================================
-  INVITO COMPLETEO - CON INTRO EPICA
-  ================================================================
--->
 <html lang="it">
 <head>
   <meta charset="UTF-8">
@@ -120,7 +115,41 @@
       box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
     }
 
-    /* ===== OVERLAY ROTAZIONE ===== */
+    /* Overlay di caricamento selfie */
+    #loading-overlay {
+      position: absolute; top:0; left:0; right:0; bottom:0;
+      background: rgba(11,11,26,0.95); backdrop-filter: blur(8px);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 90; padding: 30px; text-align: center;
+    }
+    #loading-overlay.active { display: flex; }
+    #loading-overlay .load-title {
+      font-size: clamp(18px, 4vw, 32px); color: #ffd93d; margin-bottom: 20px;
+    }
+    #loading-overlay .load-bar-bg {
+      width: 80%; max-width: 300px; height: 20px; background: #1a1a2e;
+      border: 3px solid #ffd93d; border-radius: 12px; overflow: hidden; margin: 10px auto;
+    }
+    #loading-overlay .load-bar-fill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, #ff4d6d, #ffd93d);
+      transition: width 0.15s linear;
+    }
+    #loading-overlay .load-label {
+      font-size: clamp(12px, 2.5vw, 18px); color: #b8f2e6; margin-top: 10px;
+    }
+    #loading-overlay .load-avatar {
+      width: 80px; height: 80px; border-radius: 50%; border: 4px solid #ffd93d;
+      margin-top: 20px; opacity: 0; transition: opacity 1s;
+      object-fit: cover;
+    }
+    #loading-overlay .load-avatar.show { opacity: 1; }
+    #loading-overlay .load-done {
+      font-size: clamp(16px, 3vw, 24px); color: #3bcb6f; margin-top: 10px; opacity: 0;
+      transition: opacity 0.5s;
+    }
+    #loading-overlay .load-done.show { opacity: 1; }
+
+    /* ===== ROTAZIONE ===== */
     #rotate-overlay {
       display: none; position: absolute; top:0; left:0; right:0; bottom:0;
       background: #0b0b1a; color: #fff; z-index: 100;
@@ -131,7 +160,7 @@
       #screen-game.active #game-wrap { display: none; }
     }
 
-    /* ===== OVERLAY INTRO (nuovo) ===== */
+    /* ===== OVERLAY INTRO (conto alla rovescia) ===== */
     #intro-overlay {
       position: absolute; top:0; left:0; right:0; bottom:0;
       background: rgba(11,11,26,0.92); backdrop-filter: blur(6px);
@@ -145,33 +174,20 @@
       100% { background: rgba(30,20,60,0.95); }
     }
     #intro-overlay .intro-title {
-      font-size: clamp(28px, 6vw, 52px);
-      color: #ffd93d;
-      text-shadow: 0 0 30px #ffd93d, 0 0 60px #ff4d6d;
-      margin-bottom: 10px;
-      letter-spacing: 4px;
+      font-size: clamp(28px, 6vw, 52px); color: #ffd93d;
+      text-shadow: 0 0 30px #ffd93d, 0 0 60px #ff4d6d; margin-bottom: 10px; letter-spacing: 4px;
     }
     #intro-overlay .intro-sub {
-      font-size: clamp(14px, 3vw, 24px);
-      color: #b8f2e6;
-      margin-bottom: 20px;
-      opacity: 0.8;
+      font-size: clamp(14px, 3vw, 24px); color: #b8f2e6; margin-bottom: 20px; opacity: 0.8;
     }
     #intro-overlay .intro-name {
-      font-size: clamp(20px, 4vw, 36px);
-      color: #fff;
-      background: rgba(255,77,109,0.3);
-      padding: 6px 24px;
-      border-radius: 40px;
-      border: 2px solid #ff4d6d;
-      margin-bottom: 30px;
-      display: inline-block;
+      font-size: clamp(20px, 4vw, 36px); color: #fff;
+      background: rgba(255,77,109,0.3); padding: 6px 24px; border-radius: 40px;
+      border: 2px solid #ff4d6d; margin-bottom: 30px; display: inline-block;
     }
     #intro-overlay .countdown {
-      font-size: clamp(48px, 10vw, 80px);
-      color: #ffd93d;
-      text-shadow: 0 0 40px #ff4d6d;
-      font-weight: bold;
+      font-size: clamp(48px, 10vw, 80px); color: #ffd93d;
+      text-shadow: 0 0 40px #ff4d6d; font-weight: bold;
       animation: countPop 0.6s ease;
     }
     @keyframes countPop {
@@ -184,11 +200,20 @@
       background: #fff; opacity: 0; pointer-events: none;
       transition: opacity 0.1s;
     }
-    #intro-overlay .intro-flash.active {
-      opacity: 0.9;
-      transition: opacity 0.05s;
-    }
+    #intro-overlay .intro-flash.active { opacity: 0.9; transition: opacity 0.05s; }
 
+    /* ===== BOSS DIALOGUE ===== */
+    #boss-dialogue {
+      position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.8); border: 2px solid #ff4d6d; border-radius: 12px;
+      padding: 8px 18px; color: #ffd93d; font-size: clamp(11px, 2vw, 16px);
+      z-index: 10; white-space: nowrap; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; text-shadow: 0 0 10px #ff4d6d;
+      font-family: 'Courier New', monospace;
+    }
+    #boss-dialogue.show { opacity: 1; }
+
+    /* ===== HUD ===== */
     #hud {
       position: absolute; top: 10px; left: 10px; z-index: 5;
       display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
@@ -196,6 +221,7 @@
     #hud-name { font-size: 13px; color: #fff; text-shadow: 2px 2px 0 #000; }
     #hud-lives { font-size: 18px; text-shadow: 2px 2px 0 #000; }
     #hud-progress { font-size: 10px; color: #b8f2e6; text-shadow: 1px 1px 0 #000; }
+    #hud-stats { font-size: 9px; color: #aaa; text-shadow: 1px 1px 0 #000; display: none; }
 
     #volume-toggle {
       position: absolute; top: 10px; right: 10px; z-index: 6;
@@ -229,6 +255,7 @@
     #boss-hp-bar-bg { width: 180px; height: 14px; background: rgba(0,0,0,0.6); border: 2px solid #fff; border-radius: 8px; overflow: hidden; }
     #boss-hp-bar-fill { height: 100%; background: #ff4d6d; width: 100%; transition: width 0.1s ease; box-shadow: 0 0 10px #ff4d6d; }
 
+    /* ===== SCHERMATE RISULTATO ===== */
     .result-box {
       background: rgba(26,26,46,0.95); border: 4px solid #ffd93d; padding: 30px 24px;
       max-width: 480px; position: relative; z-index: 1; border-radius: 20px;
@@ -257,6 +284,77 @@
 
     #face-preview { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #fff; margin-bottom: 16px; object-fit: cover; }
 
+    /* ===== FINALE - SCATOLA REGALO ===== */
+    #gift-overlay {
+      position: absolute; top:0; left:0; right:0; bottom:0;
+      background: rgba(11,11,26,0.92); backdrop-filter: blur(6px);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 95; padding: 20px; text-align: center;
+    }
+    #gift-overlay.active { display: flex; }
+    #gift-box {
+      width: 120px; height: 120px; background: linear-gradient(145deg, #ff4d6d, #cc0033);
+      border-radius: 12px; box-shadow: 0 0 40px rgba(255,77,109,0.6);
+      position: relative; display: flex; align-items: center; justify-content: center;
+      font-size: 60px; color: #ffd93d; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      margin-bottom: 20px;
+    }
+    #gift-box.open { transform: scale(1.3); }
+    #gift-box .lid {
+      position: absolute; top: -20px; left: -10px; right: -10px; height: 25px;
+      background: linear-gradient(145deg, #ff6b8a, #cc0033);
+      border-radius: 12px 12px 0 0; transition: transform 0.6s ease;
+      transform-origin: bottom center;
+      box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+    }
+    #gift-box.open .lid { transform: rotateX(-90deg); }
+    #gift-box .ribbon {
+      position: absolute; top: 0; bottom: 0; left: 50%; width: 10px;
+      background: #ffd93d; transform: translateX(-50%);
+      box-shadow: 0 0 10px #ffd93d;
+    }
+    #gift-box .ribbon-h {
+      position: absolute; top: 50%; left: 0; right: 0; height: 10px;
+      background: #ffd93d; transform: translateY(-50%);
+      box-shadow: 0 0 10px #ffd93d;
+    }
+    #gift-content {
+      font-size: clamp(16px, 3vw, 24px); color: #fff; opacity: 0;
+      transition: opacity 0.8s ease; margin-top: 10px;
+      background: rgba(0,0,0,0.5); padding: 12px 24px; border-radius: 16px;
+      border: 2px solid #ffd93d;
+    }
+    #gift-content.show { opacity: 1; }
+
+    /* ===== SCHERMATA FINALE PERSONALIZZATA ===== */
+    #final-screen {
+      position: absolute; top:0; left:0; right:0; bottom:0;
+      background: #0b0b1a; display: none; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 98;
+      padding: 30px; text-align: center;
+    }
+    #final-screen.active { display: flex; }
+    #final-screen .final-avatar {
+      width: 120px; height: 120px; border-radius: 50%; border: 4px solid #ffd93d;
+      object-fit: cover; box-shadow: 0 0 40px rgba(255,215,61,0.4);
+      margin-bottom: 16px;
+    }
+    #final-screen .final-name {
+      font-size: clamp(24px, 5vw, 40px); color: #ffd93d;
+      text-shadow: 0 0 20px #ffd93d;
+    }
+    #final-screen .final-title {
+      font-size: clamp(18px, 4vw, 32px); color: #3bcb6f;
+      margin: 8px 0;
+    }
+    #final-screen .final-sub {
+      font-size: clamp(14px, 3vw, 22px); color: #b8f2e6;
+      margin-top: 10px;
+    }
+    #final-screen .final-share {
+      margin-top: 20px; font-size: 12px; color: #aaa;
+    }
+
     @media (orientation: landscape) and (max-height: 500px) {
       .result-box { padding: 14px 20px; }
       #face-preview { width: 56px; height: 56px; margin-bottom: 8px; }
@@ -267,7 +365,7 @@
   </style>
 </head>
 <body>
-  <div id="dev-version">✨ FILA v2.1 - INTRO EPICA</div>
+  <div id="dev-version">🎮 FILA v3.0 - BOSS EPICO</div>
   <div id="app" class="crt">
 
     <!-- SCHERMATA 0: AGGIUNGI ALLA HOME -->
@@ -314,14 +412,23 @@
       <button class="pixel-btn" id="btn-confirm" style="display:none; background:#3bcb6f; box-shadow:4px 4px 0 #145c2b,-4px 4px 0 #145c2b,0 0 0 3px #fff inset;">CONFERMA E GIOCA</button>
     </section>
 
-    <!-- SCHERMATA 3: GIOCO (con intro) -->
+    <!-- SCHERMATA 3: GIOCO -->
     <section id="screen-game" class="screen">
       <div id="rotate-overlay">
         <div style="font-size:40px;">📱</div>
         <p class="body-text" style="margin-top:16px;">Gira il telefono in orizzontale!</p>
       </div>
       <div id="game-wrap">
-        <!-- OVERLAY INTRO -->
+        <!-- OVERLAY CARICAMENTO SELFIE -->
+        <div id="loading-overlay">
+          <div class="load-title">🎮 CREAZIONE PERSONAGGIO</div>
+          <div class="load-bar-bg"><div class="load-bar-fill" id="load-bar-fill"></div></div>
+          <div class="load-label" id="load-label">Analisi volto...</div>
+          <img class="load-avatar" id="load-avatar" alt="avatar">
+          <div class="load-done" id="load-done">✅ PLAYER CREATED</div>
+        </div>
+
+        <!-- OVERLAY INTRO (conto alla rovescia) -->
         <div id="intro-overlay">
           <div class="intro-flash" id="intro-flash"></div>
           <div class="intro-title">⚔️ LA SFIDA</div>
@@ -330,10 +437,35 @@
           <div class="countdown" id="intro-countdown">3</div>
         </div>
 
+        <!-- BOSS DIALOGUE -->
+        <div id="boss-dialogue"></div>
+
+        <!-- GIFT OVERLAY (finale) -->
+        <div id="gift-overlay">
+          <div id="gift-box">
+            <div class="lid"></div>
+            <div class="ribbon"></div>
+            <div class="ribbon-h"></div>
+            <span style="z-index:2;">🎁</span>
+          </div>
+          <div id="gift-content">Hai trovato un regalo!</div>
+        </div>
+
+        <!-- FINAL PERSONALIZED SCREEN -->
+        <div id="final-screen">
+          <img class="final-avatar" id="final-avatar" alt="avatar">
+          <div class="final-name" id="final-name"></div>
+          <div class="final-title">🏆 PLAYER COMPLETED</div>
+          <div class="final-sub">LIVELLO COMPLETATO</div>
+          <div class="final-sub" style="font-size:clamp(18px,4vw,30px); color:#ffd93d;">CI VEDIAMO ALLA FESTA!</div>
+          <div class="final-share">📸 Screenshot e condividi!</div>
+        </div>
+
         <div id="hud">
           <div id="hud-name"></div>
           <div id="hud-lives"></div>
           <div id="hud-progress">🏁 Distanza: 0%</div>
+          <div id="hud-stats"></div>
         </div>
         <div id="volume-toggle">🔊</div>
         <div id="boss-hp-wrap">
@@ -349,19 +481,19 @@
       </div>
     </section>
 
-    <!-- SCHERMATA 4: VITTORIA -->
+    <!-- SCHERMATA 4: VITTORIA (statistiche) -->
     <section id="screen-win" class="screen">
       <div id="confetti-layer"></div>
-      <div class="result-box">
+      <div class="result-box" id="win-box">
         <canvas id="face-preview"></canvas>
-        <h1 class="title" style="font-size:22px;">🏆 CE L'HAI FATTA!</h1>
-        <p class="body-text" id="win-message"></p>
-        <p class="body-text" style="margin-top:20px; color:#ffd93d; font-size:clamp(12px, 2.5vw, 16px);">
+        <h1 class="title" style="font-size:22px;">🏆 STATISTICHE</h1>
+        <div id="stats-container" style="font-size:clamp(12px,2vw,16px); color:#b8f2e6; text-align:left; margin:10px 0; line-height:2;"></div>
+        <p class="body-text" style="margin-top:10px; color:#ffd93d; font-size:clamp(12px, 2.5vw, 16px);">
           📅 SABATO 12 SETTEMBRE 2026 - ORE 19:00<br>
           📍 Piazza dei Ricordi 1, Cantù
         </p>
-        <!-- TODO-RSVP: sostituisci il link qui sotto con il tuo Google Form -->
-        <button class="pixel-btn" onclick="window.open('https://forms.gle/TODO-RSVP','_blank')">✅ CONFERMA PRESENZA</button>
+        <button class="pixel-btn" id="btn-show-gift">🎁 APRI IL REGALO</button>
+        <button class="pixel-btn" onclick="window.open('https://forms.gle/TODO-RSVP','_blank')" style="background:#3bcb6f; box-shadow:4px 4px 0 #145c2b,-4px 4px 0 #145c2b,0 0 0 3px #fff inset;">✅ CONFERMA PRESENZA</button>
       </div>
     </section>
 
@@ -439,10 +571,11 @@
       gunGet: () => { playTone(400,700,0.1,'square',0.15); setTimeout(()=>playTone(700,1100,0.12,'square',0.15),100); },
       bossHit: () => playTone(150,100,0.1,'sawtooth',0.18),
       bossDefeat: () => { [0,120,240,360].forEach((d,i)=>setTimeout(()=>playTone(300+i*150,500+i*150,0.2,'square',0.16),d)); },
-      win: () => { [0,150,300,450,600].forEach((d,i)=>setTimeout(()=>playTone(400+i*150,400+i*150,0.25,'triangle',0.18),d)); },
+      win: () => { [0,150,300,450,600,750].forEach((d,i)=>setTimeout(()=>playTone(400+i*150,400+i*150,0.2,'triangle',0.18),d)); },
       lose: () => { [0,150,300].forEach((d,i)=>setTimeout(()=>playTone(300-i*80,200-i*80,0.3,'sawtooth',0.16),d)); },
       countdown: () => playTone(500,800,0.08,'square',0.10),
       go: () => { playTone(300, 900, 0.15, 'square', 0.20); setTimeout(()=>playTone(600,1200,0.15,'square',0.20),80); },
+      gift: () => { [0,100,200].forEach((d,i)=>setTimeout(()=>playTone(400+i*200,600+i*200,0.15,'triangle',0.14),d)); },
     };
 
     volBtn.addEventListener('click', () => {
@@ -524,14 +657,9 @@
 
     document.getElementById('btn-confirm').addEventListener('click', () => {
       state.faceCanvas = pixelateFace(captureCanvas);
-      document.getElementById('face-overlay').src = state.faceCanvas.toDataURL();
-      if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-      document.getElementById('hud-name').textContent = state.name;
-      // Imposta il nome nell'intro
-      document.getElementById('intro-player-name').textContent = `👤 ${state.name}`;
+      // Avvia la sequenza di caricamento
       showScreen('screen-game');
-      // Avvia l'intro prima del gioco
-      startIntroThenGame();
+      startLoadingSequence();
     });
 
     function pixelateFace(sourceCanvas) {
@@ -549,7 +677,54 @@
     }
 
     /* ============================================================
-       SEZIONE 5: INTRO EPICA (prima del gioco)
+       SEZIONE 5: SEQUENZA DI CARICAMENTO SELFIE
+       ============================================================ */
+    function startLoadingSequence() {
+      const overlay = document.getElementById('loading-overlay');
+      const fill = document.getElementById('load-bar-fill');
+      const label = document.getElementById('load-label');
+      const avatar = document.getElementById('load-avatar');
+      const done = document.getElementById('load-done');
+
+      overlay.classList.add('active');
+      fill.style.width = '0%';
+      avatar.classList.remove('show');
+      done.classList.remove('show');
+      avatar.src = state.faceCanvas.toDataURL();
+
+      const steps = [
+        { label: 'Analisi volto...', progress: 30 },
+        { label: 'Creazione Avatar...', progress: 65 },
+        { label: 'Rendering...', progress: 100 },
+      ];
+
+      let stepIndex = 0;
+      const interval = setInterval(() => {
+        if (stepIndex < steps.length) {
+          const s = steps[stepIndex];
+          label.textContent = s.label;
+          fill.style.width = s.progress + '%';
+          stepIndex++;
+          if (stepIndex === steps.length) {
+            clearInterval(interval);
+            // Mostra avatar e done
+            setTimeout(() => {
+              avatar.classList.add('show');
+              done.classList.add('show');
+              sfx.pickup();
+              setTimeout(() => {
+                overlay.classList.remove('active');
+                // Avvia l'intro
+                startIntroThenGame();
+              }, 1200);
+            }, 300);
+          }
+        }
+      }, 400);
+    }
+
+    /* ============================================================
+       SEZIONE 6: INTRO EPICA (conto alla rovescia)
        ============================================================ */
     let introRunning = false;
 
@@ -558,15 +733,13 @@
       const countEl = document.getElementById('intro-countdown');
       const flashEl = document.getElementById('intro-flash');
 
-      // Se il telefono è in portrait, l'overlay di rotazione è attivo e blocca tutto.
-      // Aspettiamo che l'orientamento sia landscape per far partire l'intro.
-      // Usiamo un intervallo per controllare.
+      // Imposta il nome
+      document.getElementById('intro-player-name').textContent = `👤 ${state.name}`;
+
       if (window.matchMedia('(orientation: portrait)').matches) {
-        // Se in portrait, mostriamo l'intro solo quando diventa landscape
         const checkOrientation = setInterval(() => {
           if (window.matchMedia('(orientation: landscape)').matches) {
             clearInterval(checkOrientation);
-            // Forza il reflow e poi avvia
             requestAnimationFrame(() => startIntroSequence());
           }
         }, 300);
@@ -582,9 +755,7 @@
       const countEl = document.getElementById('intro-countdown');
       const flashEl = document.getElementById('intro-flash');
 
-      // Mostra l'overlay
       overlay.classList.add('active');
-
       let count = 3;
       countEl.textContent = count;
       sfx.countdown();
@@ -594,21 +765,17 @@
         if (count > 0) {
           countEl.textContent = count;
           sfx.countdown();
-          // animazione di rimbalzo (già in CSS)
           countEl.style.animation = 'none';
           requestAnimationFrame(() => {
             countEl.style.animation = 'countPop 0.6s ease';
           });
         } else {
           clearInterval(interval);
-          // Via!
           countEl.textContent = 'VIA!';
           sfx.go();
-          // Flash bianco
           flashEl.classList.add('active');
           setTimeout(() => {
             flashEl.classList.remove('active');
-            // Nascondi l'overlay
             overlay.classList.remove('active');
             introRunning = false;
             // Avvia il gioco
@@ -619,14 +786,24 @@
     }
 
     /* ============================================================
-       SEZIONE 6: GIOCO - COSTANTI E STATO
+       SEZIONE 7: GIOCO - COSTANTI E STATO
        ============================================================ */
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
     const W = 480, H = 270;
     const GRAVITY = 0.5, GROUND_Y = H - 44;
     let game = null;
-    let gameInitialized = false; // per evitare doppie inizializzazioni
+    let gameInitialized = false;
+
+    // Statistiche
+    let stats = {
+      deaths: 0,
+      startTime: 0,
+      endTime: 0,
+      enemiesKilled: 0,
+      shotsFired: 0,
+      shotsHit: 0,
+    };
 
     function fitCanvas() {
       const vv = window.visualViewport;
@@ -642,7 +819,7 @@
     fitCanvas();
 
     /* ============================================================
-       SEZIONE 7: GIOCO - FUNZIONI DI COSTRUZIONE
+       SEZIONE 8: GIOCO - FUNZIONI DI COSTRUZIONE
        ============================================================ */
     function makePlayer(x) {
       return { x, y: GROUND_Y - 28, w: 20, h: 28, vx:0, vy:0, onGround:false, facing:1, invulnUntil:0 };
@@ -680,21 +857,51 @@
     function buildBoss() {
       return {
         x: 2800, y: GROUND_Y - 90, w: 74, h: 90,
-        hp: 25, maxHp: 25, alive: true, state: 'dormant',
-        spawnStartFrame: 0, dir: -1, nextMissileFrame: 0, flashUntil: 0
+        hp: 30, maxHp: 30, alive: true, state: 'dormant',
+        spawnStartFrame: 0, dir: -1, nextMissileFrame: 0, flashUntil: 0,
+        phase: 1, // 1 = normale, 2 = seconda fase
+        attackTimer: 0,
+        attackPattern: 0, // 0 = missili, 1 = raffica, 2 = onda
+        dialogueTimer: 0,
+        dialogueShown: false,
+        introDone: false,
       };
+    }
+
+    // Frasi del boss
+    const BOSS_DIALOGUES = {
+      intro: ['Non entrerai mai alla festa!', 'Io sono FILA, il guardiano!', 'Preparati a perdere!'],
+      hit: ['Ehi!', 'Non vale!', 'Questo è cheating!', 'Ma come fai?', 'Basta!'],
+      half: ['Ti manca ancora poco...', 'Non è finita!', 'Forse sei più forte di quanto pensassi...'],
+      defeat: ['Nooo!', 'Impossibile!', 'La festa è tua... per ora...'],
+    };
+
+    function getRandomDialogue(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function showBossDialogue(text, duration = 1500) {
+      const el = document.getElementById('boss-dialogue');
+      el.textContent = '🗣️ ' + text;
+      el.classList.add('show');
+      clearTimeout(el._timeout);
+      el._timeout = setTimeout(() => el.classList.remove('show'), duration);
     }
 
     const ARENA_ENTRY_X = 2500, BOSS_TRIGGER_X = 2530, FIRE_GATE_X = 1930, BOSS_SPAWN_DURATION = 60;
     let lastShotFrame = -1000;
 
     /* ============================================================
-       SEZIONE 8: GIOCO - INIZIALIZZAZIONE
+       SEZIONE 9: GIOCO - INIZIALIZZAZIONE
        ============================================================ */
     function initGame() {
       if (gameInitialized) return;
       gameInitialized = true;
       fitCanvas();
+
+      // Reset stats
+      stats = { deaths: 0, startTime: performance.now(), endTime: 0, enemiesKilled: 0, shotsFired: 0, shotsHit: 0 };
+
       game = {
         keys: { left: false, right: false, jump: false, shoot: false },
         lives: 3, checkpointX: 20, over: false, won: false,
@@ -713,24 +920,47 @@
         poofParticles: [],
         shakeUntil: 0, shakeMagnitude: 0,
         flagX: 2900,
-        progress: 0
+        progress: 0,
+        dustParticles: [],
+        leafParticles: [],
+        shootingStars: [],
+        time: 0,
+        bossDialogueCooldown: 0,
       };
+
       document.getElementById('btn-shoot-gun').style.display = 'none';
       document.getElementById('boss-hp-wrap').style.display = 'none';
       document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
       document.getElementById('hud-progress').textContent = '🏁 Distanza: 0%';
+      document.getElementById('hud-stats').style.display = 'none';
+      document.getElementById('boss-dialogue').classList.remove('show');
       lastShotFrame = -1000;
+
+      // Genera stelle cadenti
+      for (let i = 0; i < 3; i++) {
+        game.shootingStars.push({
+          x: Math.random() * W,
+          y: Math.random() * H * 0.5,
+          vx: -1 - Math.random() * 2,
+          vy: 0.5 + Math.random() * 1,
+          life: 60 + Math.random() * 60,
+          maxLife: 120,
+        });
+      }
+
       requestAnimationFrame(loop);
     }
 
     /* ============================================================
-       SEZIONE 9: GIOCO - UPDATE (identico a prima)
+       SEZIONE 10: GIOCO - UPDATE
        ============================================================ */
     function update() {
       const p = game.player;
       game.frame++;
-      const SPEED = 3;
+      game.time = (performance.now() - stats.startTime) / 1000;
 
+      // ---- Movimento ----
+      const SPEED = 3;
       if (game.keys.left) { p.vx = -SPEED; p.facing = -1; }
       else if (game.keys.right) { p.vx = SPEED; p.facing = 1; }
       else p.vx = 0;
@@ -747,6 +977,66 @@
       }
       if (p.y > H + 60) { loseLife(); return; }
 
+      // ---- Polvere quando corre ----
+      if (Math.abs(p.vx) > 1 && p.onGround) {
+        game.dustParticles.push({
+          x: p.x + (p.vx > 0 ? p.w : 0),
+          y: p.y + p.h - 2,
+          vx: -p.vx * 0.2 + (Math.random() - 0.5) * 0.5,
+          vy: -0.5 - Math.random() * 0.5,
+          size: 2 + Math.random() * 3,
+          life: 15 + Math.random() * 10,
+          maxLife: 25,
+          color: 'rgba(200,180,160,0.6)',
+        });
+      }
+
+      // ---- Particelle polvere ----
+      for (let i = game.dustParticles.length - 1; i >= 0; i--) {
+        const d = game.dustParticles[i];
+        d.x += d.vx; d.y += d.vy; d.vy += 0.05; d.life--;
+        if (d.life <= 0) game.dustParticles.splice(i,1);
+      }
+
+      // ---- Foglie ----
+      if (game.frame % 30 === 0) {
+        game.leafParticles.push({
+          x: game.camX + W + 10,
+          y: 20 + Math.random() * 60,
+          vx: -0.5 - Math.random() * 0.8,
+          vy: 0.2 + Math.random() * 0.4,
+          size: 4 + Math.random() * 4,
+          life: 200 + Math.random() * 100,
+          maxLife: 300,
+          rot: Math.random() * 6,
+          rotSpeed: (Math.random() - 0.5) * 0.05,
+          color: `hsl(${80 + Math.random()*30}, 60%, ${40 + Math.random()*20}%)`,
+        });
+      }
+      for (let i = game.leafParticles.length - 1; i >= 0; i--) {
+        const l = game.leafParticles[i];
+        l.x += l.vx; l.y += l.vy; l.rot += l.rotSpeed; l.life--;
+        if (l.life <= 0 || l.x < game.camX - 40) game.leafParticles.splice(i,1);
+      }
+
+      // ---- Stelle cadenti ----
+      for (let i = game.shootingStars.length - 1; i >= 0; i--) {
+        const s = game.shootingStars[i];
+        s.x += s.vx; s.y += s.vy; s.life--;
+        if (s.life <= 0) {
+          game.shootingStars.splice(i,1);
+          game.shootingStars.push({
+            x: game.camX + W + 20,
+            y: Math.random() * H * 0.3,
+            vx: -1.5 - Math.random() * 2,
+            vy: 0.5 + Math.random() * 1,
+            life: 60 + Math.random() * 60,
+            maxLife: 120,
+          });
+        }
+      }
+
+      // ---- Nemici ----
       for (const en of game.enemies) {
         if (!en.alive) continue;
         if (en.type === 'fire') {
@@ -763,11 +1053,17 @@
         const overlap = p.x < en.x + en.w && p.x + p.w > en.x && p.y < en.y + en.h && p.y + p.h > en.y;
         if (overlap && game.frame > p.invulnUntil) {
           const stomp = p.vy > 0 && (p.y + p.h - p.vy) <= en.y + 6;
-          if (stomp) { en.alive = false; p.vy = -7; sfx.stomp(); spawnPoof(en.x+en.w/2, en.y+en.h/2, '#c0392b', 12); }
-          else { loseLife(); return; }
+          if (stomp) {
+            en.alive = false;
+            p.vy = -7;
+            sfx.stomp();
+            stats.enemiesKilled++;
+            spawnPoof(en.x+en.w/2, en.y+en.h/2, '#c0392b', 12);
+          } else { loseLife(); return; }
         }
       }
 
+      // ---- Fireballs ----
       for (let i = game.fireballs.length - 1; i >= 0; i--) {
         const fb = game.fireballs[i];
         fb.x += fb.vx;
@@ -777,12 +1073,15 @@
         if (fb.x < game.camX - 60 || fb.x > game.camX + W + 60) game.fireballs.splice(i,1);
       }
 
+      // ---- Muro fuoco ----
       const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
       if (!firesDefeatedForGate && p.x + p.w > FIRE_GATE_X) p.x = FIRE_GATE_X - p.w;
 
+      // ---- Arena ----
       if (!game.arenaEntered && p.x > ARENA_ENTRY_X) game.arenaEntered = true;
       if (game.arenaEntered && p.x < ARENA_ENTRY_X) p.x = ARENA_ENTRY_X;
 
+      // ---- Pistola ----
       if (!game.hasGun && !game.gunPickup.collected) {
         const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
         const gp = game.gunPickup;
@@ -792,6 +1091,7 @@
         }
       }
 
+      // ---- Proiettili giocatore ----
       for (let i = game.bullets.length - 1; i >= 0; i--) {
         const b = game.bullets[i];
         b.x += b.vx;
@@ -799,12 +1099,33 @@
           const boss = game.boss;
           if (b.x < boss.x + boss.w && b.x + b.w > boss.x && b.y < boss.y + boss.h && b.y + b.h > boss.y) {
             boss.hp--; boss.flashUntil = game.frame + 6; game.bullets.splice(i,1);
+            stats.shotsHit++;
             updateBossHpBar(); sfx.bossHit(); triggerShake(4, 8);
+
+            // Dialoghi quando colpito
+            if (game.bossDialogueCooldown <= 0 && boss.hp > 0) {
+              showBossDialogue(getRandomDialogue(BOSS_DIALOGUES.hit), 1200);
+              game.bossDialogueCooldown = 30;
+            }
+
+            // Seconda fase
+            if (boss.hp <= boss.maxHp * 0.5 && boss.phase === 1) {
+              boss.phase = 2;
+              showBossDialogue(getRandomDialogue(BOSS_DIALOGUES.half), 1800);
+              // Cambia colore (effetto visivo)
+              document.getElementById('boss-hp-bar-fill').style.background = '#ff8a3d';
+            }
+
             if (boss.hp <= 0) {
-              boss.alive = false; document.getElementById('boss-hp-wrap').style.display = 'none';
-              sfx.bossDefeat(); triggerShake(12, 25);
-              spawnPoof(boss.x+boss.w/2, boss.y+boss.h/2, '#ffcf4d', 28);
-              spawnPoof(boss.x+boss.w/2, boss.y+boss.h/2, '#ff4d6d', 20);
+              boss.alive = false;
+              document.getElementById('boss-hp-wrap').style.display = 'none';
+              showBossDialogue(getRandomDialogue(BOSS_DIALOGUES.defeat), 2000);
+              sfx.bossDefeat();
+              triggerShake(15, 30);
+              spawnPoof(boss.x+boss.w/2, boss.y+boss.h/2, '#ffcf4d', 40);
+              spawnPoof(boss.x+boss.w/2, boss.y+boss.h/2, '#ff4d6d', 30);
+              // Avvia la sequenza finale
+              setTimeout(() => startFinalSequence(), 1500);
             }
             continue;
           }
@@ -812,28 +1133,95 @@
         if (b.x < game.camX - 40 || b.x > game.camX + W + 40) game.bullets.splice(i,1);
       }
 
+      // ---- Boss ----
       if (game.boss.alive) {
         const boss = game.boss;
         if (boss.state === 'dormant' && p.x > BOSS_TRIGGER_X) {
-          boss.state = 'spawning'; boss.spawnStartFrame = game.frame;
+          boss.state = 'spawning';
+          boss.spawnStartFrame = game.frame;
           spawnGroundCrack(boss.x + boss.w/2);
           document.getElementById('boss-hp-wrap').style.display = 'block';
           updateBossHpBar();
+          // Dialogo intro
+          setTimeout(() => {
+            showBossDialogue(getRandomDialogue(BOSS_DIALOGUES.intro), 2000);
+          }, 500);
         }
         if (boss.state === 'spawning') {
           const progress = (game.frame - boss.spawnStartFrame) / BOSS_SPAWN_DURATION;
-          if (progress >= 1) { boss.state = 'active'; boss.nextMissileFrame = game.frame + 70; }
+          if (progress >= 1) {
+            boss.state = 'active';
+            boss.nextMissileFrame = game.frame + 60;
+            boss.attackTimer = 0;
+          }
         }
         if (boss.state !== 'dormant' && p.x + p.w > boss.x && p.x < boss.x + boss.w) p.x = boss.x - p.w;
-        if (boss.state === 'active' && game.frame >= boss.nextMissileFrame) {
-          game.missiles.push({ x: boss.x - 6, y: boss.y + boss.h - 30, w: 14, h: 10, vx: -3, vy: 0, spawnFrame: game.frame });
-          boss.nextMissileFrame = game.frame + 90 + Math.floor(Math.random() * 40);
+
+        // Attacchi del boss (fase attiva)
+        if (boss.state === 'active') {
+          boss.attackTimer++;
+          const attackSpeed = boss.phase === 2 ? 1.5 : 1;
+
+          if (boss.attackTimer > 40 / attackSpeed) {
+            boss.attackTimer = 0;
+            boss.attackPattern = (boss.attackPattern + 1) % 3;
+
+            if (boss.attackPattern === 0) {
+              // Missili
+              game.missiles.push({
+                x: boss.x - 6, y: boss.y + boss.h - 30, w: 14, h: 10,
+                vx: -3, vy: 0, spawnFrame: game.frame
+              });
+              if (boss.phase === 2) {
+                // Doppio missile in fase 2
+                game.missiles.push({
+                  x: boss.x - 6, y: boss.y + boss.h - 10, w: 14, h: 10,
+                  vx: -3, vy: -0.5, spawnFrame: game.frame
+                });
+              }
+            } else if (boss.attackPattern === 1 && boss.phase === 2) {
+              // Raffica di proiettili (solo fase 2)
+              for (let j = 0; j < 5; j++) {
+                setTimeout(() => {
+                  if (!game.boss.alive) return;
+                  game.bullets.push({
+                    x: boss.x - 4, y: boss.y + 20 + Math.random() * 40,
+                    w: 8, h: 8, vx: -4 - Math.random() * 2, vy: (Math.random() - 0.5) * 1.5
+                  });
+                }, j * 80);
+              }
+            } else {
+              // Onda d'urto (da schivare saltando)
+              if (boss.phase === 2) {
+                // Effetto visivo onda (particelle a terra)
+                for (let k = 0; k < 20; k++) {
+                  game.bossParticles.push({
+                    x: boss.x + Math.random() * boss.w,
+                    y: GROUND_Y - 4,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: -1 - Math.random() * 2,
+                    size: 3 + Math.random() * 4,
+                    life: 20 + Math.random() * 10,
+                    maxLife: 30,
+                    color: '#ff8a3d',
+                  });
+                }
+                // Se il giocatore è a terra, subisce danno
+                if (p.onGround && p.x > boss.x - 100 && p.x < boss.x + boss.w + 100) {
+                  loseLife();
+                  return;
+                }
+              }
+            }
+          }
         }
       }
 
+      // ---- Particelle ----
       updateParticles(game.bossParticles);
       updateParticles(game.poofParticles);
 
+      // ---- Missili boss ----
       for (let i = game.missiles.length - 1; i >= 0; i--) {
         const m = game.missiles[i];
         const homing = (game.frame - m.spawnFrame) < 40;
@@ -851,23 +1239,39 @@
         if (m.x < game.camX - 80 || m.x > game.camX + W + 80) game.missiles.splice(i,1);
       }
 
+      // ---- Limiti ----
       if (p.x < 0) p.x = 0;
       game.camX = Math.max(0, p.x - W / 2.5);
 
+      // ---- Progresso ----
       const totalDist = game.flagX - 20;
       const progress = Math.min(100, Math.round(((p.x - 20) / totalDist) * 100));
       document.getElementById('hud-progress').textContent = `🏁 Distanza: ${Math.min(100, progress)}%`;
 
-      if (p.x > game.flagX) { game.won = true; onWin(); }
+      // ---- Traguardo (solo se boss sconfitto) ----
+      if (game.boss.alive === false && p.x > game.flagX) {
+        game.won = true;
+        // La sequenza finale è già stata avviata dalla sconfitta del boss
+      }
+
+      // ---- Cooldown dialoghi ----
+      if (game.bossDialogueCooldown > 0) game.bossDialogueCooldown--;
     }
 
+    /* ============================================================
+       SEZIONE 11: GIOCO - FUNZIONI DI GESTIONE
+       ============================================================ */
     function loseLife() {
       document.getElementById('boss-hp-wrap').style.display = 'none';
       sfx.hit(); triggerShake(6, 12);
       game.lives--;
+      stats.deaths++;
       document.getElementById('hud-lives').textContent = '♥'.repeat(Math.max(game.lives, 0));
-      if (game.lives <= 0) { game.over = true; onLose(); }
-      else {
+      if (game.lives <= 0) {
+        game.over = true;
+        stats.endTime = performance.now();
+        onLose();
+      } else {
         game.player = makePlayer(game.checkpointX);
         game.player.invulnUntil = game.frame + 60;
         const gunEarned = game.checkpointX > 20;
@@ -883,8 +1287,10 @@
         game.poofParticles = [];
         game.shakeUntil = 0;
         game.missiles = [];
+        game.dustParticles = [];
         lastShotFrame = -1000;
         document.getElementById('btn-shoot-gun').style.display = gunEarned ? 'flex' : 'none';
+        document.getElementById('boss-dialogue').classList.remove('show');
       }
     }
 
@@ -896,23 +1302,25 @@
     function triggerShake(mag, dur) { game.shakeMagnitude = mag; game.shakeUntil = game.frame + dur; }
 
     function spawnGroundCrack(cx) {
-      for (let i=0; i<16; i++) {
+      for (let i=0; i<20; i++) {
         game.bossParticles.push({
-          x: cx + (Math.random()-0.5)*70, y: GROUND_Y - Math.random()*8,
-          vx: (Math.random()-0.5)*3.5, vy: -3 - Math.random()*3,
-          size: 4+Math.random()*5, life:30+Math.random()*20, maxLife:45, color:'#7a5a34'
+          x: cx + (Math.random()-0.5)*80, y: GROUND_Y - Math.random()*10,
+          vx: (Math.random()-0.5)*4, vy: -4 - Math.random()*4,
+          size: 4+Math.random()*6, life:30+Math.random()*20, maxLife:50, color:'#7a5a34'
         });
       }
     }
+
     function spawnPoof(cx, cy, color, count) {
       for (let i=0; i<count; i++) {
-        const angle = Math.random()*Math.PI*2, speed = 1.5+Math.random()*3;
+        const angle = Math.random()*Math.PI*2, speed = 1.5+Math.random()*4;
         game.poofParticles.push({
           x:cx, y:cy, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed-1,
-          size:3+Math.random()*4, life:20+Math.random()*15, maxLife:35, color
+          size:3+Math.random()*5, life:20+Math.random()*20, maxLife:40, color
         });
       }
     }
+
     function updateParticles(arr) {
       for (let i=arr.length-1; i>=0; i--) {
         const pt = arr[i];
@@ -926,11 +1334,12 @@
       lastShotFrame = game.frame;
       const p = game.player;
       game.bullets.push({ x: p.facing>0 ? p.x+p.w : p.x-8, y: p.y+10, w:11, h:6, vx: p.facing*7 });
+      stats.shotsFired++;
       sfx.shoot();
     }
 
     /* ============================================================
-       SEZIONE 10: GIOCO - RENDER (identico a prima)
+       SEZIONE 12: GIOCO - RENDER
        ============================================================ */
     function render() {
       drawSky();
@@ -943,34 +1352,104 @@
       ctx.save();
       ctx.translate(-game.camX + shakeX, shakeY);
 
+      // Piattaforme
       for (const plat of game.platforms) drawGroundBlock(plat);
       drawFlag(game.flagX);
       drawArrivalBuilding(game.flagX + 60);
+
+      // Nemici
       for (const en of game.enemies) if (en.alive) drawEnemy(en);
       for (const fb of game.fireballs) drawFireball(fb);
+
+      // Muro fuoco
       const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
       if (!firesDefeatedForGate) drawFireGate(FIRE_GATE_X);
+
+      // Pistola
       if (!game.gunPickup.collected) {
         const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
         if (firesDefeated) drawGunPickup(game.gunPickup);
       }
+
+      // Particelle
       for (const pt of game.bossParticles) drawParticle(pt);
       for (const pt of game.poofParticles) drawParticle(pt);
+
+      // Foglie
+      for (const l of game.leafParticles) {
+        ctx.save();
+        ctx.translate(l.x, l.y);
+        ctx.rotate(l.rot);
+        ctx.fillStyle = l.color;
+        ctx.fillRect(-l.size/2, -l.size/4, l.size, l.size/2);
+        ctx.restore();
+      }
+
+      // Polvere
+      for (const d of game.dustParticles) {
+        ctx.globalAlpha = d.life / d.maxLife;
+        ctx.fillStyle = d.color;
+        ctx.fillRect(d.x, d.y, d.size, d.size);
+        ctx.globalAlpha = 1;
+      }
+
+      // Stelle cadenti
+      for (const s of game.shootingStars) {
+        const alpha = s.life / s.maxLife;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(s.x, s.y, 8, 2);
+        ctx.fillRect(s.x-6, s.y-1, 6, 4);
+        ctx.fillRect(s.x-12, s.y, 6, 2);
+        ctx.globalAlpha = 1;
+      }
+
+      // Boss
       if (game.boss.alive && game.boss.state !== 'dormant') drawBossWithSpawn(game.boss);
+
+      // Missili
       for (const m of game.missiles) drawMissile(m);
-      for (const b of game.bullets) drawBullet(b);
+
+      // Proiettili giocatore e del boss (raffica)
+      for (const b of game.bullets) {
+        if (b.w === 8 && b.h === 8) {
+          // proiettile del boss (raffica)
+          ctx.fillStyle = '#ff8a3d';
+          ctx.beginPath(); ctx.arc(b.x+4, b.y+4, 4, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#ffe27a';
+          ctx.beginPath(); ctx.arc(b.x+4, b.y+4, 2, 0, Math.PI*2); ctx.fill();
+        } else {
+          drawBullet(b);
+        }
+      }
+
+      // Giocatore
       drawPlayer(game.player);
 
       ctx.restore();
       positionFaceOverlay();
     }
 
-    // --- Draw Functions (come prima) ---
+    // --- Draw Functions (con miglioramenti) ---
     function drawSky() {
+      // Sole che si muove lentamente
+      const sunX = 100 + Math.sin(game.time * 0.005) * 30;
       const grad = ctx.createLinearGradient(0,0,0,H);
-      grad.addColorStop(0, '#2b7be0'); grad.addColorStop(0.6, '#7ec8ff'); grad.addColorStop(1, '#b5dffa');
+      grad.addColorStop(0, '#2b7be0');
+      grad.addColorStop(0.5, '#7ec8ff');
+      grad.addColorStop(1, '#b5dffa');
       ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+      // Sole
+      ctx.fillStyle = '#ffe27a';
+      ctx.beginPath();
+      ctx.arc(sunX, 35, 22, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,226,122,0.2)';
+      ctx.beginPath();
+      ctx.arc(sunX, 35, 40, 0, Math.PI*2);
+      ctx.fill();
     }
+
     function drawParallax() {
       const treeOffset = (game.camX * 0.4) % 320;
       ctx.fillStyle = '#2d6a4f';
@@ -986,20 +1465,23 @@
         drawHill(hx, GROUND_Y+4, 100, 45); drawHill(hx+180, GROUND_Y+10, 80, 30);
       }
       const cloudOffset = (game.camX * 0.1) % 280;
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
       for (let i=-1; i<4; i++) {
         const cx = i*280 - cloudOffset;
         drawCloud(cx+20, 30); drawCloud(cx+150, 60);
       }
     }
+
     function drawTree(x, baseY, w, h) {
       ctx.fillStyle = '#6b3e1e'; ctx.fillRect(x+w/2-2, baseY-h, 4, h);
       ctx.fillStyle = '#2d6a4f';
       ctx.beginPath(); ctx.moveTo(x, baseY-h+6); ctx.lineTo(x+w/2, baseY-h-16); ctx.lineTo(x+w, baseY-h+6); ctx.fill();
       ctx.beginPath(); ctx.moveTo(x+6, baseY-h+12); ctx.lineTo(x+w/2, baseY-h-6); ctx.lineTo(x+w-6, baseY-h+12); ctx.fill();
     }
+
     function drawHill(x, baseY, w, h) { ctx.beginPath(); ctx.moveTo(x, baseY); ctx.quadraticCurveTo(x+w/2, baseY-h, x+w, baseY); ctx.closePath(); ctx.fill(); }
     function drawCloud(x, y) { ctx.fillRect(x,y,40,12); ctx.fillRect(x+10,y-8,24,10); ctx.fillRect(x+20,y+8,22,8); }
+
     function drawGroundBlock(plat) {
       ctx.fillStyle = '#8a5a34'; ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
       ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.fillRect(plat.x, plat.y+8, plat.w, 3); ctx.fillRect(plat.x, plat.y+plat.h-4, plat.w, 4);
@@ -1007,12 +1489,14 @@
       ctx.fillStyle = '#388e3c';
       for (let bx=6; bx<plat.w-4; bx+=16) ctx.fillRect(plat.x+bx, plat.y, 5, 3);
     }
+
     function drawFlag(flagX) {
       ctx.fillStyle = '#d9d9d9'; ctx.fillRect(flagX+10, GROUND_Y-120, 4, 120);
       ctx.fillStyle = '#ffd93d'; ctx.fillRect(flagX+6, GROUND_Y-124, 12, 6);
       ctx.fillStyle = '#ff4d6d';
       ctx.beginPath(); ctx.moveTo(flagX+14, GROUND_Y-116); ctx.lineTo(flagX+46, GROUND_Y-104); ctx.lineTo(flagX+14, GROUND_Y-92); ctx.fill();
     }
+
     function drawArrivalBuilding(x) {
       const baseY = GROUND_Y, bw=140, bh=95;
       ctx.fillStyle = '#d94f3c'; ctx.fillRect(x, baseY-bh, bw, bh);
@@ -1023,6 +1507,7 @@
       ctx.fillStyle = '#fff8e8'; ctx.fillRect(x+bw/2-38, baseY-bh-36, 76, 18);
       ctx.fillStyle = '#7a2e22'; ctx.font='10px monospace'; ctx.textAlign='center'; ctx.fillText('PIZZA', x+bw/2, baseY-bh-22);
     }
+
     const enemySprite = new Image(); let enemySpriteLoaded=false; enemySprite.onload=()=>enemySpriteLoaded=true; enemySprite.src='nemico.png';
     function drawEnemy(en) {
       if (enemySpriteLoaded) {
@@ -1040,12 +1525,14 @@
       ctx.fillStyle = '#fff'; const eyeX = en.dir>0 ? en.x+en.w-10 : en.x+3; ctx.fillRect(eyeX, en.y+3, 6, 6);
       ctx.fillStyle = '#1a1a1a'; ctx.fillRect(eyeX+(en.dir>0?3:1), en.y+5, 2, 3);
     }
+
     function drawFireTurret(en) {
       const pulse = Math.sin(game.frame*0.15)*2;
       ctx.fillStyle = '#3a1a1a'; ctx.fillRect(en.x, en.y+8, en.w, en.h-8);
       ctx.fillStyle = '#ffcf4d'; const eyeX = en.dir>0 ? en.x+en.w-10 : en.x+4; ctx.fillRect(eyeX, en.y+12, 6, 5);
       drawFireIndicator(en);
     }
+
     function drawFireIndicator(en) {
       const pulse = Math.sin(game.frame*0.15)*2;
       const cx = en.x+en.w/2, topY = en.y-6-pulse;
@@ -1054,11 +1541,13 @@
       ctx.fillStyle = '#ffe27a';
       ctx.beginPath(); ctx.moveTo(cx, topY+5); ctx.quadraticCurveTo(cx+4, topY+12, cx, topY+15); ctx.quadraticCurveTo(cx-4, topY+12, cx, topY+5); ctx.fill();
     }
+
     function drawFireball(fb) {
       ctx.fillStyle = '#ff5a1f'; ctx.beginPath(); ctx.arc(fb.x+fb.w/2, fb.y+fb.h/2, fb.w/2, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#ffe27a'; ctx.beginPath(); ctx.arc(fb.x+fb.w/2, fb.y+fb.h/2, fb.w/4, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = 'rgba(255,90,31,0.3)'; ctx.fillRect(fb.x-8, fb.y+2, 6, fb.h-4);
     }
+
     function drawFireGate(x) {
       const pulse = 0.5 + Math.sin(game.frame*0.1)*0.15;
       ctx.save(); ctx.globalAlpha = pulse;
@@ -1068,6 +1557,7 @@
       for (let y=GROUND_Y-130; y<GROUND_Y; y+=20) ctx.fillRect(x-6, y, 12, 10);
       ctx.restore();
     }
+
     function drawGunPickup(gp) {
       const bob = Math.sin(game.frame*0.1)*3;
       ctx.fillStyle = 'rgba(255,217,61,0.25)'; ctx.beginPath(); ctx.ellipse(gp.x+gp.w/2, gp.y+gp.h+6, 14,4,0,0,Math.PI*2); ctx.fill();
@@ -1075,36 +1565,49 @@
       ctx.fillStyle = '#7a5a2a'; ctx.fillRect(gp.x, gp.y+12+bob, 6, 10);
       ctx.fillStyle = '#ffd93d'; ctx.font='8px monospace'; ctx.fillText('🔫', gp.x-2, gp.y-2+bob);
     }
+
     function drawBullet(b) {
       ctx.fillStyle = 'rgba(255,226,122,0.4)'; const tx = b.vx>0 ? b.x-10 : b.x+b.w; ctx.fillRect(tx, b.y-1, 10, b.h+2);
       ctx.fillStyle = '#ffe27a'; ctx.fillRect(b.x-1, b.y-1, b.w+2, b.h+2);
       ctx.fillStyle = '#fff8d6'; ctx.fillRect(b.x+1, b.y, b.w-2, b.h);
     }
+
     function drawMissile(m) {
       ctx.fillStyle = '#7a2e22'; ctx.fillRect(m.x, m.y, m.w, m.h);
       ctx.fillStyle = '#ff8a3d'; ctx.beginPath(); ctx.moveTo(m.x, m.y+m.h/2); ctx.lineTo(m.x-8, m.y); ctx.lineTo(m.x-8, m.y+m.h); ctx.fill();
       ctx.fillStyle = 'rgba(255,138,61,0.3)'; ctx.fillRect(m.x-12, m.y+2, 6, m.h-4);
     }
+
     function drawBoss(boss, drawY) {
       const y = drawY !== undefined ? drawY : boss.y;
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(boss.x+boss.w/2, GROUND_Y+3, boss.w/2, 6, 0,0,Math.PI*2); ctx.fill();
-      if (enemySpriteLoaded) { ctx.drawImage(enemySprite, boss.x, y, boss.w, boss.h); }
-      else {
-        ctx.fillStyle = '#2c0a0a'; ctx.fillRect(boss.x, y+16, boss.w, boss.h-16);
-        ctx.fillStyle = '#5c1a10'; ctx.fillRect(boss.x+8, y+boss.h-24, boss.w-16, 16);
+
+      // Colore cambia in fase 2
+      const color1 = boss.phase === 2 ? '#4a0a0a' : '#2c0a0a';
+      const color2 = boss.phase === 2 ? '#8a2a1a' : '#5c1a10';
+
+      if (enemySpriteLoaded) {
+        ctx.drawImage(enemySprite, boss.x, y, boss.w, boss.h);
+      } else {
+        ctx.fillStyle = color1; ctx.fillRect(boss.x, y+16, boss.w, boss.h-16);
+        ctx.fillStyle = color2; ctx.fillRect(boss.x+8, y+boss.h-24, boss.w-16, 16);
         ctx.fillStyle = '#8a2a1a'; ctx.fillRect(boss.x, y+6, 12, 12); ctx.fillRect(boss.x+boss.w-12, y+6, 12, 12);
         ctx.fillStyle = '#c0392b'; ctx.fillRect(boss.x, y+8, 8, 8); ctx.fillRect(boss.x+boss.w-8, y+8, 8, 8);
-        ctx.fillStyle = '#ffcf4d'; ctx.fillRect(boss.x+12, y+24, 18, 16); ctx.fillRect(boss.x+boss.w-30, y+24, 18, 16);
+        ctx.fillStyle = boss.phase === 2 ? '#ff4d6d' : '#ffcf4d';
+        ctx.fillRect(boss.x+12, y+24, 18, 16); ctx.fillRect(boss.x+boss.w-30, y+24, 18, 16);
         ctx.fillStyle = '#1a1a1a'; ctx.fillRect(boss.x+18, y+30, 6, 8); ctx.fillRect(boss.x+boss.w-24, y+30, 6, 8);
         ctx.fillStyle = '#1a0a0a'; ctx.fillRect(boss.x+14, y+50, 46, 12);
-        ctx.fillStyle = '#ff4d6d'; ctx.fillRect(boss.x+18, y+52, 8, 4); ctx.fillRect(boss.x+38, y+52, 8, 4);
+        ctx.fillStyle = boss.phase === 2 ? '#ff8a3d' : '#ff4d6d';
+        ctx.fillRect(boss.x+18, y+52, 8, 4); ctx.fillRect(boss.x+38, y+52, 8, 4);
       }
+
       if (boss.flashUntil && game.frame < boss.flashUntil) {
         ctx.globalAlpha = 0.5; ctx.fillStyle='#fff'; ctx.fillRect(boss.x, y, boss.w, boss.h); ctx.globalAlpha=1;
       }
       ctx.restore();
     }
+
     function drawBossWithSpawn(boss) {
       if (boss.state === 'active') { drawBoss(boss); return; }
       const progress = Math.min(1, (game.frame - boss.spawnStartFrame) / BOSS_SPAWN_DURATION);
@@ -1114,12 +1617,14 @@
       ctx.save(); ctx.beginPath(); ctx.rect(boss.x-20, -2000, boss.w+40, 2000+GROUND_Y); ctx.clip();
       drawBoss(boss, drawY); ctx.restore();
     }
+
     function drawParticle(pt) {
       ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
       ctx.fillStyle = pt.color || '#7a5a34';
       ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
       ctx.globalAlpha = 1;
     }
+
     function drawPlayer(p) {
       ctx.save();
       const walking = Math.abs(p.vx) > 0 && p.onGround;
@@ -1144,6 +1649,7 @@
       ctx.fillRect(p.x+4, p.y-6, p.w-8, 6);
       ctx.restore();
     }
+
     function positionFaceOverlay() {
       const overlay = document.getElementById('face-overlay');
       if (!state.faceCanvas) { overlay.style.display='none'; return; }
@@ -1162,7 +1668,7 @@
     }
 
     /* ============================================================
-       SEZIONE 11: INPUT
+       SEZIONE 13: INPUT
        ============================================================ */
     function bindTouch(id, prop) {
       const el = document.getElementById(id);
@@ -1191,7 +1697,7 @@
     });
 
     /* ============================================================
-       SEZIONE 12: GAME LOOP
+       SEZIONE 14: GAME LOOP
        ============================================================ */
     function loop() {
       if (!game || game.over || game.won) return;
@@ -1200,25 +1706,207 @@
     }
 
     /* ============================================================
-       SEZIONE 13: VITTORIA / SCONFITTA
+       SEZIONE 15: SEQUENZA FINALE (dopo boss sconfitto)
        ============================================================ */
-    function onWin() {
-      document.getElementById('win-message').textContent =
-        `${state.name}, hai superato la prova! Preparati per la festa di Michele: sarà leggendaria. 🎉`;
+    function startFinalSequence() {
+      // Disabilita il game loop
+      game.won = true;
+      stats.endTime = performance.now();
+
+      // 1. Esplosione (già fatta)
+      // 2. Confetti (dopo 1.5s)
+      setTimeout(() => {
+        spawnConfetti();
+        sfx.win();
+        // Cambia musica? (la musica di sottofondo resta)
+        // 3. Fuochi d'artificio (dopo 2s)
+        setTimeout(() => {
+          startFireworks();
+        }, 1500);
+      }, 1500);
+    }
+
+    let fireworksActive = false;
+    function startFireworks() {
+      if (fireworksActive) return;
+      fireworksActive = true;
+      // Disegna fuochi d'artificio sul canvas (in un overlay temporaneo?)
+      // Usiamo un overlay HTML per semplicità: creiamo un canvas temporaneo sopra
+      const fwCanvas = document.createElement('canvas');
+      fwCanvas.width = W; fwCanvas.height = H;
+      fwCanvas.style.position = 'absolute';
+      fwCanvas.style.top = '0';
+      fwCanvas.style.left = '0';
+      fwCanvas.style.width = '100%';
+      fwCanvas.style.height = '100%';
+      fwCanvas.style.pointerEvents = 'none';
+      fwCanvas.style.zIndex = '30';
+      const wrap = document.getElementById('game-wrap');
+      wrap.appendChild(fwCanvas);
+
+      const fwCtx = fwCanvas.getContext('2d');
+      let particles = [];
+      let colors = ['#ff4d6d', '#ffd93d', '#4dd6ff', '#3bcb6f', '#fff', '#ff8a3d'];
+
+      function createExplosion(x, y) {
+        const count = 30 + Math.random() * 20;
+        for (let i=0; i<count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 1 + Math.random() * 3;
+          particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 0.5,
+            life: 40 + Math.random() * 30,
+            maxLife: 70,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            size: 2 + Math.random() * 4,
+          });
+        }
+      }
+
+      let frameCount = 0;
+      function animateFireworks() {
+        if (frameCount > 100) {
+          fwCanvas.remove();
+          fireworksActive = false;
+          // Passa al regalo
+          showGift();
+          return;
+        }
+        fwCtx.clearRect(0, 0, W, H);
+        // Nuove esplosioni ogni 10 frame
+        if (frameCount % 12 === 0) {
+          createExplosion(Math.random() * W, 50 + Math.random() * 120);
+        }
+        for (let i=particles.length-1; i>=0; i--) {
+          const p = particles[i];
+          p.x += p.vx; p.y += p.vy;
+          p.vy += 0.05;
+          p.life--;
+          if (p.life <= 0) { particles.splice(i,1); continue; }
+          const alpha = p.life / p.maxLife;
+          fwCtx.globalAlpha = alpha;
+          fwCtx.fillStyle = p.color;
+          fwCtx.fillRect(p.x, p.y, p.size, p.size);
+          // Scia
+          fwCtx.globalAlpha = alpha * 0.3;
+          fwCtx.fillRect(p.x - p.vx*2, p.y - p.vy*2, p.size*0.6, p.size*0.6);
+        }
+        fwCtx.globalAlpha = 1;
+        frameCount++;
+        requestAnimationFrame(animateFireworks);
+      }
+      animateFireworks();
+    }
+
+    function showGift() {
+      const overlay = document.getElementById('gift-overlay');
+      const box = document.getElementById('gift-box');
+      const content = document.getElementById('gift-content');
+
+      overlay.classList.add('active');
+      sfx.gift();
+
+      setTimeout(() => {
+        box.classList.add('open');
+        setTimeout(() => {
+          content.textContent = '🎉 Invito per la festa di Michele!';
+          content.classList.add('show');
+          sfx.win();
+          // Dopo 3 secondi mostra la schermata finale personalizzata
+          setTimeout(() => {
+            showFinalScreen();
+          }, 2500);
+        }, 800);
+      }, 600);
+    }
+
+    function showFinalScreen() {
+      const finalScreen = document.getElementById('final-screen');
+      const avatar = document.getElementById('final-avatar');
+      const nameEl = document.getElementById('final-name');
+
+      avatar.src = state.faceCanvas.toDataURL();
+      nameEl.textContent = state.name;
+      finalScreen.classList.add('active');
+
+      // Nascondi gift overlay
+      document.getElementById('gift-overlay').classList.remove('active');
+
+      // Dopo 4 secondi mostra le statistiche
+      setTimeout(() => {
+        finalScreen.classList.remove('active');
+        showWinScreen();
+      }, 4000);
+    }
+
+    function showWinScreen() {
+      // Calcola statistiche
+      const totalTime = (stats.endTime - stats.startTime) / 1000;
+      const minutes = Math.floor(totalTime / 60);
+      const seconds = Math.floor(totalTime % 60);
+      const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      const accuracy = stats.shotsFired > 0 ? Math.round((stats.shotsHit / stats.shotsFired) * 100) : 0;
+      let grade = 'F';
+      if (accuracy >= 90 && stats.deaths <= 1) grade = 'A+';
+      else if (accuracy >= 75 && stats.deaths <= 3) grade = 'A';
+      else if (accuracy >= 60) grade = 'B';
+      else if (accuracy >= 40) grade = 'C';
+
+      const container = document.getElementById('stats-container');
+      container.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px 16px;">
+          <span>👤 Giocatore:</span><span style="color:#ffd93d;">${state.name}</span>
+          <span>💀 Morti:</span><span>${stats.deaths}</span>
+          <span>⏱️ Tempo:</span><span>${timeStr}</span>
+          <span>👾 Nemici eliminati:</span><span>${stats.enemiesKilled}</span>
+          <span>🎯 Precisione:</span><span>${accuracy}%</span>
+          <span>⭐ Voto:</span><span style="color:${grade === 'A+' ? '#ffd93d' : '#3bcb6f'};">${grade}</span>
+        </div>
+      `;
+
+      // Mostra la foto
       const preview = document.getElementById('face-preview');
       preview.width = 90; preview.height = 90;
       const pctx = preview.getContext('2d');
       if (state.faceCanvas) pctx.drawImage(state.faceCanvas, 0, 0, 90, 90);
+
       showScreen('screen-win');
-      sfx.win();
+      // Confetti già presenti, ne aggiungiamo altri
       spawnConfetti();
+
+      // Bottone per il regalo (mostra la gift overlay se cliccato)
+      document.getElementById('btn-show-gift').onclick = () => {
+        // Nascondi la schermata win e mostra la gift overlay
+        document.getElementById('screen-win').classList.remove('active');
+        document.getElementById('gift-overlay').classList.add('active');
+        // Resetta la scatola per riaprirla
+        const box = document.getElementById('gift-box');
+        box.classList.remove('open');
+        const content = document.getElementById('gift-content');
+        content.classList.remove('show');
+        content.textContent = 'Hai trovato un regalo!';
+        setTimeout(() => {
+          box.classList.add('open');
+          setTimeout(() => {
+            content.textContent = '🎉 Invito per la festa di Michele!';
+            content.classList.add('show');
+          }, 800);
+        }, 600);
+        // Dopo 4 secondi mostra il final screen
+        setTimeout(() => {
+          document.getElementById('gift-overlay').classList.remove('active');
+          showFinalScreen();
+        }, 4000);
+      };
     }
 
     function spawnConfetti() {
       const box = document.getElementById('confetti-layer');
       box.innerHTML = '';
       const colors = ['#ffd93d','#ff4d6d','#4dd6ff','#3bcb6f','#fff','#ff8a3d','#ff6b9d'];
-      for (let i=0; i<45; i++) {
+      for (let i=0; i<60; i++) {
         const el = document.createElement('div');
         el.className = 'confetti-piece';
         el.style.left = Math.random()*100 + '%';
@@ -1232,6 +1920,9 @@
       }
     }
 
+    /* ============================================================
+       SEZIONE 16: SCONFITTA
+       ============================================================ */
     function onLose() {
       document.getElementById('lose-message').textContent =
         `💔 Mi dispiace ${state.name}, questa volta non ce l'hai fatta. Niente festa per te... a meno che tu non voglia riprovare!`;
@@ -1242,10 +1933,14 @@
     document.getElementById('btn-retry').addEventListener('click', () => {
       showScreen('screen-game');
       gameInitialized = false;
+      // Resetta tutto
+      document.getElementById('gift-overlay').classList.remove('active');
+      document.getElementById('final-screen').classList.remove('active');
+      document.getElementById('boss-dialogue').classList.remove('show');
       startIntroThenGame();
     });
 
-    console.log('🚀 Invito Compleanno Fila - Con Intro Epica!');
+    console.log('🎮 Invito Compleanno Fila - Versione BOSS EPICO con finale spettacolare!');
   </script>
 </body>
 </html>
