@@ -8,9 +8,6 @@
   2. TODO-DATA     -> data e ora della festa
   3. TODO-LUOGO    -> indirizzo / luogo
   4. [FATTO] musica -> Coin-Block_Run.mp3
-  5. TODO-RSVP     -> se vuoi raccogliere conferme, sostituisci
-                      il bottone finale con un link Formspree/
-                      Google Form
   6. TODO-ICONA    -> icona home screen (vedi sotto, in attesa della foto)
   ================================================================
 -->
@@ -65,22 +62,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    #dev-version {
-      position: fixed;
-      top: 6px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.6);
-      color: #ffd93d;
-      font-family: 'PixelFont', 'Courier New', monospace;
-      font-size: 11px;
-      padding: 4px 10px;
-      border: 1px solid #ffd93d;
-      z-index: 999;
-      pointer-events: none;
-      letter-spacing: 1px;
     }
 
     .screen {
@@ -517,8 +498,6 @@
 </head>
 
 <body>
-  <!-- TODO: rimuovere questo badge prima della pubblicazione definitiva -->
-  <div id="dev-version">DEV BUILD v3-DEV</div>
   <div id="app" class="crt">
 
     <!-- SCHERMATA 0: AGGIUNGI ALLA HOME (volutamente generica, non svela nulla) -->
@@ -592,7 +571,7 @@
       <video id="video-preview" autoplay playsinline muted></video>
       <canvas id="capture-canvas"></canvas>
       <p class="body-text" id="camera-status">Inquadra il viso e sorridi.</p>
-      <button class="pixel-btn" id="btn-shoot">📸 SCATTA</button>
+      <button class="pixel-btn" id="btn-shoot" disabled>SCATTA</button>
       <button class="pixel-btn" id="btn-retake" style="display:none;">RIPETI</button>
       <button class="pixel-btn" id="btn-confirm"
         style="display:none; background:#3bcb6f; box-shadow:4px 4px 0 #145c2b,-4px 4px 0 #145c2b,0 0 0 3px #fff inset;">CONFERMA
@@ -643,8 +622,6 @@
           📅 SABATO 12 SETTEMBRE 2026 - ORE 19:00<br>
           📍 Piazza dei Ricordi 1, Cantù
         </p>
-        <button class="pixel-btn" onclick="window.open('https://forms.gle/TODO-RSVP','_blank')">CONFERMA LA TUA
-          PRESENZA</button>
       </div>
     </section>
 
@@ -785,19 +762,54 @@
     /* ============ SCHERMATA 2: CAMERA ============ */
     const video = document.getElementById('video-preview');
     const captureCanvas = document.getElementById('capture-canvas');
+    const shootButton = document.getElementById('btn-shoot');
     let mediaStream = null;
+    let cameraReady = false;
+
+    function stopCamera() {
+      if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+      mediaStream = null;
+      video.srcObject = null;
+    }
+
+    function startGame() {
+      stopCamera();
+      document.getElementById('hud-name').textContent = state.name;
+      showScreen('screen-game');
+      initGame();
+    }
 
     async function startCamera() {
+      cameraReady = false;
+      shootButton.disabled = true;
+      shootButton.textContent = 'ATTENDO LA FOTOCAMERA';
       try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Fotocamera non supportata');
+        }
         mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
         video.srcObject = mediaStream;
+        await video.play();
+        cameraReady = video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+        if (cameraReady) {
+          shootButton.disabled = false;
+          shootButton.textContent = 'SCATTA';
+        } else {
+          video.addEventListener('loadeddata', () => {
+            cameraReady = true;
+            shootButton.disabled = false;
+            shootButton.textContent = 'SCATTA';
+          }, { once: true });
+        }
       } catch (err) {
         document.getElementById('camera-status').textContent =
           'Non riesco ad accedere alla fotocamera. Controlla i permessi del browser e ricarica la pagina.';
+        shootButton.textContent = 'FOTOCAMERA NON DISPONIBILE';
       }
     }
 
     document.getElementById('btn-shoot').addEventListener('click', () => {
+      if (!cameraReady || !video.videoWidth || !video.videoHeight) return;
       const w = video.videoWidth, h = video.videoHeight;
       captureCanvas.width = w; captureCanvas.height = h;
       const ctx = captureCanvas.getContext('2d');
@@ -823,11 +835,10 @@
     document.getElementById('btn-confirm').addEventListener('click', () => {
       state.faceCanvas = pixelateFace(captureCanvas);
       document.getElementById('face-overlay').src = state.faceCanvas.toDataURL();
-      if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-      document.getElementById('hud-name').textContent = state.name;
-      showScreen('screen-game');
-      initGame();
+      startGame();
     });
+
+
 
     // Ritaglia un cerchio centrale dal selfie, mantenendo l'immagine nitida (nessuna pixelizzazione)
     function pixelateFace(sourceCanvas) {
