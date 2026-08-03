@@ -629,7 +629,7 @@
     }
 
     /* ============================================================
-       SEZIONE 5: CREAZIONE CON OMINO 2D (riutilizziamo la versione corretta)
+       SEZIONE 5: CREAZIONE CON OMINO 2D
        ============================================================ */
     function startCreationSequence() {
       const overlay = document.getElementById('creation-overlay');
@@ -645,7 +645,7 @@
         runCreationAnimation(ctx, W, H, faceImg);
       };
       faceImg.onerror = () => {
-        // Fallback
+        // Fallback: avatar generico
         const fallbackCanvas = document.createElement('canvas');
         fallbackCanvas.width = 80; fallbackCanvas.height = 80;
         const fctx = fallbackCanvas.getContext('2d');
@@ -658,6 +658,323 @@
         fbImg.src = fallbackCanvas.toDataURL();
       };
       faceImg.src = state.faceDataURL || '';
+    }
+
+    /* ============================================================
+       SEZIONE 5b: ANIMAZIONE CREAZIONE (runCreationAnimation)
+       ============================================================ */
+    function runCreationAnimation(ctx, W, H, faceImg) {
+      const status = document.getElementById('creation-status');
+      let frame = 0;
+
+      const guy = {
+        x: -50,
+        y: 120,
+        bodyW: 34,
+        bodyH: 44,
+        headSize: 28,
+        headY: -14, // offset RELATIVO al corpo (gy)
+        legLen: 18,
+        armLen: 16,
+        state: 'walking',
+        attached: false,
+        flashTimer: 0,
+        scale: 1,
+        alpha: 1,
+        breathe: 0,
+        faceScale: 0,
+        attachTimer: 0,
+      };
+
+      // ---- DISEGNA OMINO DETTAGLIATO ----
+      function drawDetailedGuy(gx, gy) {
+        const s = guy.scale;
+        const alpha = guy.alpha;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(gx, gy);
+        ctx.scale(s, s);
+
+        // Ombra
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.beginPath();
+        ctx.ellipse(guy.bodyW/2, guy.bodyH + 6, guy.bodyW/2 + 4, 6, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // ---- GAMBE ----
+        const legSwing = guy.state === 'walking' ? Math.sin(frame * 0.08) * 7 : 0;
+        const legSwing2 = guy.state === 'walking' ? Math.sin(frame * 0.08 + Math.PI) * 7 : 0;
+
+        ctx.fillStyle = '#1a2a4a';
+        ctx.beginPath();
+        ctx.moveTo(10, guy.bodyH - 4);
+        ctx.quadraticCurveTo(8 + legSwing, guy.bodyH + guy.legLen/2, 10 + legSwing*0.5, guy.bodyH + guy.legLen);
+        ctx.lineTo(14 + legSwing*0.5, guy.bodyH + guy.legLen);
+        ctx.quadraticCurveTo(12 + legSwing*0.5, guy.bodyH + guy.legLen/2, 14, guy.bodyH - 4);
+        ctx.fill();
+
+        ctx.fillStyle = '#1a2a4a';
+        ctx.beginPath();
+        ctx.moveTo(guy.bodyW - 10, guy.bodyH - 4);
+        ctx.quadraticCurveTo(guy.bodyW - 8 + legSwing2, guy.bodyH + guy.legLen/2, guy.bodyW - 10 + legSwing2*0.5, guy.bodyH + guy.legLen);
+        ctx.lineTo(guy.bodyW - 14 + legSwing2*0.5, guy.bodyH + guy.legLen);
+        ctx.quadraticCurveTo(guy.bodyW - 12 + legSwing2*0.5, guy.bodyH + guy.legLen/2, guy.bodyW - 14, guy.bodyH - 4);
+        ctx.fill();
+
+        // Scarpe
+        ctx.fillStyle = '#1a1a2a';
+        ctx.fillRect(6 + legSwing*0.5, guy.bodyH + guy.legLen - 3, 10, 5);
+        ctx.fillRect(guy.bodyW - 16 + legSwing2*0.5, guy.bodyH + guy.legLen - 3, 10, 5);
+
+        // ---- BUSTO ----
+        const breatheOffset = guy.state === 'walking' ? 0 : Math.sin(frame * 0.03) * 0.8;
+        const bodyGrad = ctx.createLinearGradient(0, 4, 0, guy.bodyH);
+        bodyGrad.addColorStop(0, '#4a8aff');
+        bodyGrad.addColorStop(0.5, '#3b7dff');
+        bodyGrad.addColorStop(1, '#1f4fbf');
+        ctx.fillStyle = bodyGrad;
+        // Busto arrotondato senza roundRect (per compatibilità)
+        const bx = 4, by = 8 + breatheOffset, bw = guy.bodyW - 8, bh = guy.bodyH - 14, r = 6;
+        ctx.beginPath();
+        ctx.moveTo(bx + r, by);
+        ctx.lineTo(bx + bw - r, by);
+        ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+        ctx.lineTo(bx + bw, by + bh - r);
+        ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+        ctx.lineTo(bx + r, by + bh);
+        ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+        ctx.lineTo(bx, by + r);
+        ctx.quadraticCurveTo(bx, by, bx + r, by);
+        ctx.fill();
+
+        // Colletto
+        ctx.fillStyle = '#1f4fbf';
+        ctx.beginPath();
+        ctx.moveTo(8, 10 + breatheOffset);
+        ctx.lineTo(guy.bodyW/2, 6 + breatheOffset);
+        ctx.lineTo(guy.bodyW - 8, 10 + breatheOffset);
+        ctx.fill();
+
+        // Cintura
+        ctx.fillStyle = '#1a3a7a';
+        ctx.fillRect(6, guy.bodyH - 16, guy.bodyW - 12, 4);
+
+        // ---- BRACCIA ----
+        const armSwing = guy.state === 'walking' ? Math.sin(frame * 0.08) * 5 : 0;
+        const armSwing2 = guy.state === 'walking' ? Math.sin(frame * 0.08 + Math.PI) * 5 : 0;
+
+        ctx.fillStyle = '#2a5abf';
+        ctx.beginPath();
+        ctx.moveTo(4, 14 + breatheOffset);
+        ctx.quadraticCurveTo(-2 + armSwing, 22 + breatheOffset, 0 + armSwing*0.5, 30 + breatheOffset);
+        ctx.lineTo(4 + armSwing*0.5, 30 + breatheOffset);
+        ctx.quadraticCurveTo(2 + armSwing*0.5, 22 + breatheOffset, 6, 14 + breatheOffset);
+        ctx.fill();
+
+        ctx.fillStyle = '#2a5abf';
+        ctx.beginPath();
+        ctx.moveTo(guy.bodyW - 4, 14 + breatheOffset);
+        ctx.quadraticCurveTo(guy.bodyW + 2 + armSwing2, 22 + breatheOffset, guy.bodyW + armSwing2*0.5, 30 + breatheOffset);
+        ctx.lineTo(guy.bodyW - 4 + armSwing2*0.5, 30 + breatheOffset);
+        ctx.quadraticCurveTo(guy.bodyW - 2 + armSwing2*0.5, 22 + breatheOffset, guy.bodyW - 6, 14 + breatheOffset);
+        ctx.fill();
+
+        // ---- COLLO ----
+        ctx.fillStyle = '#ffd6a5';
+        ctx.fillRect(guy.bodyW/2 - 4, 4 + breatheOffset, 8, 6);
+
+        // ---- TESTA (ora RELATIVA a gy) ----
+        const headOffsetY = guy.headY + breatheOffset;
+        const headX = guy.bodyW/2 - guy.headSize/2;
+        const headY = headOffsetY;
+
+        if (guy.state === 'walking') {
+          // Testa vuota
+          ctx.strokeStyle = '#ffd6a5';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(guy.bodyW/2, headY + guy.headSize/2, guy.headSize/2, 0, Math.PI*2);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(255,214,165,0.15)';
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.3)';
+          ctx.font = '18px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('?', guy.bodyW/2, headY + guy.headSize/2 + 1);
+        } else {
+          // Disegna la faccia con zoom
+          const scale = guy.state === 'attaching' ? Math.min(1, guy.faceScale) : 1;
+          const fx = headX + (guy.headSize - 28 * scale) / 2;
+          const fy = headY + (guy.headSize - 28 * scale) / 2;
+          ctx.save();
+          ctx.globalAlpha = guy.attached ? 1 : (guy.state === 'attaching' ? Math.min(1, guy.faceScale) : 1);
+          ctx.drawImage(faceImg, fx, fy, 28 * scale, 28 * scale);
+          ctx.restore();
+
+          if (guy.attached) {
+            ctx.strokeStyle = `rgba(255,215,61,${0.3 + Math.sin(frame*0.08)*0.2})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(guy.bodyW/2, headY + guy.headSize/2, guy.headSize/2 + 3, 0, Math.PI*2);
+            ctx.stroke();
+          }
+        }
+
+        ctx.restore();
+      }
+
+      // ---- PORTALE ----
+      function drawPortal(px, py, progress) {
+        const radius = 18 + progress * 25;
+        ctx.save();
+
+        const glow = ctx.createRadialGradient(px, py, 0, px, py, radius + 20);
+        glow.addColorStop(0, 'rgba(77,214,255,0)');
+        glow.addColorStop(0.7, `rgba(77,214,255,${0.1 * progress})`);
+        glow.addColorStop(1, 'rgba(77,214,255,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(px, py, radius + 20, 0, Math.PI*2);
+        ctx.fill();
+
+        for (let i = 0; i < 4; i++) {
+          const r = radius - i * 6 - 2;
+          if (r < 4) continue;
+          const alpha = 0.15 + (1 - i / 4) * 0.3;
+          ctx.globalAlpha = alpha * progress;
+          ctx.strokeStyle = `hsl(${210 + i * 20}, 100%, ${50 + i * 10}%)`;
+          ctx.lineWidth = 2.5 - i * 0.4;
+          ctx.beginPath();
+          const angle = frame * 0.04 + i * 1.2;
+          ctx.arc(px, py, r, angle, angle + 1.8);
+          ctx.stroke();
+        }
+
+        ctx.globalAlpha = 0.2 + Math.sin(frame * 0.05) * 0.1;
+        ctx.strokeStyle = `rgba(255,215,61,${0.2 + Math.sin(frame*0.04)*0.1})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(px, py, radius + 4, 0, Math.PI*2);
+        ctx.stroke();
+
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2 + frame * 0.03;
+          const dist = radius * 0.3 + Math.sin(frame * 0.05 + i) * radius * 0.2;
+          const px2 = px + Math.cos(angle) * dist;
+          const py2 = py + Math.sin(angle) * dist * 0.5;
+          const size = 2 + Math.sin(frame * 0.1 + i * 1.5) * 1;
+          ctx.globalAlpha = 0.4 + Math.sin(frame * 0.06 + i * 2) * 0.2;
+          ctx.fillStyle = `hsl(${200 + i * 15}, 80%, 70%)`;
+          ctx.fillRect(px2 - size/2, py2 - size/2, size, size);
+        }
+
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      // ---- ANIMAZIONE PRINCIPALE ----
+      function animate() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Sfondo
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, '#1a1a3e');
+        grad.addColorStop(0.5, '#2a1a4e');
+        grad.addColorStop(1, '#0b0b1a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Terreno
+        ctx.fillStyle = '#2a3a2a';
+        ctx.fillRect(0, H-18, W, 18);
+        ctx.fillStyle = '#3a5a3a';
+        ctx.fillRect(0, H-20, W, 4);
+
+        // Particelle luccicanti
+        for (let i=0; i<25; i++) {
+          const x = (Math.sin(i*137.5 + frame*0.02) * 0.5 + 0.5) * W;
+          const y = (Math.cos(i*97.3 + frame*0.015) * 0.5 + 0.5) * (H-30) + 10;
+          const size = 1 + Math.sin(i*53.7 + frame*0.05) * 0.5 + 0.5;
+          ctx.globalAlpha = 0.15 + Math.sin(i*73.1 + frame*0.03) * 0.1 + 0.1;
+          ctx.fillStyle = '#ffd93d';
+          ctx.fillRect(x, y, size, size);
+        }
+        ctx.globalAlpha = 1;
+
+        // Portale
+        const portalX = W - 40;
+        const portalY = 130;
+        const portalProgress = Math.min(1, Math.max(0, (guy.x - 80) / 150));
+        if (portalProgress > 0.1) {
+          drawPortal(portalX, portalY, Math.min(1, portalProgress * 1.5));
+        }
+
+        // Omino
+        drawDetailedGuy(guy.x, guy.y);
+
+        // ---- GESTIONE STATI ----
+        if (guy.state === 'walking') {
+          guy.x += 1.0;
+          if (guy.x > W/2 - guy.bodyW/2 - 10) {
+            guy.x = W/2 - guy.bodyW/2 - 10;
+            guy.state = 'attaching';
+            status.textContent = '✨ Incastro in corso...';
+            sfx.creation();
+            guy.faceScale = 0;
+          }
+        } else if (guy.state === 'attaching') {
+          if (guy.faceScale < 1) {
+            guy.faceScale += 0.04;
+          }
+          guy.attachTimer++;
+          if (guy.attachTimer > 35) {
+            guy.attached = true;
+            guy.state = 'portal';
+            status.textContent = '🌀 Portale magico...';
+            sfx.portal();
+            guy.flashTimer = 20;
+          }
+        } else if (guy.state === 'portal') {
+          guy.x += 1.2;
+          const distToPortal = (portalX - guy.x);
+          if (distToPortal < 60) {
+            guy.scale = 0.4 + (distToPortal / 60) * 0.6;
+            guy.alpha = 0.3 + (distToPortal / 60) * 0.7;
+          }
+          if (guy.x > portalX - 20) {
+            guy.state = 'fading';
+            status.textContent = '✨ Teletrasporto in corso...';
+            sfx.teleport();
+
+            let flashFrame = 0;
+            const flashInterval = setInterval(() => {
+              flashFrame++;
+              ctx.fillStyle = `rgba(255,255,255,${flashFrame / 15})`;
+              ctx.fillRect(0, 0, W, H);
+              if (flashFrame > 15) {
+                clearInterval(flashInterval);
+                document.getElementById('creation-overlay').classList.remove('active');
+                gameInitialized = false;
+                initGame();
+              }
+            }, 30);
+            return;
+          }
+        }
+
+        if (guy.flashTimer > 0) {
+          ctx.fillStyle = `rgba(255,255,255,${guy.flashTimer / 30})`;
+          ctx.fillRect(0, 0, W, H);
+          guy.flashTimer--;
+        }
+
+        frame++;
+        requestAnimationFrame(animate);
+      }
+
+      animate();
     }
 
     // La funzione runCreationAnimation è identica a quella corretta che abbiamo già
