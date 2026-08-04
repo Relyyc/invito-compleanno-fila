@@ -108,6 +108,13 @@
       display: block; margin: 0 auto; background: #4da6ff;
       image-rendering: pixelated; width: 100%; height: 100%;
     }
+    #face-overlay {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      border-radius: 50%;
+      z-index: 4;
+    }
 
     /* ===== OVERLAY CREAZIONE ===== */
     #creation-overlay {
@@ -322,7 +329,7 @@
   </style>
 </head>
 <body>
-  <div id="dev-version">🎮 FILA v3.4 - PERSONAGGIO DEFINITIVO</div>
+  <div id="dev-version">🎮 FILA v3.5 - MERGE + FIX FOTO/MANIFEST</div>
   <div id="app" class="crt">
 
     <!-- SCHERMATA 0: AGGIUNGI ALLA HOME -->
@@ -417,6 +424,7 @@
           <div id="boss-hp-bar-bg"><div id="boss-hp-bar-fill"></div></div>
         </div>
         <canvas id="game-canvas" width="480" height="270"></canvas>
+        <img id="face-overlay" alt="">
         <div id="touch-controls">
           <div id="dpad"><div class="touch-btn" id="btn-left">◀</div><div class="touch-btn" id="btn-right">▶</div></div>
           <div id="right-controls"><div class="touch-btn" id="btn-shoot-gun" style="display:none;">🔫</div><div class="touch-btn" id="btn-jump">▲</div></div>
@@ -1548,6 +1556,32 @@
       drawPlayer(game.player);
 
       ctx.restore();
+
+      positionFaceOverlay();
+    }
+
+    // Posiziona la foto (nitida, fuori dal canvas pixelato) esattamente sopra
+    // la testa dello sprite, seguendo camera, scala e animazione del respiro.
+    function positionFaceOverlay() {
+      const overlay = document.getElementById('face-overlay');
+      if (!state.faceDataURL) { overlay.style.display = 'none'; return; }
+
+      const p = game.player;
+      if (p._headX === undefined) { overlay.style.display = 'none'; return; }
+      if (!overlay.src) overlay.src = state.faceDataURL;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      const wrapRect = document.getElementById('game-wrap').getBoundingClientRect();
+      const scale = canvasRect.width / W;
+
+      const left = (canvasRect.left - wrapRect.left) + (p._headX - game.camX) * scale;
+      const top = (canvasRect.top - wrapRect.top) + p._headY * scale;
+
+      overlay.style.display = 'block';
+      overlay.style.left = left + 'px';
+      overlay.style.top = top + 'px';
+      overlay.style.width = (p._headSize * scale) + 'px';
+      overlay.style.height = (p._headSize * scale) + 'px';
     }
 
     /* -------------------------------------------------------------
@@ -1661,49 +1695,24 @@
       ctx.fillStyle = '#ffd6a5';
       ctx.fillRect(px + w/2 - 3, py + 2 + breathe, 6, 4);
 
-      // ---- TESTA (con foto) ----
+      // ---- TESTA (placeholder: la foto vera è disegnata da un overlay HTML
+      //      esterno e nitido, per non farla risultare "a blocchi" a causa
+      //      dell'image-rendering:pixelated del canvas di gioco) ----
       const headSize = 14;
       const headX = px + w/2 - headSize/2;
       const headY = py - headSize + 2 + breathe;
 
-      if (state.faceDataURL) {
-        if (!window._faceImg) {
-          window._faceImg = new Image();
-          window._faceImg.src = state.faceDataURL;
-        }
-        const img = window._faceImg;
-        if (img.complete && img.naturalWidth > 0) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(px + w/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
-          ctx.clip();
-          ctx.drawImage(img, headX, headY, headSize, headSize);
-          ctx.restore();
-        } else {
-          // Fallback (cerchio con punto interrogativo)
-          ctx.fillStyle = '#ffd6a5';
-          ctx.beginPath();
-          ctx.arc(px + w/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#666';
-          ctx.font = '12px monospace';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('?', px + w/2, headY + headSize/2 + 1);
-        }
-      } else {
-        // Testa di fallback
-        ctx.fillStyle = '#ffd6a5';
-        ctx.beginPath();
-        ctx.arc(px + w/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(px + w/2 - 4, headY + headSize/2 - 2, 2, 2);
-        ctx.fillRect(px + w/2 + 2, headY + headSize/2 - 2, 2, 2);
-      }
+      ctx.fillStyle = '#ffd6a5';
+      ctx.beginPath();
+      ctx.arc(px + w/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
+      ctx.fill();
 
-      // Bordo luminoso (solo se foto caricata)
-      if (state.faceDataURL && window._faceImg && window._faceImg.complete && window._faceImg.naturalWidth > 0) {
+      // Salviamo la geometria della testa: render() la userà per
+      // posizionare l'overlay HTML esattamente sopra questo punto.
+      p._headX = headX; p._headY = headY; p._headSize = headSize;
+
+      // Bordo luminoso (solo se la foto è pronta)
+      if (state.faceDataURL) {
         ctx.strokeStyle = `rgba(255,215,61,${0.15 + Math.sin(frame * 0.05) * 0.1})`;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
