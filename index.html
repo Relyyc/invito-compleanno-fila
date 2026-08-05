@@ -343,7 +343,7 @@
   </style>
 </head>
 <body>
-  <div id="dev-version">🎮 FILA v3.6 - PISTOLA DRITTA + MISSILI POTENZIATI</div>
+  <div id="dev-version">🎮 FILA v3.7 - PISTOLA A DESTRA + MOB FIRE RIPRISTINATI</div>
   <div id="app" class="crt">
 
     <!-- SCHERMATA 0: AGGIUNGI ALLA HOME -->
@@ -695,7 +695,7 @@
         bodyW: 34,
         bodyH: 44,
         headSize: 28,
-        headY: -14, // offset RELATIVO al corpo (gy)
+        headY: -14,
         legLen: 18,
         armLen: 16,
         state: 'walking',
@@ -708,23 +708,19 @@
         attachTimer: 0,
       };
 
-      // ---- DISEGNA OMINO DETTAGLIATO ----
       function drawDetailedGuy(gx, gy) {
         const s = guy.scale;
         const alpha = guy.alpha;
-
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.translate(gx, gy);
         ctx.scale(s, s);
 
-        // Ombra
         ctx.fillStyle = 'rgba(0,0,0,0.25)';
         ctx.beginPath();
         ctx.ellipse(guy.bodyW/2, guy.bodyH + 6, guy.bodyW/2 + 4, 6, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // ---- GAMBE ----
         const legSwing = guy.state === 'walking' ? Math.sin(frame * 0.08) * 7 : 0;
         const legSwing2 = guy.state === 'walking' ? Math.sin(frame * 0.08 + Math.PI) * 7 : 0;
 
@@ -744,19 +740,16 @@
         ctx.quadraticCurveTo(guy.bodyW - 12 + legSwing2*0.5, guy.bodyH + guy.legLen/2, guy.bodyW - 14, guy.bodyH - 4);
         ctx.fill();
 
-        // Scarpe
         ctx.fillStyle = '#1a1a2a';
         ctx.fillRect(6 + legSwing*0.5, guy.bodyH + guy.legLen - 3, 10, 5);
         ctx.fillRect(guy.bodyW - 16 + legSwing2*0.5, guy.bodyH + guy.legLen - 3, 10, 5);
 
-        // ---- BUSTO ----
         const breatheOffset = guy.state === 'walking' ? 0 : Math.sin(frame * 0.03) * 0.8;
         const bodyGrad = ctx.createLinearGradient(0, 4, 0, guy.bodyH);
         bodyGrad.addColorStop(0, '#4a8aff');
         bodyGrad.addColorStop(0.5, '#3b7dff');
         bodyGrad.addColorStop(1, '#1f4fbf');
         ctx.fillStyle = bodyGrad;
-        // Busto arrotondato senza roundRect (per compatibilità)
         const bx = 4, by = 8 + breatheOffset, bw = guy.bodyW - 8, bh = guy.bodyH - 14, r = 6;
         ctx.beginPath();
         ctx.moveTo(bx + r, by);
@@ -770,7 +763,6 @@
         ctx.quadraticCurveTo(bx, by, bx + r, by);
         ctx.fill();
 
-        // Colletto
         ctx.fillStyle = '#1f4fbf';
         ctx.beginPath();
         ctx.moveTo(8, 10 + breatheOffset);
@@ -778,11 +770,9 @@
         ctx.lineTo(guy.bodyW - 8, 10 + breatheOffset);
         ctx.fill();
 
-        // Cintura
         ctx.fillStyle = '#1a3a7a';
         ctx.fillRect(6, guy.bodyH - 16, guy.bodyW - 12, 4);
 
-        // ---- BRACCIA ----
         const armSwing = guy.state === 'walking' ? Math.sin(frame * 0.08) * 5 : 0;
         const armSwing2 = guy.state === 'walking' ? Math.sin(frame * 0.08 + Math.PI) * 5 : 0;
 
@@ -802,17 +792,14 @@
         ctx.quadraticCurveTo(guy.bodyW - 2 + armSwing2*0.5, 22 + breatheOffset, guy.bodyW - 6, 14 + breatheOffset);
         ctx.fill();
 
-        // ---- COLLO ----
         ctx.fillStyle = '#ffd6a5';
         ctx.fillRect(guy.bodyW/2 - 4, 4 + breatheOffset, 8, 6);
 
-        // ---- TESTA (ora RELATIVA a gy) ----
         const headOffsetY = guy.headY + breatheOffset;
         const headX = guy.bodyW/2 - guy.headSize/2;
         const headY = headOffsetY;
 
         if (guy.state === 'walking') {
-          // Testa vuota
           ctx.strokeStyle = '#ffd6a5';
           ctx.lineWidth = 2.5;
           ctx.beginPath();
@@ -826,7 +813,6 @@
           ctx.textBaseline = 'middle';
           ctx.fillText('?', guy.bodyW/2, headY + guy.headSize/2 + 1);
         } else {
-          // Disegna la faccia con zoom
           const scale = guy.state === 'attaching' ? Math.min(1, guy.faceScale) : 1;
           const fx = headX + (guy.headSize - 28 * scale) / 2;
           const fy = headY + (guy.headSize - 28 * scale) / 2;
@@ -834,7 +820,6 @@
           ctx.globalAlpha = guy.attached ? 1 : (guy.state === 'attaching' ? Math.min(1, guy.faceScale) : 1);
           ctx.drawImage(faceImg, fx, fy, 28 * scale, 28 * scale);
           ctx.restore();
-
           if (guy.attached) {
             ctx.strokeStyle = `rgba(255,215,61,${0.3 + Math.sin(frame*0.08)*0.2})`;
             ctx.lineWidth = 3;
@@ -843,15 +828,12 @@
             ctx.stroke();
           }
         }
-
         ctx.restore();
       }
 
-      // ---- PORTALE ----
       function drawPortal(px, py, progress) {
         const radius = 18 + progress * 25;
         ctx.save();
-
         const glow = ctx.createRadialGradient(px, py, 0, px, py, radius + 20);
         glow.addColorStop(0, 'rgba(77,214,255,0)');
         glow.addColorStop(0.7, `rgba(77,214,255,${0.1 * progress})`);
@@ -891,16 +873,12 @@
           ctx.fillStyle = `hsl(${200 + i * 15}, 80%, 70%)`;
           ctx.fillRect(px2 - size/2, py2 - size/2, size, size);
         }
-
         ctx.globalAlpha = 1;
         ctx.restore();
       }
 
-      // ---- ANIMAZIONE PRINCIPALE ----
       function animate() {
         ctx.clearRect(0, 0, W, H);
-
-        // Sfondo
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, '#1a1a3e');
         grad.addColorStop(0.5, '#2a1a4e');
@@ -908,13 +886,11 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // Terreno
         ctx.fillStyle = '#2a3a2a';
         ctx.fillRect(0, H-18, W, 18);
         ctx.fillStyle = '#3a5a3a';
         ctx.fillRect(0, H-20, W, 4);
 
-        // Particelle luccicanti
         for (let i=0; i<25; i++) {
           const x = (Math.sin(i*137.5 + frame*0.02) * 0.5 + 0.5) * W;
           const y = (Math.cos(i*97.3 + frame*0.015) * 0.5 + 0.5) * (H-30) + 10;
@@ -925,7 +901,6 @@
         }
         ctx.globalAlpha = 1;
 
-        // Portale
         const portalX = W - 40;
         const portalY = 130;
         const portalProgress = Math.min(1, Math.max(0, (guy.x - 80) / 150));
@@ -933,10 +908,8 @@
           drawPortal(portalX, portalY, Math.min(1, portalProgress * 1.5));
         }
 
-        // Omino
         drawDetailedGuy(guy.x, guy.y);
 
-        // ---- GESTIONE STATI ----
         if (guy.state === 'walking') {
           guy.x += 1.0;
           if (guy.x > W/2 - guy.bodyW/2 - 10) {
@@ -969,7 +942,6 @@
             guy.state = 'fading';
             status.textContent = '✨ Teletrasporto in corso...';
             sfx.teleport();
-
             let flashFrame = 0;
             const flashInterval = setInterval(() => {
               flashFrame++;
@@ -995,7 +967,6 @@
         frame++;
         requestAnimationFrame(animate);
       }
-
       animate();
     }
 
@@ -1008,7 +979,6 @@
     const GRAVITY = 0.5, GROUND_Y = H - 44;
     let game = null;
     let gameInitialized = false;
-
     let stats = { deaths: 0, startTime: 0, endTime: 0, enemiesKilled: 0, shotsFired: 0, shotsHit: 0 };
 
     function fitCanvas() {
@@ -1055,10 +1025,9 @@
         { x: 620, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir:1, minX:560, maxX:650, alive:true },
         { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir:-1, minX:850, maxX:1030, alive:true },
         { x: 1800, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir:1, minX:1760, maxX:1840, alive:true },
-        // I nemici "fire" ora NON sparano più palle di fuoco inutili,
-        // servono solo come ostacoli da saltare.
-        { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir:-1, alive:true },
-        { x: 1890, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir:-1, alive:true },
+        // Mob fire: sparano palle di fuoco (ripristinati)
+        { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir:-1, alive:true, nextShotFrame:60, burstRemaining:0 },
+        { x: 1890, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir:-1, alive:true, nextShotFrame:90, burstRemaining:0 },
       ];
     }
 
@@ -1109,7 +1078,7 @@
         player: makePlayer(20),
         platforms: buildLevel(),
         enemies: buildEnemies(),
-        fireballs: [], // Array vuoto, non più usato
+        fireballs: [],
         hasGun: false,
         gunPickup: { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: false },
         bullets: [],
@@ -1134,7 +1103,6 @@
       document.getElementById('hud-progress').textContent = '🏁 Distanza: 0%';
       document.getElementById('boss-dialogue').classList.remove('show');
 
-      // Precarica l'immagine della faccia per il gioco
       if (state.faceDataURL && !window._faceImg) {
         window._faceImg = new Image();
         window._faceImg.src = state.faceDataURL;
@@ -1237,23 +1205,65 @@
         }
       }
 
-      // Nemici (NON sparano più palle di fuoco)
+      // ---- NEMICI (walker e fire) ----
       for (const en of game.enemies) {
         if (!en.alive) continue;
-        // I nemici "fire" ora sono solo ostacoli, non sparano
-        if (en.type === 'walker') {
+        
+        if (en.type === 'fire') {
+          // I nemici fire sparano palle di fuoco (ripristinato)
+          if (game.frame >= en.nextShotFrame) {
+            if (en.burstRemaining <= 0) en.burstRemaining = 1 + Math.floor(Math.random() * 3);
+            game.fireballs.push({ 
+              x: en.x - 4, 
+              y: en.y + 4, 
+              w: 10, 
+              h: 10, 
+              vx: -5.5 
+            });
+            en.burstRemaining--;
+            en.nextShotFrame = en.burstRemaining > 0 
+              ? game.frame + 14 
+              : game.frame + 50 + Math.floor(Math.random() * 20);
+          }
+        } else {
+          // Nemici walker: si muovono avanti e indietro
           en.x += en.dir * 1.2;
           if (en.x < en.minX || en.x > en.maxX) en.dir *= -1;
         }
-        const overlap = p.x < en.x + en.w && p.x + p.w > en.x && p.y < en.y + en.h && p.y + p.h > en.y;
+        
+        // Collisione con il giocatore
+        const overlap = p.x < en.x + en.w && p.x + p.w > en.x && 
+                        p.y < en.y + en.h && p.y + p.h > en.y;
         if (overlap && game.frame > p.invulnUntil) {
           const stomp = p.vy > 0 && (p.y + p.h - p.vy) <= en.y + 6;
-          if (stomp) { en.alive = false; p.vy = -7; sfx.stomp(); stats.enemiesKilled++; spawnPoof(en.x+en.w/2, en.y+en.h/2, '#c0392b', 12); }
-          else { loseLife(); return; }
+          if (stomp) { 
+            en.alive = false; 
+            p.vy = -7; 
+            sfx.stomp(); 
+            stats.enemiesKilled++; 
+            spawnPoof(en.x+en.w/2, en.y+en.h/2, '#c0392b', 12); 
+          } else { 
+            loseLife(); 
+            return; 
+          }
         }
       }
 
-      // Fireballs RIMOSSE (non più usate)
+      // ---- PALLE DI FUOCO (sparate dai nemici fire) ----
+      for (let i = game.fireballs.length - 1; i >= 0; i--) {
+        const fb = game.fireballs[i];
+        fb.x += fb.vx;
+        if (p.x < fb.x + fb.w && p.x + p.w > fb.x && 
+            p.y < fb.y + fb.h && p.y + p.h > fb.y && 
+            game.frame > p.invulnUntil) {
+          game.fireballs.splice(i,1); 
+          loseLife(); 
+          return;
+        }
+        if (fb.x < game.camX - 60 || fb.x > game.camX + W + 60) {
+          game.fireballs.splice(i,1);
+        }
+      }
 
       const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
       if (!firesDefeatedForGate && p.x + p.w > FIRE_GATE_X) p.x = FIRE_GATE_X - p.w;
@@ -1305,7 +1315,7 @@
         if (b.x < game.camX - 40 || b.x > game.camX + W + 40) game.bullets.splice(i,1);
       }
 
-      // ---- BOSS (con missili potenziati, NESSUNA PALLA DI FUOCO) ----
+      // ---- BOSS (solo missili, nessuna palla di fuoco) ----
       if (game.boss.alive) {
         const boss = game.boss;
         if (boss.state === 'dormant' && p.x > BOSS_TRIGGER_X) {
@@ -1324,35 +1334,28 @@
         }
         if (boss.state !== 'dormant' && p.x + p.w > boss.x && p.x < boss.x + boss.w) p.x = boss.x - p.w;
 
-        // ---- ATTACCHI DEL BOSS (solo missili) ----
+        // Attacchi del boss: solo missili potenziati
         if (boss.state === 'active') {
           boss.attackTimer++;
           const attackSpeed = boss.phase === 2 ? 1.3 : 1;
           
-          // Ogni 35 frame (o meno in fase 2) spara una raffica
           if (boss.attackTimer > 35 / attackSpeed) {
             boss.attackTimer = 0;
             
-            // Determina quanti missili sparare (da 1 a 3)
             let missileCount = 1;
             if (boss.phase === 2) {
-              missileCount = 2 + Math.floor(Math.random() * 2); // 2 o 3
+              missileCount = 2 + Math.floor(Math.random() * 2);
             } else {
-              missileCount = 1 + Math.floor(Math.random() * 2); // 1 o 2
+              missileCount = 1 + Math.floor(Math.random() * 2);
             }
             missileCount = Math.min(missileCount, 3);
             
-            // Sparali in rapida successione
             for (let j = 0; j < missileCount; j++) {
               setTimeout(() => {
                 if (!game.boss.alive) return;
-                
-                // Velocità progressiva: ogni missile è più veloce del precedente
                 const baseSpeed = 2.5 + (boss.phase === 2 ? 0.5 : 0);
                 const speedBonus = j * 0.4;
                 const finalSpeed = baseSpeed + speedBonus;
-                
-                // Angolo leggermente variabile per un pattern a ventaglio
                 const angleOffset = (j - (missileCount-1)/2) * 0.15;
                 
                 game.missiles.push({
@@ -1364,7 +1367,7 @@
                   vy: angleOffset * 0.8 + (Math.random() - 0.5) * 0.2,
                   spawnFrame: game.frame,
                 });
-              }, j * 200); // 200ms tra un missile e l'altro
+              }, j * 200);
             }
           }
         }
@@ -1504,7 +1507,9 @@
       drawArrivalBuilding(game.flagX + 60);
 
       for (const en of game.enemies) if (en.alive) drawEnemy(en);
-      // Fireballs non più disegnate
+      
+      // Palle di fuoco (sparate dai mob) - disegnate
+      for (const fb of game.fireballs) drawFireball(fb);
 
       const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
       if (!firesDefeatedForGate) drawFireGate(FIRE_GATE_X);
@@ -1556,11 +1561,9 @@
       drawPlayer(game.player);
 
       ctx.restore();
-
       positionFaceOverlay();
     }
 
-    // Posiziona la foto (nitida) sopra la testa dello sprite
     function positionFaceOverlay() {
       const overlay = document.getElementById('face-overlay');
       if (!state.faceDataURL) { overlay.style.display = 'none'; return; }
@@ -1584,7 +1587,7 @@
     }
 
     /* -------------------------------------------------------------
-       DRAWPLAYER
+       DRAWPLAYER - PISTOLA CHE PUNTA A DESTRA
     ------------------------------------------------------------- */
     function drawPlayer(p) {
       const px = p.x;
@@ -1595,31 +1598,28 @@
 
       ctx.save();
 
-      // ---- ANIMAZIONI ----
       const walking = Math.abs(p.vx) > 0.5 && p.onGround;
       const jumping = !p.onGround && p.vy < 0;
       const falling = !p.onGround && p.vy >= 0;
 
-      // ---- OMBRA ----
+      // Ombra
       ctx.fillStyle = 'rgba(0,0,0,0.2)';
       ctx.beginPath();
       ctx.ellipse(px + w/2, GROUND_Y + 2, w/2 + 2, 4, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // ---- GAMBE ----
+      // Gambe
       const legSwing = walking ? Math.sin(frame * 0.12) * 4 : 0;
       const legSwing2 = walking ? Math.sin(frame * 0.12 + Math.PI) * 4 : 0;
       const jumpBend = jumping ? -2 : (falling ? 2 : 0);
 
       ctx.fillStyle = '#1a2a4a';
-      // Gamba sinistra
       ctx.beginPath();
       ctx.moveTo(px + 5, py + h - 6);
       ctx.lineTo(px + 3 + legSwing, py + h + 2 + jumpBend);
       ctx.lineTo(px + 6 + legSwing, py + h + 2 + jumpBend);
       ctx.lineTo(px + 7, py + h - 6);
       ctx.fill();
-      // Gamba destra
       ctx.beginPath();
       ctx.moveTo(px + 15, py + h - 6);
       ctx.lineTo(px + 17 + legSwing2, py + h + 2 + jumpBend);
@@ -1627,12 +1627,11 @@
       ctx.lineTo(px + 13, py + h - 6);
       ctx.fill();
 
-      // Scarpe
       ctx.fillStyle = '#1a1a2a';
       ctx.fillRect(px + 1 + legSwing, py + h + 1 + jumpBend, 6, 3);
       ctx.fillRect(px + 13 + legSwing2, py + h + 1 + jumpBend, 6, 3);
 
-      // ---- BUSTO ----
+      // Busto
       const breathe = walking ? 0 : Math.sin(frame * 0.04) * 0.5;
       const bodyY = py + 6 + breathe;
 
@@ -1641,7 +1640,6 @@
       bodyGrad.addColorStop(0.5, '#3b7dff');
       bodyGrad.addColorStop(1, '#1f4fbf');
       ctx.fillStyle = bodyGrad;
-      // roundRect polyfill (manuale per compatibilità)
       const bx = px + 2, by = bodyY, bw = w - 4, bh = 14, r = 4;
       ctx.beginPath();
       ctx.moveTo(bx + r, by);
@@ -1655,7 +1653,6 @@
       ctx.quadraticCurveTo(bx, by, bx + r, by);
       ctx.fill();
 
-      // Colletto
       ctx.fillStyle = '#1f4fbf';
       ctx.beginPath();
       ctx.moveTo(px + 4, bodyY);
@@ -1663,24 +1660,21 @@
       ctx.lineTo(px + 16, bodyY);
       ctx.fill();
 
-      // Cintura
       ctx.fillStyle = '#1a3a7a';
       ctx.fillRect(px + 3, bodyY + 10, w - 6, 3);
 
-      // ---- BRACCIA ----
+      // Braccia
       const armSwing = walking ? Math.sin(frame * 0.12) * 3 : 0;
       const armSwing2 = walking ? Math.sin(frame * 0.12 + Math.PI) * 3 : 0;
       const armLift = jumping ? -6 : 0;
 
       ctx.fillStyle = '#2a5abf';
-      // Braccio sinistro
       ctx.beginPath();
       ctx.moveTo(px + 2, bodyY + 2);
       ctx.lineTo(px - 1 + armSwing, bodyY + 6 + armLift);
       ctx.lineTo(px + 1 + armSwing, bodyY + 10 + armLift);
       ctx.lineTo(px + 3, bodyY + 2);
       ctx.fill();
-      // Braccio destro
       ctx.beginPath();
       ctx.moveTo(px + 18, bodyY + 2);
       ctx.lineTo(px + 21 + armSwing2, bodyY + 6 + armLift);
@@ -1688,40 +1682,43 @@
       ctx.lineTo(px + 17, bodyY + 2);
       ctx.fill();
 
-      // ---- PISTOLA (DRITTA, EMOJI IN MANO) ----
+      // ---- PISTOLA (EMOJI, PUNTA NELLA DIREZIONE GIUSTA) ----
       if (game.hasGun) {
         const gunSize = 20;
         const gunX = p.facing === -1 ? px - 8 : px + w + 4;
         const gunY = bodyY + 2 + (p.facing === -1 ? armSwing : armSwing2) + armLift;
         
         ctx.save();
+        ctx.translate(gunX, gunY + 6);
+        // Ruota la pistola in base alla direzione del personaggio
+        // L'emoji 🔫 punta a sinistra di default, quindi:
+        if (p.facing === 1) {
+          // Guarda a destra → ruota di 180° per farla puntare a destra
+          ctx.rotate(Math.PI);
+        }
         ctx.font = `${gunSize}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        // NESSUNA ROTAZIONE: la pistola è perfettamente dritta!
-        ctx.fillText('🔫', gunX, gunY + 6);
+        ctx.fillText('🔫', 0, 0);
         ctx.restore();
       }
 
-      // ---- COLLO ----
+      // Collo
       ctx.fillStyle = '#ffd6a5';
       ctx.fillRect(px + w/2 - 3, py + 2 + breathe, 6, 4);
 
-      // ---- TESTA (placeholder, l'immagine vera è l'overlay HTML) ----
+      // Testa (placeholder per l'overlay)
       const headSize = 14;
       const headX = px + w/2 - headSize/2;
       const headY = py - headSize + 2 + breathe;
 
-      // Sfondo della testa (per coprire eventuali buchi)
       ctx.fillStyle = '#ffd6a5';
       ctx.beginPath();
       ctx.arc(px + w/2, headY + headSize/2, headSize/2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Salva la geometria per l'overlay
       p._headX = headX; p._headY = headY; p._headSize = headSize;
 
-      // Bordo luminoso
       if (state.faceDataURL) {
         ctx.strokeStyle = `rgba(255,215,61,${0.15 + Math.sin(frame * 0.05) * 0.1})`;
         ctx.lineWidth = 1.5;
@@ -1733,9 +1730,9 @@
       ctx.restore();
     }
 
-    // --------------------------------------------------------------
-    // DRAW HELPERS
-    // --------------------------------------------------------------
+    /* --------------------------------------------------------------
+       DRAW HELPERS
+    -------------------------------------------------------------- */
     function drawSky() {
       const sunX = 100 + Math.sin(game.time * 0.005) * 30;
       const grad = ctx.createLinearGradient(0,0,0,H);
@@ -1841,7 +1838,20 @@
       ctx.beginPath(); ctx.moveTo(cx, topY+5); ctx.quadraticCurveTo(cx+4, topY+12, cx, topY+15); ctx.quadraticCurveTo(cx-4, topY+12, cx, topY+5); ctx.fill();
     }
 
-    // drawFireball RIMOSSA (non più usata)
+    // Palle di fuoco (sparate dai mob)
+    function drawFireball(fb) {
+      ctx.fillStyle = '#ff5a1f';
+      ctx.beginPath();
+      ctx.arc(fb.x + fb.w/2, fb.y + fb.h/2, fb.w/2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffe27a';
+      ctx.beginPath();
+      ctx.arc(fb.x + fb.w/2, fb.y + fb.h/2, fb.w/4, 0, Math.PI * 2);
+      ctx.fill();
+      // Scia
+      ctx.fillStyle = 'rgba(255,90,31,0.3)';
+      ctx.fillRect(fb.x - 8, fb.y + 2, 6, fb.h - 4);
+    }
 
     function drawFireGate(x) {
       const pulse = 0.5 + Math.sin(game.frame*0.1)*0.15;
@@ -1853,20 +1863,13 @@
       ctx.restore();
     }
 
-    /* ============================================================
-       DRAW GUN PICKUP (SOLO EMOJI, DRITTA)
-       ============================================================ */
     function drawGunPickup(gp) {
       const bob = Math.sin(game.frame * 0.08) * 4;
       const y = gp.y + bob;
-      
-      // Ombra a terra
       ctx.fillStyle = 'rgba(0,0,0,0.15)';
       ctx.beginPath();
       ctx.ellipse(gp.x + gp.w/2, gp.y + gp.h + 4, 14, 4, 0, 0, Math.PI * 2);
       ctx.fill();
-      
-      // Solo l'emoji della pistola, grande e dritta
       ctx.save();
       ctx.shadowColor = 'rgba(255,215,61,0.3)';
       ctx.shadowBlur = 15;
@@ -1883,13 +1886,8 @@
       ctx.fillStyle = '#fff8d6'; ctx.fillRect(b.x+1, b.y, b.w-2, b.h);
     }
 
-    /* ============================================================
-       DRAW MISSILE (RIDISEGNATO, CON DETTAGLI)
-       ============================================================ */
     function drawMissile(m) {
       ctx.save();
-      
-      // Scia del missile
       for (let i = 0; i < 8; i++) {
         const alpha = 0.15 - (i / 8) * 0.12;
         const size = m.w - i * 1.2;
@@ -1904,17 +1902,14 @@
         );
       }
       ctx.globalAlpha = 1;
-      
-      // Corpo del missile con gradiente
       const grad = ctx.createLinearGradient(m.x, m.y, m.x + m.w, m.y);
       grad.addColorStop(0, '#ff4d6d');
       grad.addColorStop(0.3, '#ff6b35');
       grad.addColorStop(0.7, '#ff8a3d');
       grad.addColorStop(1, '#ffd93d');
       ctx.fillStyle = grad;
-      ctx.beginPath();
-      // roundRect manuale
       const rx = m.x, ry = m.y, rw = m.w, rh = m.h, rr = 3;
+      ctx.beginPath();
       ctx.moveTo(rx + rr, ry);
       ctx.lineTo(rx + rw - rr, ry);
       ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
@@ -1925,8 +1920,6 @@
       ctx.lineTo(rx, ry + rr);
       ctx.quadraticCurveTo(rx, ry, rx + rr, ry);
       ctx.fill();
-      
-      // Punta (triangolo)
       ctx.fillStyle = '#ffd93d';
       ctx.beginPath();
       ctx.moveTo(m.x, m.y + m.h/2);
@@ -1934,20 +1927,15 @@
       ctx.lineTo(m.x - 6, m.y + m.h - 2);
       ctx.closePath();
       ctx.fill();
-      
-      // Dettaglio (striscia centrale)
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.fillRect(m.x + 4, m.y + 3, m.w - 8, 2);
       ctx.fillRect(m.x + 4, m.y + m.h - 5, m.w - 8, 2);
-      
-      // Bagliore
       ctx.shadowColor = 'rgba(255,77,109,0.5)';
       ctx.shadowBlur = 12;
       ctx.fillStyle = 'rgba(255,215,61,0.1)';
       ctx.beginPath();
       ctx.arc(m.x + 2, m.y + m.h/2, m.h, 0, Math.PI * 2);
       ctx.fill();
-      
       ctx.restore();
     }
 
@@ -2255,7 +2243,7 @@
       initGame();
     });
 
-    console.log('🎮 FILA v3.6 - Pistola dritta, messaggi boss in alto, missili potenziati!');
+    console.log('🎮 FILA v3.7 - Pistola a destra, mob fire ripristinati, boss solo missili!');
   </script>
 </body>
 </html>
