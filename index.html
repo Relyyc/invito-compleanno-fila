@@ -343,7 +343,7 @@
   </style>
 </head>
 <body>
-  <div id="dev-version">🎮 FILA v3.7 - PISTOLA A DESTRA + MOB FIRE RIPRISTINATI</div>
+  <div id="dev-version">🎮 FILA v3.8 - PISTOLA PNG PERSONALIZZATA</div>
   <div id="app" class="crt">
 
     <!-- SCHERMATA 0: AGGIUNGI ALLA HOME -->
@@ -480,6 +480,13 @@
        ============================================================ */
     const state = { name: '', faceCanvas: null, faceDataURL: null };
     const appEl = document.getElementById('app');
+
+    // ---- Caricamento immagine pistola ----
+    const gunImage = new Image();
+    gunImage.src = 'gun.png';
+    let gunLoaded = false;
+    gunImage.onload = () => { gunLoaded = true; };
+    gunImage.onerror = () => { console.warn("gun.png non trovato, uso placeholder"); };
 
     function setRealAppHeight() {
       const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -1025,7 +1032,7 @@
         { x: 620, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir:1, minX:560, maxX:650, alive:true },
         { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir:-1, minX:850, maxX:1030, alive:true },
         { x: 1800, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir:1, minX:1760, maxX:1840, alive:true },
-        // Mob fire: sparano palle di fuoco (ripristinati)
+        // Mob fire: sparano palle di fuoco
         { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir:-1, alive:true, nextShotFrame:60, burstRemaining:0 },
         { x: 1890, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir:-1, alive:true, nextShotFrame:90, burstRemaining:0 },
       ];
@@ -1210,7 +1217,7 @@
         if (!en.alive) continue;
         
         if (en.type === 'fire') {
-          // I nemici fire sparano palle di fuoco (ripristinato)
+          // I nemici fire sparano palle di fuoco
           if (game.frame >= en.nextShotFrame) {
             if (en.burstRemaining <= 0) en.burstRemaining = 1 + Math.floor(Math.random() * 3);
             game.fireballs.push({ 
@@ -1315,7 +1322,7 @@
         if (b.x < game.camX - 40 || b.x > game.camX + W + 40) game.bullets.splice(i,1);
       }
 
-      // ---- BOSS (solo missili, nessuna palla di fuoco) ----
+      // ---- BOSS (solo missili) ----
       if (game.boss.alive) {
         const boss = game.boss;
         if (boss.state === 'dormant' && p.x > BOSS_TRIGGER_X) {
@@ -1507,8 +1514,6 @@
       drawArrivalBuilding(game.flagX + 60);
 
       for (const en of game.enemies) if (en.alive) drawEnemy(en);
-      
-      // Palle di fuoco (sparate dai mob) - disegnate
       for (const fb of game.fireballs) drawFireball(fb);
 
       const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
@@ -1587,7 +1592,7 @@
     }
 
     /* -------------------------------------------------------------
-       DRAWPLAYER - PISTOLA CHE PUNTA A DESTRA
+       DRAWPLAYER - con pistola PNG personalizzata
     ------------------------------------------------------------- */
     function drawPlayer(p) {
       const px = p.x;
@@ -1682,24 +1687,33 @@
       ctx.lineTo(px + 17, bodyY + 2);
       ctx.fill();
 
-      // ---- PISTOLA (EMOJI, PUNTA NELLA DIREZIONE GIUSTA) ----
+      // ---- PISTOLA (disegno PNG) ----
       if (game.hasGun) {
-        const gunSize = 20;
-        const gunX = p.facing === -1 ? px - 8 : px + w + 4;
-        const gunY = bodyY + 2 + (p.facing === -1 ? armSwing : armSwing2) + armLift;
+        const gunW = 18;
+        const gunH = 18;
+        // Posizionamento nella mano
+        let gunX = p.facing === -1 ? px - 6 : px + w - 2;
+        let gunY = bodyY + 2 + (p.facing === -1 ? armSwing : armSwing2) + armLift - 2;
         
         ctx.save();
-        ctx.translate(gunX, gunY + 6);
-        // Ruota la pistola in base alla direzione del personaggio
-        // L'emoji 🔫 punta a sinistra di default, quindi:
-        if (p.facing === 1) {
-          // Guarda a destra → ruota di 180° per farla puntare a destra
-          ctx.rotate(Math.PI);
+        // Se il personaggio guarda a sinistra, capovolgo l'immagine orizzontalmente
+        if (p.facing === -1) {
+          ctx.translate(gunX + gunW/2, gunY + gunH/2);
+          ctx.scale(-1, 1);
+          ctx.translate(-gunX - gunW/2, -gunY - gunH/2);
         }
-        ctx.font = `${gunSize}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🔫', 0, 0);
+        if (gunLoaded && gunImage.complete && gunImage.naturalWidth > 0) {
+          ctx.drawImage(gunImage, gunX, gunY, gunW, gunH);
+        } else {
+          // Placeholder (rettangolo arancione) finché l'immagine non è caricata
+          ctx.fillStyle = '#ff8a3d';
+          ctx.fillRect(gunX, gunY, gunW, gunH);
+          ctx.fillStyle = '#000';
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🔫', gunX + gunW/2, gunY + gunH/2);
+        }
         ctx.restore();
       }
 
@@ -1707,7 +1721,7 @@
       ctx.fillStyle = '#ffd6a5';
       ctx.fillRect(px + w/2 - 3, py + 2 + breathe, 6, 4);
 
-      // Testa (placeholder per l'overlay)
+      // Testa (placeholder per overlay)
       const headSize = 14;
       const headX = px + w/2 - headSize/2;
       const headY = py - headSize + 2 + breathe;
@@ -1838,7 +1852,6 @@
       ctx.beginPath(); ctx.moveTo(cx, topY+5); ctx.quadraticCurveTo(cx+4, topY+12, cx, topY+15); ctx.quadraticCurveTo(cx-4, topY+12, cx, topY+5); ctx.fill();
     }
 
-    // Palle di fuoco (sparate dai mob)
     function drawFireball(fb) {
       ctx.fillStyle = '#ff5a1f';
       ctx.beginPath();
@@ -1848,7 +1861,6 @@
       ctx.beginPath();
       ctx.arc(fb.x + fb.w/2, fb.y + fb.h/2, fb.w/4, 0, Math.PI * 2);
       ctx.fill();
-      // Scia
       ctx.fillStyle = 'rgba(255,90,31,0.3)';
       ctx.fillRect(fb.x - 8, fb.y + 2, 6, fb.h - 4);
     }
@@ -1863,21 +1875,42 @@
       ctx.restore();
     }
 
+    /* ============================================================
+       DRAW GUN PICKUP (con gun.png)
+    ============================================================ */
     function drawGunPickup(gp) {
       const bob = Math.sin(game.frame * 0.08) * 4;
       const y = gp.y + bob;
+      
+      // Ombra a terra
       ctx.fillStyle = 'rgba(0,0,0,0.15)';
       ctx.beginPath();
       ctx.ellipse(gp.x + gp.w/2, gp.y + gp.h + 4, 14, 4, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.save();
-      ctx.shadowColor = 'rgba(255,215,61,0.3)';
-      ctx.shadowBlur = 15;
-      ctx.font = '28px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🔫', gp.x + gp.w/2, y + gp.h/2);
-      ctx.restore();
+      
+      // Disegna l'immagine della pistola
+      const gunW = 28;
+      const gunH = 28;
+      const gx = gp.x + (gp.w - gunW) / 2;
+      const gy = y + (gp.h - gunH) / 2;
+      
+      if (gunLoaded && gunImage.complete && gunImage.naturalWidth > 0) {
+        ctx.drawImage(gunImage, gx, gy, gunW, gunH);
+        // Glow
+        ctx.shadowColor = 'rgba(255,215,61,0.3)';
+        ctx.shadowBlur = 15;
+        ctx.drawImage(gunImage, gx, gy, gunW, gunH);
+        ctx.shadowBlur = 0;
+      } else {
+        // Placeholder
+        ctx.fillStyle = '#ff8a3d';
+        ctx.fillRect(gx, gy, gunW, gunH);
+        ctx.fillStyle = '#000';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔫', gx + gunW/2, gy + gunH/2);
+      }
     }
 
     function drawBullet(b) {
@@ -2243,7 +2276,7 @@
       initGame();
     });
 
-    console.log('🎮 FILA v3.7 - Pistola a destra, mob fire ripristinati, boss solo missili!');
+    console.log('🎮 FILA v3.8 - Pistola PNG personalizzata (gun.png) implementata!');
   </script>
 </body>
 </html>
