@@ -1,6 +1,6 @@
 {
   "name": "Invito Compleanno Fila",
-  "short_name": "Fila",
+  "short_name": "Il compleanno di Fila",
   "description": "Un invito di compleanno interattivo in stile videogioco",
   "start_url": "./index.html",
   "scope": "./",
@@ -21,9 +21,9 @@
     }
   ],
   "shortcuts": [
-      {
-        "name": "Avvia gioco",
-        "url": "./index.html"
-      }
-    ]
+    {
+      "name": "Avvia gioco",
+      "url": "./index.html"
+    }
+  ]
 }
