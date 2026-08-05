@@ -343,7 +343,7 @@
   </style>
 </head>
 <body>
-  <div id="dev-version">🎮 FILA v3.8 - PISTOLA PNG PERSONALIZZATA</div>
+  <div id="dev-version">🎮 FILA v3.9 - RESET BOSS FIGHT</div>
   <div id="app" class="crt">
 
     <!-- SCHERMATA 0: AGGIUNGI ALLA HOME -->
@@ -1416,9 +1416,36 @@
     }
 
     /* ============================================================
-       SEZIONE 10: FUNZIONI DI GESTIONE
+       SEZIONE 10: FUNZIONI DI GESTIONE (con RESET BOSS FIGHT)
        ============================================================ */
     function loseLife() {
+      // ---- SE SIAMO NELLA BOSS FIGHT, RESET (anche se vite 0) ----
+      if (game.arenaEntered && game.boss.alive) {
+        // Resetta il giocatore all'inizio dell'arena con 3 vite e pistola
+        game.lives = 3;
+        game.player = makePlayer(ARENA_ENTRY_X + 30);
+        game.player.invulnUntil = game.frame + 60;
+        // Resetta il boss
+        game.boss = buildBoss();
+        game.bossParticles = [];
+        game.missiles = [];
+        game.poofParticles = [];
+        game.bossDialogueCooldown = 0;
+        document.getElementById('boss-dialogue').classList.remove('show');
+        // La pistola rimane se già raccolta
+        document.getElementById('btn-shoot-gun').style.display = game.hasGun ? 'flex' : 'none';
+        document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
+        document.getElementById('boss-hp-wrap').style.display = 'none';
+        // Resetta il timer delle vite (per evitare danni immediati)
+        game.player.invulnUntil = game.frame + 90;
+        sfx.hit();
+        triggerShake(6, 12);
+        // Aggiorna la camera
+        game.camX = Math.max(0, game.player.x - W / 2.5);
+        return;
+      }
+
+      // ---- LOGICA NORMALE (fuori dalla boss fight) ----
       document.getElementById('boss-hp-wrap').style.display = 'none';
       sfx.hit(); triggerShake(6, 12);
       game.lives--;
@@ -1691,12 +1718,10 @@
       if (game.hasGun) {
         const gunW = 18;
         const gunH = 18;
-        // Posizionamento nella mano
         let gunX = p.facing === -1 ? px - 6 : px + w - 2;
         let gunY = bodyY + 2 + (p.facing === -1 ? armSwing : armSwing2) + armLift - 2;
         
         ctx.save();
-        // Se il personaggio guarda a sinistra, capovolgo l'immagine orizzontalmente
         if (p.facing === -1) {
           ctx.translate(gunX + gunW/2, gunY + gunH/2);
           ctx.scale(-1, 1);
@@ -1705,7 +1730,6 @@
         if (gunLoaded && gunImage.complete && gunImage.naturalWidth > 0) {
           ctx.drawImage(gunImage, gunX, gunY, gunW, gunH);
         } else {
-          // Placeholder (rettangolo arancione) finché l'immagine non è caricata
           ctx.fillStyle = '#ff8a3d';
           ctx.fillRect(gunX, gunY, gunW, gunH);
           ctx.fillStyle = '#000';
@@ -1882,13 +1906,11 @@
       const bob = Math.sin(game.frame * 0.08) * 4;
       const y = gp.y + bob;
       
-      // Ombra a terra
       ctx.fillStyle = 'rgba(0,0,0,0.15)';
       ctx.beginPath();
       ctx.ellipse(gp.x + gp.w/2, gp.y + gp.h + 4, 14, 4, 0, 0, Math.PI * 2);
       ctx.fill();
       
-      // Disegna l'immagine della pistola
       const gunW = 28;
       const gunH = 28;
       const gx = gp.x + (gp.w - gunW) / 2;
@@ -1896,13 +1918,11 @@
       
       if (gunLoaded && gunImage.complete && gunImage.naturalWidth > 0) {
         ctx.drawImage(gunImage, gx, gy, gunW, gunH);
-        // Glow
         ctx.shadowColor = 'rgba(255,215,61,0.3)';
         ctx.shadowBlur = 15;
         ctx.drawImage(gunImage, gx, gy, gunW, gunH);
         ctx.shadowBlur = 0;
       } else {
-        // Placeholder
         ctx.fillStyle = '#ff8a3d';
         ctx.fillRect(gx, gy, gunW, gunH);
         ctx.fillStyle = '#000';
@@ -2276,7 +2296,7 @@
       initGame();
     });
 
-    console.log('🎮 FILA v3.8 - Pistola PNG personalizzata (gun.png) implementata!');
+    console.log('🎮 FILA v3.9 - Reset boss fight con pistola mantenuta!');
   </script>
 </body>
 </html>
