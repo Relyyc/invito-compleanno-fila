@@ -735,7 +735,7 @@ fitCanvas();
 
 let game = null;
 
-function initGame() {
+function initGame(skipIntro) {
   fitCanvas();
   game = {
     keys: { left: false, right: false, jump: false, shoot: false },
@@ -750,7 +750,7 @@ function initGame() {
     enemies: buildEnemies(),
     fireballs: [],
     hasGun: false,
-    gunPickup: { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: false },
+    gunPickup: { x: 1895, y: GROUND_Y - 52, w: 56, h: 48, collected: false },
     bullets: [],
     boss: buildBoss(),
     missiles: [],
@@ -762,10 +762,20 @@ function initGame() {
     shakeUntil: 0,
     shakeMagnitude: 0,
     flagX: 2900,
+    intro: null,
   };
+  if (!skipIntro) {
+    game.intro = { phase: 'portal_open', frame: 0, portalX: 28, portalY: GROUND_Y - 50 };
+    game.player = makePlayer(28);
+    game.player.pose = 'hidden';
+    game.player.visible = false;
+  }
   document.getElementById('btn-shoot-gun').style.display = 'none';
   document.getElementById('boss-hp-wrap').style.display = 'none';
   document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
+  const tc = document.getElementById('touch-controls');
+  tc.style.opacity = skipIntro ? '1' : '0';
+  tc.style.pointerEvents = skipIntro ? 'auto' : 'none';
   requestAnimationFrame(loop);
 }
 
@@ -778,7 +788,10 @@ function makePlayer(x) {
     wasOnGround: false,
     facing: 1,
     invulnUntil: 0,
-    scaleX: 1, scaleY: 1 // per animazioni di Juice (Squash & Stretch)
+    scaleX: 1, scaleY: 1,
+    pose: 'standing',
+    visible: true,
+    standProgress: 1,
   };
 }
 
@@ -958,7 +971,78 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
+function updateIntro() {
+  const intro = game.intro;
+  intro.frame++;
+  const p = game.player;
+  const px = intro.portalX;
+  const py = intro.portalY;
+
+  if (intro.phase === 'portal_open') {
+    if (intro.frame === 1) sfx.warp();
+    if (intro.frame >= 55) {
+      intro.phase = 'eject';
+      intro.frame = 0;
+      p.visible = true;
+      p.pose = 'flying';
+      p.facing = 1;
+    }
+  } else if (intro.phase === 'eject') {
+    const t = intro.frame / 28;
+    p.x = px + 8 + t * 38;
+    p.y = GROUND_Y - 28 - Math.sin(t * Math.PI) * 42;
+    p.scaleX = 0.85 + t * 0.15;
+    p.scaleY = 1.15 - t * 0.15;
+    if (intro.frame >= 28) {
+      p.x = 58;
+      p.y = GROUND_Y - 20;
+      p.h = 22;
+      p.pose = 'sitting';
+      p.scaleX = 1;
+      p.scaleY = 1;
+      intro.phase = 'sit';
+      intro.frame = 0;
+      sfx.stomp();
+      for (let i = 0; i < 8; i++) spawnDust(p.x + p.w / 2, p.y + p.h, 0);
+    }
+  } else if (intro.phase === 'sit') {
+    p.pose = 'sitting';
+    p.x = 58;
+    p.y = GROUND_Y - 20;
+    p.h = 22;
+    if (intro.frame >= 45) {
+      intro.phase = 'stand';
+      intro.frame = 0;
+    }
+  } else if (intro.phase === 'stand') {
+    const t = Math.min(1, intro.frame / 50);
+    p.pose = 'standing_up';
+    p.standProgress = t;
+    p.x = 58;
+    p.y = GROUND_Y - 20 - t * 8;
+    p.h = 22 + t * 6;
+    if (t >= 1) {
+      p.pose = 'standing';
+      p.y = GROUND_Y - 28;
+      p.h = 28;
+      p.standProgress = 1;
+      game.intro = null;
+      game.keys = { left: false, right: false, jump: false, shoot: false };
+      const tc = document.getElementById('touch-controls');
+      tc.style.opacity = '1';
+      tc.style.pointerEvents = 'auto';
+    }
+  }
+
+  game.camX = Math.max(0, p.x - W / 3);
+}
+
 function update() {
+  if (game.intro) {
+    updateIntro();
+    return;
+  }
+
   const p = game.player;
   game.frame++;
 
@@ -1202,7 +1286,7 @@ function loseLife() {
     }
     game.fireballs = [];
     game.hasGun = gunAlreadyEarned;
-    game.gunPickup = { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: gunAlreadyEarned };
+    game.gunPickup = { x: 1895, y: GROUND_Y - 52, w: 56, h: 48, collected: gunAlreadyEarned };
     game.bullets = [];
     game.boss = buildBoss();
     game.bossParticles = [];
@@ -1239,6 +1323,14 @@ function render() {
 
   for (const plat of game.platforms) drawGroundBlock(plat);
 
+  if (game.intro) {
+    const intro = game.intro;
+    const openAmt = intro.phase === 'portal_open'
+      ? Math.min(1, intro.frame / 55)
+      : 1;
+    drawModernPortal(ctx, intro.portalX + 22, intro.portalY, 30, intro.frame, { open: openAmt });
+  }
+
   drawFlag(game.flagX);
   drawArrivalBuilding(game.flagX + 60);
 
@@ -1270,24 +1362,34 @@ function render() {
 
 function positionFaceOverlay() {
   const overlay = document.getElementById('face-overlay');
-  if (!state.faceCanvas) { overlay.style.display = 'none'; return; }
+  if (!state.faceCanvas || !game.player.visible) { overlay.style.display = 'none'; return; }
 
   const p = game.player;
   const canvasRect = canvas.getBoundingClientRect();
   const wrapRect = document.getElementById('game-wrap').getBoundingClientRect();
   const scale = canvasRect.width / W;
 
-  const walking = Math.abs(p.vx) > 0 && p.onGround;
+  const walking = Math.abs(p.vx) > 0 && p.onGround && p.pose === 'standing';
   const bobbing = walking ? Math.sin(game.frame * 0.5) * 2.5 * scale : 0;
 
+  let headY = p.y;
+  let headH = 20;
+  if (p.pose === 'sitting') {
+    headY = p.y - 2;
+    headH = 18;
+  } else if (p.pose === 'standing_up') {
+    headY = p.y + (1 - p.standProgress) * 4;
+    headH = 16 + p.standProgress * 4;
+  }
+
   const left = (canvasRect.left - wrapRect.left) + (p.x - game.camX) * scale;
-  const top = (canvasRect.top - wrapRect.top) + (p.y * scale) + bobbing;
+  const top = (canvasRect.top - wrapRect.top) + (headY * scale) + bobbing;
 
   overlay.style.display = 'block';
   overlay.style.left = left + 'px';
   overlay.style.top = top + 'px';
   overlay.style.width = (p.w * scale * p.scaleX) + 'px';
-  overlay.style.height = (20 * scale * p.scaleY) + 'px';
+  overlay.style.height = (headH * scale * p.scaleY) + 'px';
   overlay.style.transform = p.facing === -1 ? 'scaleX(-1)' : 'none';
 }
 
@@ -1424,6 +1526,94 @@ let enemySpriteLoaded = false;
 enemySprite.onload = () => { enemySpriteLoaded = true; };
 enemySprite.src = 'nemico.png';
 
+const gunSprite = new Image();
+let gunSpriteLoaded = false;
+gunSprite.onload = () => { gunSpriteLoaded = true; };
+gunSprite.src = 'gun.png';
+
+/* Portale moderno (gradienti, anelli, vortice) — riutilizzato in lab e nel gioco */
+function drawModernPortal(c, x, y, radius, time, opts = {}) {
+  const vertical = opts.vertical !== false;
+  const alpha = opts.alpha !== undefined ? opts.alpha : 1;
+  const open = opts.open !== undefined ? opts.open : 1;
+  const r = radius * open;
+  if (r < 2) return;
+
+  c.save();
+  c.globalAlpha = alpha;
+  const ry = vertical ? r * 1.45 : r;
+
+  const glow = c.createRadialGradient(x, y, r * 0.15, x, y, r * 2.2);
+  glow.addColorStop(0, 'rgba(120, 230, 255, 0.55)');
+  glow.addColorStop(0.45, 'rgba(120, 60, 220, 0.28)');
+  glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  c.fillStyle = glow;
+  c.beginPath();
+  c.ellipse(x, y, r * 1.7, ry * 1.7, 0, 0, Math.PI * 2);
+  c.fill();
+
+  const vortex = c.createRadialGradient(x, y, 0, x, y, r);
+  vortex.addColorStop(0, '#050510');
+  vortex.addColorStop(0.55, '#180838');
+  vortex.addColorStop(0.85, 'rgba(60, 180, 255, 0.75)');
+  vortex.addColorStop(1, 'rgba(180, 255, 255, 0.9)');
+  c.fillStyle = vortex;
+  c.beginPath();
+  c.ellipse(x, y, r * 0.82, ry * 0.82, 0, 0, Math.PI * 2);
+  c.fill();
+
+  for (let ring = 0; ring < 3; ring++) {
+    c.save();
+    c.translate(x, y);
+    c.rotate(time * 0.045 * (ring % 2 === 0 ? 1 : -1) + ring * 1.1);
+    const colors = ['rgba(255, 217, 61, 0.75)', 'rgba(77, 214, 255, 0.65)', 'rgba(255, 77, 109, 0.55)'];
+    c.strokeStyle = colors[ring];
+    c.lineWidth = 2.8 - ring * 0.6;
+    c.beginPath();
+    c.ellipse(0, 0, r * (0.92 - ring * 0.14), ry * (0.92 - ring * 0.12), 0, 0, Math.PI * 2);
+    c.stroke();
+    c.restore();
+  }
+
+  c.save();
+  c.translate(x, y);
+  c.rotate(time * 0.07);
+  for (let i = 0; i < 8; i++) {
+    const a = (Math.PI * 2 / 8) * i + Math.sin(time * 0.08) * 0.2;
+    c.strokeStyle = `rgba(140, 240, 255, ${0.25 + 0.2 * Math.sin(time * 0.12 + i)})`;
+    c.lineWidth = 2;
+    c.beginPath();
+    c.arc(0, 0, r * 0.55, a, a + Math.PI / 2.8);
+    c.stroke();
+  }
+  c.restore();
+
+  c.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+  c.lineWidth = 1.5;
+  c.beginPath();
+  c.ellipse(x, y, r * 0.86, ry * 0.86, 0, 0, Math.PI * 2);
+  c.stroke();
+  c.restore();
+}
+
+function drawGunHeld(c, p, armLift) {
+  if (!game.hasGun) return;
+  const handW = 18, handH = 11;
+  const px = p.facing > 0 ? p.x + p.w - 3 : p.x - handW + 3;
+  const py = p.y + 11 + armLift;
+  if (gunSpriteLoaded) {
+    c.save();
+    if (p.facing < 0) {
+      c.translate(px + handW, py);
+      c.scale(-1, 1);
+      c.drawImage(gunSprite, 0, 0, handW, handH);
+    } else {
+      c.drawImage(gunSprite, px, py, handW, handH);
+    }
+    c.restore();
+  }
+}
+
 function drawEnemy(en) {
   if (enemySpriteLoaded) {
     ctx.save();
@@ -1548,20 +1738,28 @@ function drawFireGate(x) {
 }
 
 function drawGunPickup(gp) {
-  const bob = Math.sin(game.frame * 0.1) * 3.5;
-  const y = gp.y + bob;
+  const bob = Math.sin(game.frame * 0.1) * 4;
+  const cx = gp.x + gp.w / 2;
+  const cy = gp.y + gp.h / 2 + bob;
+  const displayW = 58;
+  const displayH = 40;
+
   ctx.save();
-  ctx.shadowBlur = 12;
+  ctx.shadowBlur = 22;
   ctx.shadowColor = '#ffd93d';
-  ctx.fillStyle = 'rgba(255,217,61,0.3)';
+  ctx.fillStyle = 'rgba(255, 217, 61, 0.22)';
   ctx.beginPath();
-  ctx.ellipse(gp.x + gp.w / 2, gp.y + gp.h + 6, 14, 4, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, gp.y + gp.h + 8, 22, 6, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#3a3a3a';
-  ctx.fillRect(gp.x, y + 8, gp.w, 6);
-  ctx.fillRect(gp.x + gp.w - 6, y, 6, 12);
-  ctx.fillStyle = '#7a5a2a';
-  ctx.fillRect(gp.x, y + 12, 6, 10);
+
+  const pulse = 0.85 + Math.sin(game.frame * 0.12) * 0.15;
+  ctx.globalAlpha = pulse;
+  if (gunSpriteLoaded) {
+    ctx.drawImage(gunSprite, cx - displayW / 2, cy - displayH / 2, displayW, displayH);
+  } else {
+    ctx.fillStyle = '#ffd93d';
+    ctx.fillRect(cx - displayW / 2, cy - displayH / 2, displayW, displayH);
+  }
   ctx.restore();
 }
 
@@ -1640,7 +1838,40 @@ function drawBossWithSpawn(boss) {
 }
 
 function drawPlayer(p) {
+  if (!p.visible) return;
+
   ctx.save();
+
+  if (p.pose === 'sitting' || p.pose === 'standing_up') {
+    const sitT = p.pose === 'sitting' ? 1 : (1 - p.standProgress);
+    const torsoY = p.y + 6 * sitT;
+    const legExtend = 10 * sitT;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(p.x + p.w / 2, p.y + p.h + 2, p.w / 2, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(p.x + 2, p.y + p.h - 6, 6, 6 + legExtend * 0.3);
+    ctx.fillRect(p.x + p.w - 8, p.y + p.h - 6, 6, 6 + legExtend * 0.3);
+    ctx.fillRect(p.x + 4, p.y + p.h - 2, p.w - 2, 4 + legExtend);
+
+    const bodyGrad = ctx.createLinearGradient(p.x, torsoY, p.x, torsoY + p.h);
+    bodyGrad.addColorStop(0, '#3b7dff');
+    bodyGrad.addColorStop(1, '#1f4fbf');
+    ctx.fillStyle = bodyGrad;
+    ctx.fillRect(p.x, torsoY + 4, p.w, p.h - 10 - (1 - sitT) * 4);
+
+    ctx.fillStyle = '#1f4fbf';
+    ctx.fillRect(p.x - 2, torsoY + 8, 4, 8);
+    ctx.fillRect(p.x + p.w - 2, torsoY + 8, 4, 8);
+
+    drawGunHeld(ctx, p, 0);
+    ctx.restore();
+    return;
+  }
+
   ctx.translate(p.x + p.w / 2, p.y + p.h);
   ctx.scale(p.scaleX, p.scaleY);
   ctx.translate(-(p.x + p.w / 2), -(p.y + p.h));
@@ -1648,43 +1879,27 @@ function drawPlayer(p) {
   const walking = Math.abs(p.vx) > 0 && p.onGround;
   const legPhase = walking ? Math.sin(game.frame * 0.5) * 5 : 0;
 
-  // Ombra a terra
   ctx.fillStyle = 'rgba(0,0,0,0.25)';
   ctx.beginPath();
   ctx.ellipse(p.x + p.w / 2, p.y + p.h + 2, p.w / 2, 4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Gambe
   ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(p.x + 3, p.y + p.h - 8, 6, 8 + Math.max(0, legPhase));
   ctx.fillRect(p.x + p.w - 9, p.y + p.h - 8, 6, 8 + Math.max(0, -legPhase));
 
-  // Busto
   const bodyGrad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
   bodyGrad.addColorStop(0, '#3b7dff');
   bodyGrad.addColorStop(1, '#1f4fbf');
   ctx.fillStyle = bodyGrad;
   ctx.fillRect(p.x, p.y + 9, p.w, p.h - 17);
 
-  // Braccia
   ctx.fillStyle = '#1f4fbf';
   const armLift = p.onGround ? 0 : -4;
   ctx.fillRect(p.x - 2, p.y + 11 + armLift, 4, 10);
   ctx.fillRect(p.x + p.w - 2, p.y + 11 + armLift, 4, 10);
 
-  // Pistola
-  if (game.hasGun) {
-    ctx.fillStyle = '#2a2a2a';
-    if (p.facing === -1) {
-      ctx.fillRect(p.x - 10, p.y + 12 + armLift, 10, 5);
-      ctx.fillRect(p.x - 6, p.y + 16 + armLift, 5, 6);
-    } else {
-      ctx.fillRect(p.x + p.w, p.y + 12 + armLift, 10, 5);
-      ctx.fillRect(p.x + p.w + 1, p.y + 16 + armLift, 5, 6);
-    }
-  }
-
-  // Rimosso il rettangolo rosa (#ffd6a5): ora rimane solo il selfie in overlay circolare
+  drawGunHeld(ctx, p, armLift);
   ctx.restore();
 }
 
@@ -1725,7 +1940,7 @@ function onLose() {
 
 document.getElementById('btn-retry').addEventListener('click', () => {
   showScreen('screen-game');
-  initGame();
+  initGame(true);
 });
 
 /* ============ ANIMAZIONE MONTAGGIO PERSONAGGIO E PORTALE ============ */
@@ -1737,9 +1952,11 @@ function startAssemblySequence() {
   const titleEl = document.getElementById('assembly-title');
 
   let frame = 0;
-  const totalFrames = 410;
+  const totalFrames = 430;
   const cx = W_A / 2;
   const cy = H_A / 2 + 15;
+  const portalCX = cx + 95;
+  const portalCY = cy - 8;
 
   // Character component dimensions (FULL SIZE)
   const torsoW = 52, torsoH = 60;
@@ -1899,7 +2116,7 @@ function startAssemblySequence() {
     actx.textAlign = 'left';
     actx.fillText(`LAB_SYSTEM: ACTIVE`, 16, 20);
     actx.fillText(`SOGGETTO: ${state.name.toUpperCase()}`, 16, 32);
-    actx.fillText(`PROGRESSO: ${Math.min(100, Math.floor((frame / 340) * 100))}%`, 16, 44);
+    actx.fillText(`PROGRESSO: ${Math.min(100, Math.floor((frame / 400) * 100))}%`, 16, 44);
 
     // Corner HUD target brackets
     actx.strokeStyle = 'rgba(255, 217, 61, 0.3)';
@@ -1908,6 +2125,17 @@ function startAssemblySequence() {
     actx.beginPath(); actx.moveTo(cx + 80, cy - 80); actx.lineTo(cx + 100, cy - 80); actx.lineTo(cx + 100, cy - 60); actx.stroke();
     actx.beginPath(); actx.moveTo(cx - 80, cy + 80); actx.lineTo(cx - 100, cy + 80); actx.lineTo(cx - 100, cy + 60); actx.stroke();
     actx.beginPath(); actx.moveTo(cx + 80, cy + 80); actx.lineTo(cx + 100, cy + 80); actx.lineTo(cx + 100, cy + 60); actx.stroke();
+
+    const suckT = frame >= 355 ? Math.min(1, (frame - 355) / 50) : 0;
+    if (suckT > 0) {
+      actx.save();
+      const pullX = cx + (portalCX - cx) * suckT * 0.92;
+      const pullY = cy + (portalCY - cy) * suckT * 0.92;
+      const sc = 1 - suckT * 0.88;
+      actx.translate(pullX, pullY);
+      actx.scale(sc, sc);
+      actx.translate(-cx, -cy);
+    }
 
     // ==========================================
     // PHASE 1: BUSTO / TORSO (Frames 10 - 70)
@@ -2141,45 +2369,57 @@ function startAssemblySequence() {
     }
 
     // ==========================================
-    // PHASE 5: CHARGING & PORTAL (Frames 305 - 410)
+    // PHASE 5: PORTALE A DESTRA + RISUCCHIO (Frames 305 - 430)
     // ==========================================
+    if (suckT > 0) actx.restore();
+
     if (frame >= 305) {
       if (frame === 305) {
         sfx.warp();
         titleEl.textContent = "PORTALE ATTIVATO";
-        statusEl.textContent = "SOGGETTO PRONTO - TELETRASPORTO IN CORSO!";
+        statusEl.textContent = "TELETRASPORTO NEL MONDO DI GIOCO...";
       }
 
-      const auraPulse = Math.sin(frame * 0.2) * 6;
-      actx.save();
-      actx.shadowBlur = 20 + auraPulse;
-      actx.shadowColor = '#4dd6ff';
-      actx.strokeStyle = 'rgba(77, 214, 255, 0.6)';
-      actx.lineWidth = 3;
-      actx.beginPath();
-      actx.ellipse(cx, cy, torsoW / 2 + 18 + auraPulse, torsoH + 28 + auraPulse, 0, 0, Math.PI * 2);
-      actx.stroke();
-      actx.restore();
+      const portalOpen = Math.min(1, (frame - 305) / 45);
+      drawModernPortal(actx, portalCX, portalCY, 54, frame, { open: portalOpen, vertical: true });
 
-      const portalRadius = Math.min(180, (frame - 305) * 3);
-      const portalRot = frame * 0.1;
-      actx.save();
-      actx.translate(cx, cy);
-      actx.rotate(portalRot);
-
-      for (let i = 0; i < 8; i++) {
-        const pAngle = (Math.PI * 2 / 8) * i;
-        const px = Math.cos(pAngle) * portalRadius;
-        const py = Math.sin(pAngle) * portalRadius;
-        actx.fillStyle = i % 2 === 0 ? '#ffd93d' : '#ff4d6d';
-        actx.shadowBlur = 12;
-        actx.shadowColor = actx.fillStyle;
-        actx.fillRect(px - 6, py - 6, 12, 12);
+      if (frame >= 330 && frame < 355) {
+        const auraPulse = Math.sin(frame * 0.2) * 6;
+        actx.save();
+        actx.shadowBlur = 18 + auraPulse;
+        actx.shadowColor = '#4dd6ff';
+        actx.strokeStyle = 'rgba(77, 214, 255, 0.45)';
+        actx.lineWidth = 2;
+        actx.beginPath();
+        actx.ellipse(cx, cy, torsoW / 2 + 16 + auraPulse, torsoH + 24 + auraPulse, 0, 0, Math.PI * 2);
+        actx.stroke();
+        actx.restore();
       }
-      actx.restore();
 
-      if (frame % 2 === 0) {
-        addSparks(cx + (Math.random() - 0.5) * 80, cy + (Math.random() - 0.5) * 120, '#4dd6ff', 4, 8);
+      if (frame >= 355) {
+        statusEl.textContent = "RISUCCHIO IN CORSO...";
+        for (let i = 0; i < 8; i++) {
+          const fromX = cx + (Math.random() - 0.5) * 70;
+          const fromY = cy + (Math.random() - 0.5) * 110;
+          const t = suckT * 0.85 + Math.random() * 0.2;
+          const sx = fromX + (portalCX - fromX) * t;
+          const sy = fromY + (portalCY - fromY) * t;
+          actx.fillStyle = `rgba(120, 230, 255, ${0.65 - t * 0.5})`;
+          actx.fillRect(sx, sy, 2 + Math.random() * 2, 2 + Math.random() * 2);
+        }
+        if (frame % 2 === 0) {
+          const angle = Math.atan2(portalCY - cy, portalCX - cx);
+          particles.push({
+            x: cx + (Math.random() - 0.5) * 50,
+            y: cy + (Math.random() - 0.5) * 90,
+            vx: Math.cos(angle) * (4 + suckT * 10),
+            vy: Math.sin(angle) * (4 + suckT * 10),
+            size: 2 + Math.random() * 3,
+            life: 12 + Math.random() * 10,
+            maxLife: 22,
+            color: '#4dd6ff'
+          });
+        }
       }
     }
 
@@ -2194,8 +2434,8 @@ function startAssemblySequence() {
       if (pt.life <= 0) particles.splice(i, 1);
     }
 
-    if (frame > 370) {
-      const flashAlpha = Math.min(1, (frame - 370) / 35);
+    if (frame > 400) {
+      const flashAlpha = Math.min(1, (frame - 400) / 30);
       actx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
       actx.fillRect(0, 0, W_A, H_A);
     }

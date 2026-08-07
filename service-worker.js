@@ -6,6 +6,7 @@ const FILES_TO_CACHE = [
     "./icon-180.png",
     "./icon-512.png",
     "./nemico.png",
+    "./gun.png",
     "./Coin-Block_Run.mp3"
 ];
 
