@@ -1,15 +1,7 @@
 <!DOCTYPE html>
 <!--
   ================================================================
-  INVITO COMPLEANNO - EDIZIONE PIXEL AA
-  ================================================================
-  COSE DA SOSTITUIRE PRIMA DI PUBBLICARE (cerca "TODO" nel file):
-  1. nome del festeggiato -> Michele
-  2. TODO-DATA     -> data e ora della festa
-  3. TODO-LUOGO    -> indirizzo / luogo
-  4. musica        -> Coin-Block_Run.mp3
-  5. TODO-RSVP     -> link Formspree / Google Form per risposte
-  6. TODO-ICONA    -> icona home screen (icon-180.png, icon-512.png)
+  INVITO COMPLEANNO - BUILD AA v3.2
   ================================================================
 -->
 <html lang="it">
@@ -51,13 +43,13 @@
     position: fixed;
     top: 6px; left: 50%;
     transform: translateX(-50%);
-    background: rgba(0,0,0,0.7);
-    color: #ffd93d;
+    background: rgba(0,0,0,0.8);
+    color: #4dd6ff;
     font-family: 'PixelFont', 'Courier New', monospace;
     font-size: 10px;
-    padding: 4px 10px;
-    border: 1px solid #ffd93d;
-    box-shadow: 0 0 10px rgba(255, 217, 61, 0.3);
+    padding: 4px 12px;
+    border: 1px solid #4dd6ff;
+    box-shadow: 0 0 8px rgba(77,214,255,0.4);
     z-index: 999;
     pointer-events: none;
     letter-spacing: 1px;
@@ -78,15 +70,15 @@
   }
   .screen.active { display: flex; }
 
-  /* ---- scanline / CRT effect ---- */
+  /* CRT Effect */
   .crt::before {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: repeating-linear-gradient(
       to bottom,
-      rgba(0,0,0,0.18) 0px,
-      rgba(0,0,0,0.18) 1px,
+      rgba(0,0,0,0.15) 0px,
+      rgba(0,0,0,0.15) 1px,
       transparent 2px,
       transparent 3px
     );
@@ -97,7 +89,7 @@
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    box-shadow: inset 0 0 100px rgba(0,0,0,0.85);
+    box-shadow: inset 0 0 120px rgba(0,0,0,0.8);
     pointer-events: none;
     z-index: 51;
   }
@@ -109,24 +101,23 @@
     font-size: clamp(20px, 5vw, 42px);
     color: #ffd93d;
     text-shadow: 3px 3px 0 #ff4d6d, 6px 6px 0 #000;
-    line-height: 1.5;
-    margin-bottom: 24px;
+    line-height: 1.4;
+    margin-bottom: 20px;
   }
   p.body-text {
     font-size: clamp(11px, 2.2vw, 16px);
-    line-height: 2;
+    line-height: 1.8;
     max-width: 560px;
     color: #b8f2e6;
   }
   .warn {
     color: #ffd93d;
-    margin: 20px 0;
+    margin: 16px 0;
     font-size: clamp(11px, 2.2vw, 14px);
   }
   .instructions-box {
     background: rgba(255,255,255,0.05);
     border: 2px solid #4dd6ff;
-    box-shadow: 0 0 15px rgba(77, 214, 255, 0.2);
     padding: 14px 16px;
     margin: 12px 0;
     max-width: 480px;
@@ -137,12 +128,10 @@
     font-size: clamp(11px, 2.2vw, 14px);
     margin: 0 0 8px;
   }
-  .instructions-big { max-width: 520px; }
-  .instructions-big .instr-title { font-size: clamp(15px, 3.2vw, 20px); }
   .instr-text-big {
     color: #d6f3ff;
-    font-size: clamp(14px, 3vw, 19px);
-    line-height: 2.1;
+    font-size: clamp(13px, 2.8vw, 17px);
+    line-height: 2;
     margin: 0;
     font-family: 'Courier New', monospace;
   }
@@ -168,62 +157,73 @@
   }
   .device-btn:active { transform: translateY(3px); box-shadow: none; }
   .device-icon { font-size: 34px; }
+  
   input[type=text] {
     font-family: inherit;
     font-size: clamp(12px, 2.5vw, 16px);
-    padding: 12px;
+    padding: 14px;
     margin: 16px 0;
-    width: min(300px, 80vw);
+    width: min(320px, 85vw);
     background: #1a1a2e;
     border: 3px solid #ffd93d;
     color: #fff;
     text-align: center;
     outline: none;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
   }
   button.pixel-btn {
     font-family: inherit;
     font-size: clamp(12px, 2.5vw, 16px);
     padding: 16px 28px;
-    margin-top: 20px;
+    margin-top: 16px;
     background: #ff4d6d;
     color: #fff;
     border: none;
     box-shadow: 4px 4px 0 #7a1030, -4px 4px 0 #7a1030, 0 0 0 3px #fff inset;
     cursor: pointer;
     letter-spacing: 1px;
-    transition: background 0.1s;
   }
   button.pixel-btn:active { transform: translateY(3px); box-shadow: none; }
-  button.pixel-btn:disabled { opacity: 0.4; cursor: default; }
 
-  /* Ingrandita e ottimizzata la visuale della fotocamera in verticale */
+  /* Ingrandimento fotocamera in Portrait */
   #video-preview, #capture-canvas {
     width: min(340px, 88vw);
     height: min(340px, 88vw);
-    max-height: 42vh;
     background: #000;
     border: 4px solid #4dd6ff;
-    border-radius: 16px;
     object-fit: cover;
-    box-shadow: 0 0 25px rgba(77, 214, 255, 0.4);
+    box-shadow: 0 0 20px rgba(77,214,255,0.3);
   }
   #capture-canvas { display: none; }
 
+  /* Canvas di Montaggio Laboratorio Full Size */
+  #assembly-canvas {
+    width: min(520px, 94vw);
+    height: min(320px, 58vh);
+    background: #050510;
+    border: 4px solid #4dd6ff;
+    box-shadow: 0 0 25px rgba(77,214,255,0.4);
+    image-rendering: pixelated;
+  }
+  #assembly-status {
+    font-size: clamp(12px, 2.5vw, 16px);
+    color: #ffd93d;
+    margin-top: 14px;
+    letter-spacing: 1px;
+  }
+
+  /* Game Canvas & HUD */
   #game-wrap { position: relative; width: 100%; height: 100%; }
   #game-canvas {
-    display: block; margin: 0 auto; background: #2b1055; image-rendering: pixelated;
+    display: block; margin: 0 auto; background: #4da6ff; image-rendering: pixelated;
   }
-  
-  /* Filtro e trasformazione sul viso del personaggio */
   #face-overlay {
     position: absolute;
     display: none;
     pointer-events: none;
     border-radius: 50%;
     z-index: 3;
-    filter: contrast(1.15) saturate(1.3) sepia(0.25) brightness(0.95);
-    transition: transform 0.08s ease-out;
+    filter: contrast(1.15) saturate(1.2) brightness(0.95);
   }
 
   #rotate-overlay {
@@ -249,7 +249,7 @@
     top: 10px; left: 10px;
     font-size: 12px;
     color: #fff;
-    text-shadow: 2px 2px 0 #000, 0 0 8px rgba(255,255,255,0.5);
+    text-shadow: 2px 2px 0 #000;
     z-index: 5;
   }
 
@@ -263,8 +263,8 @@
   }
   .touch-btn {
     width: 64px; height: 64px;
-    background: rgba(255,255,255,0.2);
-    border: 3px solid rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.25);
+    border: 3px solid #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -272,12 +272,6 @@
     font-size: 24px;
     color: #fff;
     touch-action: none;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  }
-  .touch-btn:active {
-    background: rgba(255,255,255,0.4);
-    transform: scale(0.92);
   }
   #dpad { display: flex; gap: 10px; }
   #right-controls { display: flex; gap: 14px; align-items: center; }
@@ -292,29 +286,18 @@
   .boss-hp-label {
     color: #ff4d6d;
     font-size: 11px;
-    text-shadow: 2px 2px 0 #000, 0 0 10px #ff4d6d;
+    text-shadow: 2px 2px 0 #000;
     margin-bottom: 3px;
     letter-spacing: 2px;
   }
   #boss-hp-bar-bg {
-    position: relative;
     width: 180px;
     height: 14px;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.6);
     border: 2px solid #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,0.8);
-    overflow: hidden;
-  }
-  #boss-hp-bar-delay {
-    position: absolute;
-    top: 0; left: 0; height: 100%;
-    background: #ffd93d;
-    width: 100%;
-    transition: width 0.4s ease-out;
   }
   #boss-hp-bar-fill {
-    position: absolute;
-    top: 0; left: 0; height: 100%;
+    height: 100%;
     background: #ff4d6d;
     width: 100%;
     transition: width 0.15s ease-out;
@@ -323,13 +306,11 @@
   .result-box {
     background: #1a1a2e;
     border: 4px solid #ffd93d;
-    box-shadow: 0 0 25px rgba(255, 217, 61, 0.3);
     padding: 30px 24px;
     max-width: 480px;
     position: relative;
     z-index: 1;
   }
-
   #confetti-layer {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -340,64 +321,29 @@
   .confetti-piece {
     position: absolute;
     top: -20px;
-    width: 8px;
-    height: 14px;
+    width: 8px; height: 14px;
     opacity: 0.9;
-    animation-name: confetti-fall;
-    animation-timing-function: ease-in;
-    animation-fill-mode: forwards;
+    animation: confetti-fall 2.5s ease-in forwards;
   }
   @keyframes confetti-fall {
-    0%   { transform: translateY(0) rotate(0deg); opacity: 0.9; }
+    0% { transform: translateY(0) rotate(0deg); opacity: 0.9; }
     100% { transform: translateY(110vh) rotate(360deg); opacity: 0.6; }
-  }
-
-  .shake-title { animation: title-shake 0.4s ease-in-out 2; }
-  @keyframes title-shake {
-    0%, 100% { transform: translate(0, 0); }
-    20% { transform: translate(-3px, 2px); }
-    40% { transform: translate(3px, -2px); }
-    60% { transform: translate(-3px, -1px); }
-    80% { transform: translate(3px, 1px); }
   }
   #face-preview {
     width: 90px; height: 90px;
     border-radius: 50%;
     border: 3px solid #fff;
     margin-bottom: 16px;
-    box-shadow: 0 0 15px rgba(255,255,255,0.4);
-  }
-
-  @media (orientation: landscape) and (max-height: 500px) {
-    .result-box { padding: 14px 20px; }
-    #face-preview { width: 56px; height: 56px; margin-bottom: 8px; }
-    .result-box h1.title { font-size: 18px !important; margin-bottom: 8px; }
-    .result-box p.body-text { font-size: 11px !important; line-height: 1.5; margin: 6px 0; }
-    .result-box button.pixel-btn { margin-top: 10px; padding: 10px 18px; }
-  }
-
-  /* Ingrandito il canvas di montaggio avatar */
-  #assembly-canvas {
-    width: min(520px, 94vw);
-    height: auto;
-    aspect-ratio: 16 / 10;
-    max-height: 48vh;
-    background: #080814;
-    border: 3px solid #ffd93d;
-    border-radius: 12px;
-    box-shadow: 0 0 25px rgba(255, 217, 61, 0.35);
-    image-rendering: pixelated;
-    margin: 10px 0;
   }
 </style>
 </head>
 <body>
-<div id="dev-version">BUILD AA v3.0</div>
+<div id="dev-version">BUILD AA v3.2</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME -->
   <section id="screen-addhome" class="screen active">
-    <h1 class="title" style="font-size:clamp(18px,4.5vw,32px);">UN MOMENTO<br>PRIMA DI INIZIARE</h1>
+    <h1 class="title">UN MOMENTO<br>PRIMA DI INIZIARE</h1>
     <div id="addhome-choice">
       <p class="body-text">
         Per vivere questa esperienza come si deve,<br>
@@ -416,20 +362,20 @@
       </div>
     </div>
 
-    <div class="instructions-box instructions-big" id="instr-ios" style="display:none;">
+    <div class="instructions-box" id="instr-ios" style="display:none;">
       <p class="instr-title">📱 iPhone (Safari)</p>
       <p class="instr-text-big">
-        1. Tocca l'icona <b>Condividi</b><br>(il quadrato con la freccia in su)<br>
-        2. Scorri e scegli <b>"Aggiungi a Home"</b><br>
+        1. Tocca <b>Condividi</b> (quadrato con freccia)<br>
+        2. Scegli <b>"Aggiungi a Home"</b><br>
         3. Conferma in alto a destra
       </p>
     </div>
 
-    <div class="instructions-box instructions-big" id="instr-android" style="display:none;">
+    <div class="instructions-box" id="instr-android" style="display:none;">
       <p class="instr-title">🤖 Android (Chrome)</p>
       <p class="instr-text-big">
-        1. Tocca i <b>tre puntini</b><br>in alto a destra<br>
-        2. Scegli <b>"Aggiungi a schermata Home"</b><br>(o "Installa app")<br>
+        1. Tocca i <b>tre puntini</b> in alto a destra<br>
+        2. Scegli <b>"Aggiungi a Home"</b><br>
         3. Conferma
       </p>
     </div>
@@ -446,10 +392,10 @@
     <h1 class="title">ATTENZIONE<br>GIOCATORE</h1>
     <p class="body-text">
       Stai per ricevere un invito speciale.<br>
-      Per vivere l'esperienza come si deve:
+      Per vivere l'esperienza al meglio:
     </p>
     <p class="warn blink">🔊 ALZA IL VOLUME DEL TELEFONO</p>
-    <p class="warn">📷 Ti verrà chiesto di scattare un selfie<br>per creare il tuo personaggio</p>
+    <p class="warn">📷 Scatta un selfie per sbloccare<br>il tuo personaggio di gioco</p>
     <input type="text" id="player-name" placeholder="INSERISCI IL TUO NOME" maxlength="16">
     <button class="pixel-btn" id="btn-to-camera">PREMI START</button>
   </section>
@@ -459,17 +405,17 @@
     <h1 class="title" style="font-size:20px;">CREA IL TUO<br>PERSONAGGIO</h1>
     <video id="video-preview" autoplay playsinline muted></video>
     <canvas id="capture-canvas"></canvas>
-    <p class="body-text" id="camera-status">Inquadra il viso e sorridi.</p>
+    <p class="body-text" id="camera-status">Inquadra il viso e sorridi!</p>
     <button class="pixel-btn" id="btn-shoot">📸 SCATTA</button>
     <button class="pixel-btn" id="btn-retake" style="display:none;">RIPETI</button>
-    <button class="pixel-btn" id="btn-confirm" style="display:none; background:#3bcb6f; box-shadow:4px 4px 0 #145c2b,-4px 4px 0 #145c2b,0 0 0 3px #fff inset;">CONFERMA E GIOCA</button>
+    <button class="pixel-btn" id="btn-confirm" style="display:none; background:#3bcb6f; box-shadow:4px 4px 0 #145c2b,-4px 4px 0 #145c2b,0 0 0 3px #fff inset;">CONFERMA E MONTA</button>
   </section>
 
-  <!-- SCHERMATA 2.5: MONTAGGIO PERSONAGGIO -->
+  <!-- SCHERMATA 2.5: MONTAGGIO PERSONAGGIO (LABORATORIO) -->
   <section id="screen-assembly" class="screen">
-    <h1 class="title" style="font-size:clamp(16px, 3.8vw, 26px); color:#ffd93d;" id="assembly-title">LABORATORIO ASSEMBLAGGIO</h1>
+    <h1 class="title" style="font-size:18px; margin-bottom:12px;">LABORATORIO AVATAR</h1>
     <canvas id="assembly-canvas" width="512" height="320"></canvas>
-    <p class="body-text" id="assembly-status" style="font-size:12px; color:#4dd6ff; min-height: 28px;">Inizializzazione braccia meccaniche...</p>
+    <div id="assembly-status">ASSEMBLAGGIO STRUTTURA...</div>
   </section>
 
   <!-- SCHERMATA 3: GIOCO -->
@@ -484,11 +430,8 @@
         <div id="hud-lives"></div>
       </div>
       <div id="boss-hp-wrap" style="display:none;">
-        <div class="boss-hp-label">FILA - BOSS FINALE</div>
-        <div id="boss-hp-bar-bg">
-          <div id="boss-hp-bar-delay"></div>
-          <div id="boss-hp-bar-fill"></div>
-        </div>
+        <div class="boss-hp-label">FILA</div>
+        <div id="boss-hp-bar-bg"><div id="boss-hp-bar-fill"></div></div>
       </div>
       <canvas id="game-canvas" width="480" height="270"></canvas>
       <img id="face-overlay" alt="">
@@ -498,7 +441,7 @@
           <div class="touch-btn" id="btn-right">▶</div>
         </div>
         <div id="right-controls">
-          <div class="touch-btn" id="btn-shoot-gun" style="display:none; background:rgba(255,77,109,0.3); border-color:#ff4d6d;">🔫</div>
+          <div class="touch-btn" id="btn-shoot-gun" style="display:none;">🔫</div>
           <div class="touch-btn" id="btn-jump">▲</div>
         </div>
       </div>
@@ -513,7 +456,6 @@
       <h1 class="title" style="font-size:22px;">CE L'HAI FATTA!</h1>
       <p class="body-text" id="win-message"></p>
       <p class="body-text" style="margin-top:20px; color:#ffd93d;">
-        <!-- TODO-DATA / TODO-LUOGO -->
         📅 SABATO 12 SETTEMBRE 2026 - ORE 19:00<br>
         📍 Piazza dei Ricordi 1, Cantù
       </p>
@@ -524,7 +466,7 @@
   <!-- SCHERMATA 5: SCONFITTA -->
   <section id="screen-lose" class="screen">
     <div class="result-box">
-      <h1 class="title shake-title" style="font-size:22px; color:#ff4d6d; text-shadow:2px 2px 0 #000;">GAME OVER</h1>
+      <h1 class="title" style="font-size:22px; color:#ff4d6d; text-shadow:2px 2px 0 #000;">GAME OVER</h1>
       <p class="body-text" id="lose-message"></p>
       <button class="pixel-btn" id="btn-retry">RIPROVA</button>
     </div>
@@ -543,7 +485,13 @@ const state = {
   faceCanvas: null,
 };
 
-/* ============ SINTETIZZATORE AUDIO 8-BIT ============ */
+/* ============ SPRITE PISTOLA CUSTOM ============ */
+const gunSprite = new Image();
+let gunSpriteLoaded = false;
+gunSprite.onload = () => { gunSpriteLoaded = true; };
+gunSprite.src = 'gun.png';
+
+/* ============ EFFETTI SONORI ============ */
 let audioCtx = null;
 function unlockAudio() {
   if (!audioCtx) {
@@ -571,19 +519,20 @@ function playTone(freqStart, freqEnd, duration, type, volume) {
 }
 
 const sfx = {
-  jump:      () => playTone(280, 650, 0.12, 'square', 0.12),
-  shoot:     () => playTone(800, 300, 0.08, 'sawtooth', 0.12),
-  stomp:     () => playTone(220, 70, 0.14, 'square', 0.16),
-  hit:       () => playTone(180, 50, 0.25, 'sawtooth', 0.18),
+  jump:      () => playTone(300, 600, 0.12, 'square', 0.12),
+  shoot:     () => playTone(700, 900, 0.08, 'square', 0.10),
+  stomp:     () => playTone(200, 80, 0.12, 'square', 0.15),
+  hit:       () => playTone(180, 60, 0.25, 'sawtooth', 0.18),
   gunGet:    () => { playTone(400, 700, 0.1, 'square', 0.15); setTimeout(() => playTone(700, 1100, 0.12, 'square', 0.15), 100); },
-  bossHit:   () => playTone(160, 90, 0.08, 'sawtooth', 0.18),
+  bossHit:   () => playTone(150, 100, 0.1, 'sawtooth', 0.18),
   bossDefeat:() => { [0,120,240,360].forEach((d,i) => setTimeout(() => playTone(300 + i*150, 500 + i*150, 0.2, 'square', 0.16), d)); },
   win:       () => { [0,150,300,450].forEach((d,i) => setTimeout(() => playTone(400 + i*150, 400 + i*150, 0.25, 'triangle', 0.18), d)); },
   lose:      () => { [0,150,300].forEach((d,i) => setTimeout(() => playTone(300 - i*80, 200 - i*80, 0.3, 'sawtooth', 0.16), d)); },
-  warp:      () => { [0,100,200,300,400].forEach((d,i) => setTimeout(() => playTone(200 + i*180, 800 + i*100, 0.15, 'sawtooth', 0.14), d)); },
+  clank:     () => playTone(120, 40, 0.08, 'sawtooth', 0.2),
+  laser:     () => playTone(900, 300, 0.15, 'sine', 0.15),
+  portal:    () => playTone(150, 800, 0.4, 'triangle', 0.2)
 };
 
-/* ============ VIEWPORT FIT ============ */
 const appEl = document.getElementById('app');
 function setRealAppHeight() {
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -594,7 +543,7 @@ window.addEventListener('orientationchange', () => setTimeout(setRealAppHeight, 
 if (window.visualViewport) window.visualViewport.addEventListener('resize', setRealAppHeight);
 setRealAppHeight();
 
-/* ============ SCHERMATA 0: PWA HOME ============ */
+/* ============ SCHERMATA 0: AGGIUNGI ALLA HOME ============ */
 function showDeviceInstructions(device) {
   document.getElementById('addhome-choice').style.display = 'none';
   document.getElementById('instr-ios').style.display = device === 'ios' ? 'block' : 'none';
@@ -616,15 +565,13 @@ document.getElementById('btn-change-device').addEventListener('click', () => {
   document.getElementById('btn-addhome-done').style.display = 'none';
 });
 
-document.getElementById('btn-addhome-done').addEventListener('click', () => {
-  showScreen('screen-disclaimer');
-});
+document.getElementById('btn-addhome-done').addEventListener('click', () => showScreen('screen-disclaimer'));
 
 try {
   const isStandalone = window.navigator.standalone === true ||
     (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
   if (isStandalone) showScreen('screen-disclaimer');
-} catch (e) { console.warn('Standalone check failed:', e); }
+} catch (e) {}
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -635,7 +582,7 @@ function showScreen(id) {
 const bgm = document.getElementById('bgm');
 document.getElementById('btn-to-camera').addEventListener('click', () => {
   const nameInput = document.getElementById('player-name').value.trim();
-  state.name = nameInput || 'Giocatore Misterioso';
+  state.name = nameInput || 'Giocatore misterioso';
   bgm.volume = 0.5;
   bgm.play().catch(() => {});
   unlockAudio();
@@ -653,8 +600,7 @@ async function startCamera() {
     mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
     video.srcObject = mediaStream;
   } catch (err) {
-    document.getElementById('camera-status').textContent =
-      'Impossibile accedere alla fotocamera. Controlla i permessi.';
+    document.getElementById('camera-status').textContent = 'Errore accesso fotocamera. Controlla i permessi.';
   }
 }
 
@@ -669,7 +615,7 @@ document.getElementById('btn-shoot').addEventListener('click', () => {
   document.getElementById('btn-shoot').style.display = 'none';
   document.getElementById('btn-retake').style.display = 'inline-block';
   document.getElementById('btn-confirm').style.display = 'inline-block';
-  document.getElementById('camera-status').textContent = 'Ti piace? Puoi ripetere lo scatto.';
+  document.getElementById('camera-status').textContent = 'Ti piace? Puoi confermare o ripetere.';
 });
 
 document.getElementById('btn-retake').addEventListener('click', () => {
@@ -678,42 +624,218 @@ document.getElementById('btn-retake').addEventListener('click', () => {
   document.getElementById('btn-shoot').style.display = 'inline-block';
   document.getElementById('btn-retake').style.display = 'none';
   document.getElementById('btn-confirm').style.display = 'none';
-  document.getElementById('camera-status').textContent = 'Inquadra il viso e sorridi.';
+  document.getElementById('camera-status').textContent = 'Inquadra il viso e sorridi!';
 });
 
 document.getElementById('btn-confirm').addEventListener('click', () => {
   state.faceCanvas = pixelateFace(captureCanvas);
   document.getElementById('face-overlay').src = state.faceCanvas.toDataURL();
   if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-  document.getElementById('hud-name').textContent = state.name;
-  
   showScreen('screen-assembly');
-  startAssemblySequence();
+  startAssemblyAnimation();
 });
 
 function pixelateFace(sourceCanvas) {
   const size = Math.min(sourceCanvas.width, sourceCanvas.height);
   const sx = (sourceCanvas.width - size) / 2;
   const sy = (sourceCanvas.height - size) / 2;
-
   const out = document.createElement('canvas');
   const RES = 96;
   out.width = RES; out.height = RES;
   const octx = out.getContext('2d');
   octx.imageSmoothingEnabled = true;
-  octx.imageSmoothingQuality = 'high';
-
   octx.save();
   octx.beginPath();
   octx.arc(RES / 2, RES / 2, RES / 2, 0, Math.PI * 2);
   octx.clip();
   octx.drawImage(sourceCanvas, sx, sy, size, size, 0, 0, RES, RES);
   octx.restore();
-
   return out;
 }
 
-/* ============ ENGINE PLATFORMER AA ============ */
+/* ============ SCHERMATA 2.5: MONTAGGIO PERSONAGGIO (LABORATORIO) ============ */
+function startAssemblyAnimation() {
+  const assCanvas = document.getElementById('assembly-canvas');
+  const actx = assCanvas.getContext('2d');
+  const statusEl = document.getElementById('assembly-status');
+  
+  let step = 0;
+  let progress = 0;
+  let frame = 0;
+  
+  // Portale posizionato sulla DESTRA del personaggio
+  const portalX = 380;
+  const portalY = 160;
+
+  function runAssembly() {
+    frame++;
+    actx.fillStyle = '#050510';
+    actx.fillRect(0, 0, 512, 320);
+
+    // Griglia SFONDO LABORATORIO
+    actx.strokeStyle = 'rgba(77,214,255,0.08)';
+    actx.lineWidth = 1;
+    for(let x=0; x<512; x+=20) { actx.beginPath(); actx.moveTo(x,0); actx.lineTo(x,320); actx.stroke(); }
+    for(let y=0; y<320; y+=20) { actx.beginPath(); actx.moveTo(0,y); actx.lineTo(512,y); actx.stroke(); }
+
+    // Piattaforma Robotica Centrale
+    actx.fillStyle = '#111122';
+    actx.fillRect(140, 240, 160, 20);
+    actx.fillStyle = '#4dd6ff';
+    actx.fillRect(150, 240, 140, 3);
+
+    // 1. MONTAGGIO BUSTO
+    if (step === 0) {
+      statusEl.textContent = "INNESTO CORPO MODERN TECHWEAR...";
+      progress += 0.025;
+      const armY = -50 + progress * 150;
+      drawRoboticArm(actx, 220, armY, 1);
+      drawModernTorso(actx, 200, armY + 40, 40, 50);
+      if (progress >= 1) { step = 1; progress = 0; sfx.clank(); }
+    }
+    // 2. MONTAGGIO GAMBE
+    else if (step === 1) {
+      statusEl.textContent = "ASSEMBLAGGIO ARTI E SNEAKERS...";
+      progress += 0.025;
+      drawModernTorso(actx, 200, 140, 40, 50);
+      const legsY = 320 - progress * 130;
+      drawRoboticArm(actx, 150, legsY + 40, -1);
+      drawRoboticArm(actx, 290, legsY + 40, 1);
+      drawModernLegs(actx, 204, legsY, 32, 50);
+      if (progress >= 1) { step = 2; progress = 0; sfx.clank(); }
+    }
+    // 3. COLLOCAZIONE TESTA
+    else if (step === 2) {
+      statusEl.textContent = "AGGANCIO AVATAR E SCANSIONE VISO...";
+      progress += 0.02;
+      drawModernLegs(actx, 204, 190, 32, 50);
+      drawModernTorso(actx, 200, 140, 40, 50);
+      drawModernArms(actx, 185, 144, 70, 0);
+
+      const headY = -40 + progress * 140;
+      drawRoboticArm(actx, 220, headY, 0);
+      if (state.faceCanvas) {
+        actx.drawImage(state.faceCanvas, 200, headY + 30, 40, 40);
+        actx.strokeStyle = '#ff4d6d';
+        actx.lineWidth = 2;
+        actx.strokeRect(200, headY + 30, 40, 40);
+      }
+
+      if (progress > 0.6) {
+        actx.fillStyle = 'rgba(255,77,109,0.3)';
+        actx.fillRect(0, headY + 50, 512, 4);
+        if (frame % 4 === 0) sfx.laser();
+      }
+      if (progress >= 1) { step = 3; progress = 0; sfx.portal(); }
+    }
+    // 4. PORTALE SULLA DESTRA & RISUCCHIO NEL MONDO DI GIOCO
+    else if (step === 3) {
+      statusEl.textContent = "APERTURA PORTALE & TRASFERIMENTO...";
+      progress += 0.015;
+
+      // Disegna Portale sulla DESTRA (x = 380)
+      drawPortal(actx, portalX, portalY, frame, Math.min(1, progress * 2));
+
+      // Calcola risucchio: traslazione dal centro (220,140) verso il portale (380,160)
+      const suckFactor = Math.pow(progress, 2);
+      const currentX = 220 + (portalX - 220) * suckFactor;
+      const currentY = 140 + (portalY - 140) * suckFactor;
+      const scale = Math.max(0.01, 1 - suckFactor);
+      const angle = suckFactor * Math.PI * 6; // Rotazione risucchio
+
+      actx.save();
+      actx.translate(currentX, currentY);
+      actx.rotate(angle);
+      actx.scale(scale, scale);
+
+      // Personaggio completo assemblato
+      drawModernLegs(actx, -16, 50, 32, 50);
+      drawModernTorso(actx, -20, 0, 40, 50);
+      drawModernArms(actx, -35, 4, 70, 0);
+      if (state.faceCanvas) {
+        actx.drawImage(state.faceCanvas, -20, -40, 40, 40);
+      }
+      actx.restore();
+
+      if (progress >= 1) {
+        document.getElementById('hud-name').textContent = state.name;
+        showScreen('screen-game');
+        initGame();
+        return;
+      }
+    }
+
+    requestAnimationFrame(runAssembly);
+  }
+  requestAnimationFrame(runAssembly);
+}
+
+function drawRoboticArm(ctx, x, y, dir) {
+  ctx.strokeStyle = '#4dd6ff';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x + dir * 60, y - 80);
+  ctx.lineTo(x + dir * 20, y - 20);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  ctx.fillStyle = '#ffd93d';
+  ctx.fillRect(x - 6, y - 6, 12, 12);
+}
+
+function drawPortal(ctx, cx, cy, frame, scale) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+  
+  for (let r = 50; r > 0; r -= 10) {
+    ctx.rotate((frame * 0.05) * (r % 2 === 0 ? 1 : -1));
+    ctx.fillStyle = r % 20 === 0 ? '#4dd6ff' : '#ff4d6d';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r, r * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ============ GRAFICA PERSONAGGIO MODERNO ============ */
+function drawModernTorso(ctx, x, y, w, h) {
+  // Felpa / Techwear moderno scuro
+  const grad = ctx.createLinearGradient(x, y, x, y + h);
+  grad.addColorStop(0, '#1e1e2f');
+  grad.addColorStop(1, '#12121c');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y, w, h);
+
+  // Striscia al neon moderna
+  ctx.fillStyle = '#4dd6ff';
+  ctx.fillRect(x + w/2 - 2, y, 4, h);
+  ctx.fillStyle = '#ff4d6d';
+  ctx.fillRect(x + 4, y + 10, w - 8, 4);
+}
+
+function drawModernLegs(ctx, x, y, w, h) {
+  // Pantaloni Cargo scuri
+  ctx.fillStyle = '#2b2b36';
+  ctx.fillRect(x, y, w/2 - 2, h - 12);
+  ctx.fillRect(x + w/2 + 2, y, w/2 - 2, h - 12);
+
+  // Sneakers moderne bianche/rosse
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x - 2, y + h - 12, w/2, 12);
+  ctx.fillRect(x + w/2 + 2, y + h - 12, w/2 + 2, 12);
+  ctx.fillStyle = '#ff4d6d';
+  ctx.fillRect(x - 2, y + h - 4, w/2, 4);
+  ctx.fillRect(x + w/2 + 2, y + h - 4, w/2 + 2, 4);
+}
+
+function drawModernArms(ctx, x, y, w, h) {
+  ctx.fillStyle = '#1e1e2f';
+  ctx.fillRect(x, y, 8, 30);
+  ctx.fillRect(x + w - 8, y, 8, 30);
+}
+
+
+/* ============ SCHERMATA 3: GIOCO PLATFORM ============ */
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
@@ -746,23 +868,32 @@ function initGame() {
     camX: 0,
     frame: 0,
     player: makePlayer(20),
+    introState: 'portal_spit', // INTRO IN-GAME: Portale sputa il personaggio
+    introFrame: 0,
     platforms: buildLevel(),
     enemies: buildEnemies(),
     fireballs: [],
     hasGun: false,
-    gunPickup: { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: false },
+    gunPickup: { x: 1915, y: GROUND_Y - 24, w: 24, h: 20, collected: false },
     bullets: [],
     boss: buildBoss(),
     missiles: [],
     bossParticles: [],
+    arenaEntered: false,
     poofParticles: [],
     dustParticles: [],
-    sparkParticles: [],
-    arenaEntered: false,
     shakeUntil: 0,
     shakeMagnitude: 0,
     flagX: 2900,
   };
+  
+  // Posizione iniziale intro: esce dal portale
+  game.player.x = 20;
+  game.player.y = GROUND_Y - 80;
+  game.player.vx = 2.5;
+  game.player.vy = -3;
+  game.player.isSeated = true;
+
   document.getElementById('btn-shoot-gun').style.display = 'none';
   document.getElementById('boss-hp-wrap').style.display = 'none';
   document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
@@ -775,10 +906,11 @@ function makePlayer(x) {
     w: 20, h: 28,
     vx: 0, vy: 0,
     onGround: false,
-    wasOnGround: false,
     facing: 1,
     invulnUntil: 0,
-    scaleX: 1, scaleY: 1 // per animazioni di Juice (Squash & Stretch)
+    squashX: 1,
+    squashY: 1,
+    isSeated: false
   };
 }
 
@@ -830,82 +962,14 @@ function buildBoss() {
   };
 }
 
-function spawnGroundCrack(cx) {
-  for (let i = 0; i < 22; i++) {
-    game.bossParticles.push({
-      x: cx + (Math.random() - 0.5) * 70,
-      y: GROUND_Y - Math.random() * 8,
-      vx: (Math.random() - 0.5) * 4,
-      vy: -3 - Math.random() * 4,
-      size: 4 + Math.random() * 5,
-      life: 30 + Math.random() * 20,
-      maxLife: 50,
-      color: '#654321',
-    });
-  }
-}
-
-function spawnPoof(cx, cy, color, count) {
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 1.5 + Math.random() * 3.5;
-    game.poofParticles.push({
-      x: cx, y: cy,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - 1,
-      size: 3 + Math.random() * 4,
-      life: 20 + Math.random() * 15,
-      maxLife: 35,
-      color,
-    });
-  }
-}
-
-function spawnSparks(cx, cy, count) {
-  for (let i = 0; i < count; i++) {
-    game.sparkParticles.push({
-      x: cx, y: cy,
-      vx: (Math.random() - 0.5) * 5,
-      vy: (Math.random() - 0.5) * 5,
-      size: 2 + Math.random() * 2,
-      life: 10 + Math.random() * 10,
-      maxLife: 20,
-      color: '#ffe27a'
-    });
-  }
-}
-
-function spawnDust(x, y, vxMult) {
-  game.dustParticles.push({
-    x: x + (Math.random() - 0.5) * 8,
-    y: y,
-    vx: -vxMult * 0.2 + (Math.random() - 0.5) * 0.5,
-    vy: -Math.random() * 1.2,
-    size: 2 + Math.random() * 3,
-    life: 15 + Math.random() * 10,
-    maxLife: 25
-  });
-}
-
-function updateParticles(arr) {
-  for (let i = arr.length - 1; i >= 0; i--) {
-    const pt = arr[i];
-    pt.vy += 0.2;
-    pt.x += pt.vx;
-    pt.y += pt.vy;
-    pt.life--;
-    if (pt.life <= 0) arr.splice(i, 1);
-  }
-}
-
 function triggerShake(magnitude, durationFrames) {
   game.shakeMagnitude = magnitude;
   game.shakeUntil = game.frame + durationFrames;
 }
 
-/* --- INPUT --- */
+/* --- input controls --- */
 window.addEventListener('keydown', e => {
-  if (!game) return;
+  if (!game || game.introState !== 'done') return;
   if (e.code === 'ArrowLeft') game.keys.left = true;
   if (e.code === 'ArrowRight') game.keys.right = true;
   if (e.code === 'Space' || e.code === 'ArrowUp') game.keys.jump = true;
@@ -920,37 +984,32 @@ window.addEventListener('keyup', e => {
 
 let lastShotFrame = -1000;
 function shootBullet() {
-  if (!game || !game.hasGun) return;
-  if (game.frame - lastShotFrame < 12) return;
+  if (!game || !game.hasGun || game.introState !== 'done') return;
+  if (game.frame - lastShotFrame < 14) return;
   lastShotFrame = game.frame;
   const p = game.player;
-  const bx = p.facing > 0 ? p.x + p.w + 2 : p.x - 10;
-  const by = p.y + 11;
   game.bullets.push({
-    x: bx, y: by, w: 12, h: 5,
+    x: p.facing > 0 ? p.x + p.w : p.x - 12,
+    y: p.y + 8, w: 12, h: 6,
     vx: p.facing * 8,
   });
-  spawnSparks(bx, by, 5);
   sfx.shoot();
 }
 
 function bindTouch(id, prop) {
   const el = document.getElementById(id);
-  const set = v => e => { e.preventDefault(); if (game) game.keys[prop] = v; };
+  const set = v => e => { e.preventDefault(); if (game && game.introState === 'done') game.keys[prop] = v; };
   el.addEventListener('touchstart', set(true));
   el.addEventListener('touchend', set(false));
   el.addEventListener('mousedown', set(true));
   el.addEventListener('mouseup', set(false));
-  el.addEventListener('mouseleave', set(false));
 }
 bindTouch('btn-left', 'left');
 bindTouch('btn-right', 'right');
 bindTouch('btn-jump', 'jump');
 
 document.getElementById('btn-shoot-gun').addEventListener('touchstart', e => { e.preventDefault(); shootBullet(); });
-document.getElementById('btn-shoot-gun').addEventListener('mousedown', e => { e.preventDefault(); shootBullet(); });
 
-/* --- GAME LOOP --- */
 function loop() {
   if (!game || game.over || game.won) return;
   update();
@@ -962,70 +1021,88 @@ function update() {
   const p = game.player;
   game.frame++;
 
-  p.wasOnGround = p.onGround;
+  // --- INTRO D'INGRESSO DAL PORTALE ---
+  if (game.introState !== 'done') {
+    game.introFrame++;
+    if (game.introState === 'portal_spit') {
+      p.vy += GRAVITY;
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.y + p.h >= GROUND_Y) {
+        p.y = GROUND_Y - p.h;
+        p.vy = 0; p.vx = 0;
+        p.onGround = true;
+        game.introState = 'seated';
+        game.introFrame = 0;
+        sfx.clank();
+      }
+    } else if (game.introState === 'seated') {
+      p.isSeated = true;
+      if (game.introFrame > 35) {
+        game.introState = 'getting_up';
+        game.introFrame = 0;
+      }
+    } else if (game.introState === 'getting_up') {
+      if (game.introFrame > 20) {
+        p.isSeated = false;
+        game.introState = 'done';
+      }
+    }
+    game.camX = Math.max(0, p.x - W / 2.5);
+    return;
+  }
 
-  const SPEED = 3.2;
+  // --- GIOCABILITÀ NORMALE ---
+  const SPEED = 3;
   if (game.keys.left) { p.vx = -SPEED; p.facing = -1; }
   else if (game.keys.right) { p.vx = SPEED; p.facing = 1; }
   else p.vx = 0;
 
-  // Salto con effetto Juice (Stretch)
   if (game.keys.jump && p.onGround) {
-    p.vy = -10.8;
+    p.vy = -10.5;
     p.onGround = false;
-    p.scaleX = 0.75;
-    p.scaleY = 1.3;
+    p.squashX = 0.7; p.squashY = 1.3;
     sfx.jump();
-    for (let i = 0; i < 4; i++) spawnDust(p.x + p.w / 2, p.y + p.h, 0);
+  }
+
+  // Polvere corsa
+  if (Math.abs(p.vx) > 0 && p.onGround && game.frame % 6 === 0) {
+    game.dustParticles.push({
+      x: p.x + p.w / 2, y: p.y + p.h,
+      vx: -p.vx * 0.2, vy: -Math.random(),
+      size: 3, life: 15, maxLife: 15
+    });
   }
 
   p.vy += GRAVITY;
   p.x += p.vx;
   p.y += p.vy;
+
+  // Ripristino Squash
+  p.squashX += (1 - p.squashX) * 0.15;
+  p.squashY += (1 - p.squashY) * 0.15;
+
   p.onGround = false;
-
-  // Polvere durante la corsa
-  if (Math.abs(p.vx) > 0 && p.wasOnGround && game.frame % 5 === 0) {
-    spawnDust(p.x + p.w / 2, p.y + p.h, p.vx);
-  }
-
-  // Collisione Piattaforme
   for (const plat of game.platforms) {
     if (p.x + p.w > plat.x && p.x < plat.x + plat.w) {
       if (p.vy >= 0 && p.y + p.h - p.vy <= plat.y && p.y + p.h >= plat.y) {
+        if (!p.onGround && p.vy > 2) { p.squashX = 1.3; p.squashY = 0.7; }
         p.y = plat.y - p.h;
         p.vy = 0;
         p.onGround = true;
-        // Effetto Juice all'atterraggio (Squash)
-        if (!p.wasOnGround) {
-          p.scaleX = 1.25;
-          p.scaleY = 0.8;
-          for (let i = 0; i < 5; i++) spawnDust(p.x + p.w / 2, p.y + p.h, 0);
-        }
       }
     }
   }
 
-  // Ritorno graduale alla scala normale (Squash & Stretch decay)
-  p.scaleX += (1 - p.scaleX) * 0.15;
-  p.scaleY += (1 - p.scaleY) * 0.15;
-
-  if (p.y > H + 60) {
-    loseLife();
-    return;
-  }
+  if (p.y > H + 60) { loseLife(); return; }
 
   // Nemici
   for (const en of game.enemies) {
     if (!en.alive) continue;
-
     if (en.type === 'fire') {
       if (game.frame >= en.nextShotFrame) {
-        if (en.burstRemaining <= 0) en.burstRemaining = 1 + Math.floor(Math.random() * 3);
-        game.fireballs.push({ x: en.x - 4, y: en.y + 4, w: 12, h: 12, vx: -5.5 });
-        en.burstRemaining--;
-        if (en.burstRemaining > 0) en.nextShotFrame = game.frame + 14;
-        else en.nextShotFrame = game.frame + 45 + Math.floor(Math.random() * 20);
+        game.fireballs.push({ x: en.x - 4, y: en.y + 4, w: 10, h: 10, vx: -5.5 });
+        en.nextShotFrame = game.frame + 60;
       }
     } else {
       en.x += en.dir * 1.2;
@@ -1034,17 +1111,10 @@ function update() {
 
     const overlap = p.x < en.x + en.w && p.x + p.w > en.x && p.y < en.y + en.h && p.y + p.h > en.y;
     if (overlap && game.frame > p.invulnUntil) {
-      const stomp = p.vy > 0 && (p.y + p.h - p.vy) <= en.y + 8;
+      const stomp = p.vy > 0 && (p.y + p.h - p.vy) <= en.y + 6;
       if (stomp) {
-        en.alive = false;
-        p.vy = -7.5;
-        p.scaleX = 0.8; p.scaleY = 1.2;
-        sfx.stomp();
-        spawnPoof(en.x + en.w / 2, en.y + en.h / 2, en.type === 'fire' ? '#ff8a3d' : '#c0392b', 14);
-      } else {
-        loseLife();
-        return;
-      }
+        en.alive = false; p.vy = -7; sfx.stomp();
+      } else { loseLife(); return; }
     }
   }
 
@@ -1052,47 +1122,35 @@ function update() {
   for (let i = game.fireballs.length - 1; i >= 0; i--) {
     const fb = game.fireballs[i];
     fb.x += fb.vx;
-    const hit = p.x < fb.x + fb.w && p.x + p.w > fb.x && p.y < fb.y + fb.h && p.y + p.h > fb.y;
-    if (hit && game.frame > p.invulnUntil) {
-      game.fireballs.splice(i, 1);
-      loseLife();
-      return;
+    if (p.x < fb.x + fb.w && p.x + p.w > fb.x && p.y < fb.y + fb.h && p.y + p.h > fb.y) {
+      game.fireballs.splice(i, 1); loseLife(); return;
     }
-    if (fb.x < game.camX - 60 || fb.x > game.camX + W + 60) game.fireballs.splice(i, 1);
   }
 
-  // Cancello di Fuoco
-  const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
-  if (!firesDefeatedForGate && p.x + p.w > FIRE_GATE_X) p.x = FIRE_GATE_X - p.w;
+  // Blocco Cancello
+  const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
+  if (!firesDefeated && p.x + p.w > FIRE_GATE_X) p.x = FIRE_GATE_X - p.w;
 
-  if (!game.arenaEntered && p.x > ARENA_ENTRY_X) game.arenaEntered = true;
-  if (game.arenaEntered && p.x < ARENA_ENTRY_X) p.x = ARENA_ENTRY_X;
-
-  // Raccolta Pistola
-  if (!game.hasGun && !game.gunPickup.collected) {
-    const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
+  // PISTOLA CUSTOM (gun.png) - Sblocco
+  if (!game.hasGun && !game.gunPickup.collected && firesDefeated) {
     const gp = game.gunPickup;
-    if (firesDefeated && p.x < gp.x + gp.w && p.x + p.w > gp.x && p.y < gp.y + gp.h && p.y + p.h > gp.y) {
+    if (p.x < gp.x + gp.w && p.x + p.w > gp.x && p.y < gp.y + gp.h && p.y + p.h > gp.y) {
       gp.collected = true;
       game.hasGun = true;
       sfx.gunGet();
       game.checkpointX = gp.x;
       document.getElementById('btn-shoot-gun').style.display = 'flex';
-      spawnSparks(gp.x + gp.w/2, gp.y + gp.h/2, 20);
     }
   }
 
-  // Proiettili del Giocatore
+  // Proiettili Player
   for (let i = game.bullets.length - 1; i >= 0; i--) {
     const b = game.bullets[i];
     b.x += b.vx;
     if (game.boss.alive && game.boss.state === 'active') {
       const boss = game.boss;
-      const hitBoss = b.x < boss.x + boss.w && b.x + b.w > boss.x && b.y < boss.y + boss.h && b.y + b.h > boss.y;
-      if (hitBoss) {
+      if (b.x < boss.x + boss.w && b.x + b.w > boss.x && b.y < boss.y + boss.h && b.y + b.h > boss.y) {
         boss.hp--;
-        boss.flashUntil = game.frame + 6;
-        spawnSparks(b.x, b.y, 8);
         game.bullets.splice(i, 1);
         updateBossHpBar();
         sfx.bossHit();
@@ -1101,171 +1159,162 @@ function update() {
           boss.alive = false;
           document.getElementById('boss-hp-wrap').style.display = 'none';
           sfx.bossDefeat();
-          triggerShake(12, 30);
-          spawnPoof(boss.x + boss.w / 2, boss.y + boss.h / 2, '#ffcf4d', 35);
-          spawnPoof(boss.x + boss.w / 2, boss.y + boss.h / 2, '#ff4d6d', 25);
         }
-        continue;
       }
     }
-    if (b.x < game.camX - 40 || b.x > game.camX + W + 40) game.bullets.splice(i, 1);
   }
 
-  // Boss
+  // Boss Activation
   if (game.boss.alive) {
     const boss = game.boss;
     if (boss.state === 'dormant' && p.x > BOSS_TRIGGER_X) {
       boss.state = 'spawning';
       boss.spawnStartFrame = game.frame;
-      spawnGroundCrack(boss.x + boss.w / 2);
       document.getElementById('boss-hp-wrap').style.display = 'block';
-      updateBossHpBar();
     }
-
-    if (boss.state === 'spawning') {
-      const progress = (game.frame - boss.spawnStartFrame) / BOSS_SPAWN_DURATION;
-      if (progress >= 1) {
-        boss.state = 'active';
-        boss.nextMissileFrame = game.frame + 60;
-      }
+    if (boss.state === 'spawning' && (game.frame - boss.spawnStartFrame) >= BOSS_SPAWN_DURATION) {
+      boss.state = 'active';
     }
-
-    if (boss.state !== 'dormant' && p.x + p.w > boss.x && p.x < boss.x + boss.w) {
-      p.x = boss.x - p.w;
-    }
-
-    if (boss.state === 'active') {
-      if (game.frame >= boss.nextMissileFrame) {
-        game.missiles.push({
-          x: boss.x - 6, y: boss.y + boss.h - 35, w: 16, h: 10,
-          vx: -3.5, vy: 0, spawnFrame: game.frame,
-        });
-        boss.nextMissileFrame = game.frame + 75 + Math.floor(Math.random() * 35);
-      }
-    }
+    if (boss.state !== 'dormant' && p.x + p.w > boss.x) p.x = boss.x - p.w;
   }
 
-  updateParticles(game.bossParticles);
-  updateParticles(game.poofParticles);
+  // Particelle
   updateParticles(game.dustParticles);
-  updateParticles(game.sparkParticles);
 
-  // Missili inseguitori
-  const HOMING_WINDOW = 35;
-  for (let i = game.missiles.length - 1; i >= 0; i--) {
-    const m = game.missiles[i];
-    if ((game.frame - m.spawnFrame) < HOMING_WINDOW) {
-      const targetX = (p.x + p.w / 2) - m.x;
-      const targetY = (p.y + p.h / 2) - m.y;
-      const dist = Math.hypot(targetX, targetY) || 1;
-      const speed = 4.2;
-      m.vx += ((targetX / dist) * speed - m.vx) * 0.06;
-      m.vy += ((targetY / dist) * speed - m.vy) * 0.06;
-    }
-    m.x += m.vx; m.y += m.vy;
-
-    const hitPlayer = p.x < m.x + m.w && p.x + p.w > m.x && p.y < m.y + m.h && p.y + p.h > m.y;
-    if (hitPlayer && game.frame > p.invulnUntil) {
-      game.missiles.splice(i, 1);
-      loseLife();
-      return;
-    }
-    if (m.x < game.camX - 80 || m.x > game.camX + W + 80) game.missiles.splice(i, 1);
-  }
-
-  if (p.x < 0) p.x = 0;
   game.camX = Math.max(0, p.x - W / 2.5);
+  if (p.x > game.flagX) { game.won = true; onWin(); }
+}
 
-  if (p.x > game.flagX) {
-    game.won = true;
-    onWin();
+function updateParticles(arr) {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const pt = arr[i];
+    pt.x += pt.vx; pt.y += pt.vy; pt.life--;
+    if (pt.life <= 0) arr.splice(i, 1);
   }
 }
 
 function loseLife() {
-  document.getElementById('boss-hp-wrap').style.display = 'none';
   sfx.hit();
-  triggerShake(8, 15);
+  triggerShake(6, 12);
   game.lives--;
   document.getElementById('hud-lives').textContent = '♥'.repeat(Math.max(game.lives, 0));
-  if (game.lives <= 0) {
-    game.over = true;
-    onLose();
-  } else {
+  if (game.lives <= 0) { game.over = true; onLose(); }
+  else {
     game.player = makePlayer(game.checkpointX);
-    game.player.invulnUntil = game.frame + 60;
-    const gunAlreadyEarned = game.checkpointX > 20;
-
-    game.enemies = buildEnemies();
-    if (gunAlreadyEarned) {
-      game.enemies.forEach(e => { if (e.type === 'fire') e.alive = false; });
-    }
-    game.fireballs = [];
-    game.hasGun = gunAlreadyEarned;
-    game.gunPickup = { x: 1915, y: GROUND_Y - 22, w: 18, h: 22, collected: gunAlreadyEarned };
-    game.bullets = [];
-    game.boss = buildBoss();
-    game.bossParticles = [];
-    game.dustParticles = [];
-    game.sparkParticles = [];
-    game.arenaEntered = false;
-    game.poofParticles = [];
-    game.missiles = [];
-    document.getElementById('btn-shoot-gun').style.display = gunAlreadyEarned ? 'flex' : 'none';
+    game.introState = 'done';
   }
 }
 
 function updateBossHpBar() {
-  const boss = game.boss;
-  const pct = Math.max(0, boss.hp / boss.maxHp) * 100;
+  const pct = Math.max(0, game.boss.hp / game.boss.maxHp) * 100;
   document.getElementById('boss-hp-bar-fill').style.width = pct + '%';
-  setTimeout(() => {
-    const delayEl = document.getElementById('boss-hp-bar-delay');
-    if (delayEl) delayEl.style.width = pct + '%';
-  }, 200);
 }
 
-/* ==================== RENDERING AA ==================== */
+/* --- RENDER GAME --- */
 function render() {
-  drawSky();
-  drawParallax();
+  ctx.fillStyle = '#4da6ff';
+  ctx.fillRect(0, 0, W, H);
 
   const shaking = game.frame < game.shakeUntil;
-  const shakeX = shaking ? (Math.random() - 0.5) * 2 * game.shakeMagnitude : 0;
-  const shakeY = shaking ? (Math.random() - 0.5) * 2 * game.shakeMagnitude : 0;
+  const shakeX = shaking ? (Math.random() - 0.5) * game.shakeMagnitude : 0;
+  const shakeY = shaking ? (Math.random() - 0.5) * game.shakeMagnitude : 0;
 
   ctx.save();
   ctx.translate(-game.camX + shakeX, shakeY);
 
-  for (const plat of game.platforms) drawGroundBlock(plat);
+  // Terreno
+  for (const plat of game.platforms) {
+    ctx.fillStyle = '#8a5a34';
+    ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+    ctx.fillStyle = '#3fae4a';
+    ctx.fillRect(plat.x, plat.y, plat.w, 6);
+  }
 
-  drawFlag(game.flagX);
-  drawArrivalBuilding(game.flagX + 60);
+  // PORTALE D'INGRESSO IN-GAME
+  if (game.introState !== 'done') {
+    drawPortal(ctx, 20, GROUND_Y - 30, game.frame, 1);
+  }
 
+  // PISTOLA A TERRA (gun.png Showcase)
+  if (!game.gunPickup.collected) {
+    const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
+    if (firesDefeated) drawGunPickup(game.gunPickup);
+  }
+
+  // Nemici e Boss
   for (const en of game.enemies) if (en.alive) drawEnemy(en);
-  for (const fb of game.fireballs) drawFireball(fb);
+  if (game.boss.alive && game.boss.state !== 'dormant') drawBoss(game.boss);
 
-  const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
-  if (!firesDefeatedForGate) drawFireGate(FIRE_GATE_X);
+  // Proiettili
+  for (const b of game.bullets) {
+    ctx.fillStyle = '#ffe27a';
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+  }
 
-  if (!game.gunPickup.collected && firesDefeatedForGate) drawGunPickup(game.gunPickup);
-
-  // Particelle
-  for (const pt of game.bossParticles) drawParticle(pt);
-  for (const pt of game.poofParticles) drawParticle(pt);
-  for (const pt of game.dustParticles) drawDustParticle(pt);
-  for (const pt of game.sparkParticles) drawSparkParticle(pt);
-
-  if (game.boss.alive && game.boss.state !== 'dormant') drawBossWithSpawn(game.boss);
-
-  for (const m of game.missiles) drawMissile(m);
-  for (const b of game.bullets) drawBullet(b);
-
+  // Player
   drawPlayer(game.player);
 
   ctx.restore();
-
   positionFaceOverlay();
+}
+
+function drawGunPickup(gp) {
+  const bob = Math.sin(game.frame * 0.1) * 4;
+  ctx.save();
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = '#ffd93d';
+  if (gunSpriteLoaded) {
+    ctx.drawImage(gunSprite, gp.x - 4, gp.y + bob - 4, 28, 20);
+  } else {
+    ctx.fillStyle = '#ffd93d';
+    ctx.fillRect(gp.x, gp.y + bob, gp.w, gp.h);
+  }
+  ctx.restore();
+}
+
+function drawEnemy(en) {
+  ctx.fillStyle = en.type === 'fire' ? '#ff4d6d' : '#c0392b';
+  ctx.fillRect(en.x, en.y, en.w, en.h);
+}
+
+function drawBoss(boss) {
+  ctx.fillStyle = '#5c1a10';
+  ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
+}
+
+function drawPlayer(p) {
+  ctx.save();
+  ctx.translate(p.x + p.w / 2, p.y + p.h);
+  ctx.scale(p.squashX, p.squashY);
+
+  if (p.isSeated) {
+    // POSIZIONE SEDUTO DOPO LA CADUTA DAL PORTALE
+    drawModernTorso(ctx, -10, -20, 20, 20);
+    ctx.fillStyle = '#2b2b36';
+    ctx.fillRect(-12, -8, 24, 8); // Gambe piegate in avanti
+  } else {
+    // STANDING / WALKING
+    drawModernTorso(ctx, -10, -22, 20, 16);
+    drawModernLegs(ctx, -8, -6, 16, 12);
+
+    // IMPUGNATURA PISTOLA PNG REALISTICA
+    if (game.hasGun) {
+      const gunW = 16, gunH = 11;
+      const gunX = p.facing === 1 ? 4 : -18;
+      const gunY = -16;
+      if (gunSpriteLoaded) {
+        if (p.facing === -1) {
+          ctx.save(); ctx.scale(-1, 1);
+          ctx.drawImage(gunSprite, -gunX - gunW, gunY, gunW, gunH);
+          ctx.restore();
+        } else {
+          ctx.drawImage(gunSprite, gunX, gunY, gunW, gunH);
+        }
+      }
+    }
+  }
+
+  ctx.restore();
 }
 
 function positionFaceOverlay() {
@@ -1277,448 +1326,28 @@ function positionFaceOverlay() {
   const wrapRect = document.getElementById('game-wrap').getBoundingClientRect();
   const scale = canvasRect.width / W;
 
-  const walking = Math.abs(p.vx) > 0 && p.onGround;
-  const bobbing = walking ? Math.sin(game.frame * 0.5) * 2.5 * scale : 0;
-
   const left = (canvasRect.left - wrapRect.left) + (p.x - game.camX) * scale;
-  const top = (canvasRect.top - wrapRect.top) + (p.y * scale) + bobbing;
+  const top = (canvasRect.top - wrapRect.top) + (p.y - (p.isSeated ? 10 : 18)) * scale;
 
   overlay.style.display = 'block';
   overlay.style.left = left + 'px';
   overlay.style.top = top + 'px';
-  overlay.style.width = (p.w * scale * p.scaleX) + 'px';
-  overlay.style.height = (20 * scale * p.scaleY) + 'px';
-  overlay.style.transform = p.facing === -1 ? 'scaleX(-1)' : 'none';
+  overlay.style.width = (p.w * scale) + 'px';
+  overlay.style.height = (20 * scale) + 'px';
 }
 
-function drawSky() {
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#110c2a');
-  grad.addColorStop(0.5, '#2b1055');
-  grad.addColorStop(1, '#75317c');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-}
-
-function drawParallax() {
-  // Montagne distanti (parallasse ultra-lenta)
-  const distOffset = (game.camX * 0.1) % 400;
-  ctx.fillStyle = '#21133b';
-  for (let i = -1; i < 3; i++) {
-    const mx = i * 400 - distOffset;
-    ctx.beginPath();
-    ctx.moveTo(mx, GROUND_Y + 10);
-    ctx.lineTo(mx + 120, GROUND_Y - 80);
-    ctx.lineTo(mx + 250, GROUND_Y + 10);
-    ctx.fill();
-  }
-
-  // Colline (parallasse media)
-  const hillOffset = (game.camX * 0.3) % 300;
-  ctx.fillStyle = '#1d4838';
-  for (let i = -1; i < 4; i++) {
-    const hx = i * 300 - hillOffset;
-    drawHill(hx, GROUND_Y + 4, 100, 45);
-    drawHill(hx + 160, GROUND_Y + 10, 80, 32);
-  }
-
-  // Nuvole pixel
-  const cloudOffset = (game.camX * 0.15) % 260;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-  for (let i = -1; i < 4; i++) {
-    const cx = i * 260 - cloudOffset;
-    drawCloud(cx + 30, 35);
-    drawCloud(cx + 150, 55);
-  }
-}
-
-function drawHill(x, baseY, w, h) {
-  ctx.beginPath();
-  ctx.moveTo(x, baseY);
-  ctx.quadraticCurveTo(x + w / 2, baseY - h, x + w, baseY);
-  ctx.fill();
-}
-
-function drawCloud(x, y) {
-  ctx.fillRect(x, y, 36, 10);
-  ctx.fillRect(x + 8, y - 6, 24, 8);
-}
-
-function drawGroundBlock(plat) {
-  // Corpo Terra con Texture e Rilievi
-  ctx.fillStyle = '#5c3a21';
-  ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
-
-  // Pattern Rocce/Dettagli
-  ctx.fillStyle = '#422815';
-  for (let bx = 4; bx < plat.w - 8; bx += 16) {
-    ctx.fillRect(plat.x + bx, plat.y + 12, 8, 6);
-    ctx.fillRect(plat.x + bx + 8, plat.y + 26, 6, 6);
-  }
-
-  // Ombra inferiore
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.fillRect(plat.x, plat.y + plat.h - 4, plat.w, 4);
-
-  // Cima Erba Lussureggiante
-  ctx.fillStyle = '#2db34d';
-  ctx.fillRect(plat.x, plat.y, plat.w, 6);
-  ctx.fillStyle = '#1e8035';
-  for (let bx = 0; bx < plat.w; bx += 8) {
-    ctx.fillRect(plat.x + bx, plat.y + 6, 4, 3);
-  }
-  // Bordo Luce Erba
-  ctx.fillStyle = '#52e375';
-  ctx.fillRect(plat.x, plat.y, plat.w, 2);
-}
-
-function drawFlag(flagX) {
-  ctx.fillStyle = '#d9d9d9';
-  ctx.fillRect(flagX + 10, GROUND_Y - 120, 4, 120);
-  ctx.fillStyle = '#ffd93d';
-  ctx.fillRect(flagX + 6, GROUND_Y - 124, 12, 6);
-  ctx.fillStyle = '#ff4d6d';
-  ctx.beginPath();
-  ctx.moveTo(flagX + 14, GROUND_Y - 116);
-  ctx.lineTo(flagX + 44, GROUND_Y - 104);
-  ctx.lineTo(flagX + 14, GROUND_Y - 92);
-  ctx.fill();
-}
-
-function drawArrivalBuilding(x) {
-  const baseY = GROUND_Y;
-  const bw = 130, bh = 90;
-  ctx.fillStyle = '#b83b28';
-  ctx.fillRect(x, baseY - bh, bw, bh);
-  ctx.fillStyle = '#6b2014';
-  ctx.fillRect(x - 6, baseY - bh - 14, bw + 12, 16);
-
-  const stripeW = 14;
-  for (let i = 0; i * stripeW < bw; i++) {
-    ctx.fillStyle = i % 2 === 0 ? '#f4f1ea' : '#b83b28';
-    ctx.fillRect(x + i * stripeW, baseY - bh + 18, stripeW, 10);
-  }
-
-  ctx.fillStyle = '#3a1f10';
-  ctx.fillRect(x + bw / 2 - 12, baseY - 34, 24, 34);
-
-  // Finestre con Luce (Bloom)
-  ctx.save();
-  ctx.shadowBlur = 10;
-  ctx.shadowColor = '#ffe9a8';
-  ctx.fillStyle = '#ffe9a8';
-  ctx.fillRect(x + 14, baseY - bh + 40, 22, 22);
-  ctx.fillRect(x + bw - 36, baseY - bh + 40, 22, 22);
-  ctx.restore();
-
-  ctx.fillStyle = '#fff8e8';
-  ctx.fillRect(x + bw / 2 - 34, baseY - bh - 34, 68, 18);
-  ctx.fillStyle = '#6b2014';
-  ctx.font = '10px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('PIZZA', x + bw / 2, baseY - bh - 21);
-}
-
-const enemySprite = new Image();
-let enemySpriteLoaded = false;
-enemySprite.onload = () => { enemySpriteLoaded = true; };
-enemySprite.src = 'nemico.png';
-
-function drawEnemy(en) {
-  if (enemySpriteLoaded) {
-    ctx.save();
-    if (en.dir < 0) {
-      ctx.translate(en.x + en.w, en.y);
-      ctx.scale(-1, 1);
-      ctx.drawImage(enemySprite, 0, 0, en.w, en.h);
-    } else {
-      ctx.drawImage(enemySprite, en.x, en.y, en.w, en.h);
-    }
-    ctx.restore();
-    if (en.type === 'fire') drawFireIndicator(en);
-    return;
-  }
-  if (en.type === 'fire') {
-    drawFireTurret(en);
-    return;
-  }
-  ctx.fillStyle = '#c0392b';
-  ctx.fillRect(en.x, en.y + 4, en.w, en.h - 4);
-  ctx.fillStyle = '#e8b4a0';
-  ctx.fillRect(en.x + 4, en.y + en.h - 9, en.w - 8, 6);
-  ctx.fillStyle = '#fff';
-  const eyeX = en.dir > 0 ? en.x + en.w - 10 : en.x + 3;
-  ctx.fillRect(eyeX, en.y + 3, 6, 6);
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(eyeX + (en.dir > 0 ? 3 : 1), en.y + 5, 2, 3);
-}
-
-function drawFireTurret(en) {
-  ctx.fillStyle = '#3a2020';
-  ctx.fillRect(en.x, en.y + 8, en.w, en.h - 8);
-  ctx.fillStyle = '#ffcf4d';
-  const eyeX = en.dir > 0 ? en.x + en.w - 10 : en.x + 4;
-  ctx.fillRect(eyeX, en.y + 12, 6, 5);
-  drawFireIndicator(en);
-}
-
-function drawFireIndicator(en) {
-  const pulse = Math.sin(game.frame * 0.18) * 2.5;
-  const cx = en.x + en.w / 2;
-  const topY = en.y - 6 - pulse;
-  
-  ctx.save();
-  ctx.shadowBlur = 12;
-  ctx.shadowColor = '#ff5a1f';
-  ctx.fillStyle = '#ff8a3d';
-  ctx.beginPath();
-  ctx.arc(cx, topY + 8, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#ffe27a';
-  ctx.beginPath();
-  ctx.arc(cx, topY + 8, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-/* --- PROIETTILI CON EFFETTO GLOW (BLOOM AA) --- */
-function drawFireball(fb) {
-  ctx.save();
-  ctx.shadowBlur = 15;
-  ctx.shadowColor = '#ff4d2e';
-  ctx.globalCompositeOperation = 'lighter';
-
-  ctx.fillStyle = '#ff5a1f';
-  ctx.beginPath();
-  ctx.arc(fb.x + fb.w / 2, fb.y + fb.h / 2, fb.w / 2, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(fb.x + fb.w / 2, fb.y + fb.h / 2, fb.w / 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawBullet(b) {
-  ctx.save();
-  ctx.shadowBlur = 12;
-  ctx.shadowColor = '#ffe27a';
-  ctx.globalCompositeOperation = 'lighter';
-
-  // Scia sfumata
-  const trailLen = 14;
-  const trailX = b.vx > 0 ? b.x - trailLen : b.x + b.w + trailLen;
-  const grad = ctx.createLinearGradient(b.x, b.y, trailX, b.y);
-  grad.addColorStop(0, 'rgba(255, 226, 122, 1)');
-  grad.addColorStop(1, 'rgba(255, 226, 122, 0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(Math.min(b.x, trailX), b.y - 1, Math.abs(b.x - trailX) + b.w, b.h + 2);
-
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(b.x, b.y, b.w, b.h);
-  ctx.restore();
-}
-
-function drawMissile(m) {
-  ctx.save();
-  ctx.shadowBlur = 10;
-  ctx.shadowColor = '#ff4d6d';
-  ctx.fillStyle = '#8a2b2b';
-  ctx.fillRect(m.x, m.y, m.w, m.h);
-  ctx.fillStyle = '#ff8a3d';
-  ctx.beginPath();
-  ctx.moveTo(m.x, m.y + m.h / 2);
-  ctx.lineTo(m.x - 8, m.y);
-  ctx.lineTo(m.x - 8, m.y + m.h);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawFireGate(x) {
-  const pulse = 0.5 + Math.sin(game.frame * 0.12) * 0.2;
-  ctx.save();
-  ctx.globalAlpha = pulse;
-  ctx.fillStyle = '#ff4d6d';
-  ctx.fillRect(x - 6, GROUND_Y - 130, 12, 130);
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = '#ffd93d';
-  for (let y = GROUND_Y - 130; y < GROUND_Y; y += 20) ctx.fillRect(x - 6, y, 12, 10);
-  ctx.restore();
-}
-
-function drawGunPickup(gp) {
-  const bob = Math.sin(game.frame * 0.1) * 3.5;
-  const y = gp.y + bob;
-  ctx.save();
-  ctx.shadowBlur = 12;
-  ctx.shadowColor = '#ffd93d';
-  ctx.fillStyle = 'rgba(255,217,61,0.3)';
-  ctx.beginPath();
-  ctx.ellipse(gp.x + gp.w / 2, gp.y + gp.h + 6, 14, 4, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#3a3a3a';
-  ctx.fillRect(gp.x, y + 8, gp.w, 6);
-  ctx.fillRect(gp.x + gp.w - 6, y, 6, 12);
-  ctx.fillStyle = '#7a5a2a';
-  ctx.fillRect(gp.x, y + 12, 6, 10);
-  ctx.restore();
-}
-
-function drawParticle(pt) {
-  ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
-  ctx.fillStyle = pt.color || '#7a5a34';
-  ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
-  ctx.globalAlpha = 1;
-}
-
-function drawDustParticle(pt) {
-  ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife) * 0.6;
-  ctx.fillStyle = '#d0c8b0';
-  ctx.beginPath();
-  ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-}
-
-function drawSparkParticle(pt) {
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
-  ctx.fillStyle = pt.color;
-  ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
-  ctx.restore();
-}
-
-function drawBoss(boss, drawY) {
-  const y = drawY !== undefined ? drawY : boss.y;
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.beginPath();
-  ctx.ellipse(boss.x + boss.w / 2, GROUND_Y + 3, boss.w / 2, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  if (enemySpriteLoaded) {
-    ctx.drawImage(enemySprite, boss.x, y, boss.w, boss.h);
-  } else {
-    ctx.fillStyle = '#5c1a10';
-    ctx.fillRect(boss.x, y + 14, boss.w, boss.h - 14);
-    ctx.fillStyle = '#c0392b';
-    ctx.fillRect(boss.x + 6, y + boss.h - 20, boss.w - 12, 14);
-    ctx.fillStyle = '#ffcf4d';
-    ctx.fillRect(boss.x + 10, y + 20, 14, 12);
-    ctx.fillRect(boss.x + boss.w - 24, y + 20, 14, 12);
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(boss.x + 14, y + 24, 6, 6);
-    ctx.fillRect(boss.x + boss.w - 20, y + 24, 6, 6);
-  }
-
-  if (boss.flashUntil && game.frame < boss.flashUntil) {
-    ctx.globalAlpha = 0.65;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(boss.x, y, boss.w, boss.h);
-    ctx.globalAlpha = 1;
-  }
-  ctx.restore();
-}
-
-function drawBossWithSpawn(boss) {
-  if (boss.state === 'active') {
-    drawBoss(boss);
-    return;
-  }
-  const progress = Math.min(1, (game.frame - boss.spawnStartFrame) / BOSS_SPAWN_DURATION);
-  if (progress < 0.3) return;
-  const emerge = (progress - 0.3) / 0.7;
-  const drawY = GROUND_Y - (GROUND_Y - boss.y) * emerge;
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(boss.x - 20, -2000, boss.w + 40, 2000 + GROUND_Y);
-  ctx.clip();
-  drawBoss(boss, drawY);
-  ctx.restore();
-}
-
-function drawPlayer(p) {
-  ctx.save();
-  ctx.translate(p.x + p.w / 2, p.y + p.h);
-  ctx.scale(p.scaleX, p.scaleY);
-  ctx.translate(-(p.x + p.w / 2), -(p.y + p.h));
-
-  const walking = Math.abs(p.vx) > 0 && p.onGround;
-  const legPhase = walking ? Math.sin(game.frame * 0.5) * 5 : 0;
-
-  // Ombra a terra
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.beginPath();
-  ctx.ellipse(p.x + p.w / 2, p.y + p.h + 2, p.w / 2, 4, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Gambe
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(p.x + 3, p.y + p.h - 8, 6, 8 + Math.max(0, legPhase));
-  ctx.fillRect(p.x + p.w - 9, p.y + p.h - 8, 6, 8 + Math.max(0, -legPhase));
-
-  // Busto
-  const bodyGrad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
-  bodyGrad.addColorStop(0, '#3b7dff');
-  bodyGrad.addColorStop(1, '#1f4fbf');
-  ctx.fillStyle = bodyGrad;
-  ctx.fillRect(p.x, p.y + 9, p.w, p.h - 17);
-
-  // Braccia
-  ctx.fillStyle = '#1f4fbf';
-  const armLift = p.onGround ? 0 : -4;
-  ctx.fillRect(p.x - 2, p.y + 11 + armLift, 4, 10);
-  ctx.fillRect(p.x + p.w - 2, p.y + 11 + armLift, 4, 10);
-
-  // Pistola
-  if (game.hasGun) {
-    ctx.fillStyle = '#2a2a2a';
-    if (p.facing === -1) {
-      ctx.fillRect(p.x - 10, p.y + 12 + armLift, 10, 5);
-      ctx.fillRect(p.x - 6, p.y + 16 + armLift, 5, 6);
-    } else {
-      ctx.fillRect(p.x + p.w, p.y + 12 + armLift, 10, 5);
-      ctx.fillRect(p.x + p.w + 1, p.y + 16 + armLift, 5, 6);
-    }
-  }
-
-  // Rimosso il rettangolo rosa (#ffd6a5): ora rimane solo il selfie in overlay circolare
-  ctx.restore();
-}
-
-/* ============ VITTORIA / SCONFITTA ============ */
 function onWin() {
-  document.getElementById('win-message').textContent =
-    `${state.name}, hai superato la prova! Preparati per la festa di Michele: sarà leggendaria.`;
+  document.getElementById('win-message').textContent = `${state.name}, complimenti! Preparati per la festa!`;
   const preview = document.getElementById('face-preview');
   preview.width = 90; preview.height = 90;
   const pctx = preview.getContext('2d');
   if (state.faceCanvas) pctx.drawImage(state.faceCanvas, 0, 0, 90, 90);
   showScreen('screen-win');
   sfx.win();
-  spawnConfetti();
-}
-
-function spawnConfetti() {
-  const box = document.getElementById('confetti-layer');
-  box.innerHTML = '';
-  const colors = ['#ffd93d', '#ff4d6d', '#4dd6ff', '#3bcb6f', '#fff'];
-  for (let i = 0; i < 35; i++) {
-    const el = document.createElement('div');
-    el.className = 'confetti-piece';
-    el.style.left = Math.random() * 100 + '%';
-    el.style.background = colors[Math.floor(Math.random() * colors.length)];
-    el.style.animationDelay = (Math.random() * 0.6) + 's';
-    el.style.animationDuration = (2 + Math.random() * 1.5) + 's';
-    box.appendChild(el);
-  }
 }
 
 function onLose() {
-  document.getElementById('lose-message').textContent =
-    `Mi dispiace ${state.name}, questa volta non ce l'hai fatta. Niente festa per te... a meno che tu non voglia riprovare!`;
+  document.getElementById('lose-message').textContent = `Niente da fare ${state.name}! Vuoi riprovare?`;
   showScreen('screen-lose');
   sfx.lose();
 }
@@ -1727,489 +1356,6 @@ document.getElementById('btn-retry').addEventListener('click', () => {
   showScreen('screen-game');
   initGame();
 });
-
-/* ============ ANIMAZIONE MONTAGGIO PERSONAGGIO E PORTALE ============ */
-function startAssemblySequence() {
-  const c = document.getElementById('assembly-canvas');
-  const actx = c.getContext('2d');
-  const W_A = c.width, H_A = c.height;
-  const statusEl = document.getElementById('assembly-status');
-  const titleEl = document.getElementById('assembly-title');
-
-  let frame = 0;
-  const totalFrames = 410;
-  const cx = W_A / 2;
-  const cy = H_A / 2 + 15;
-
-  // Character component dimensions (FULL SIZE)
-  const torsoW = 52, torsoH = 60;
-  const legW = 16, legH = 52;
-  const armW = 14, armH = 48;
-  const headSize = 56;
-
-  // Target positions when fully assembled
-  const targetTorsoX = cx - torsoW / 2;
-  const targetTorsoY = cy - torsoH / 2;
-
-  const targetLegLeftX = cx - torsoW / 2 + 4;
-  const targetLegRightX = cx + torsoW / 2 - legW - 4;
-  const targetLegY = targetTorsoY + torsoH - 4;
-
-  const targetArmLeftX = targetTorsoX - armW + 4;
-  const targetArmRightX = targetTorsoX + torsoW - 4;
-  const targetArmY = targetTorsoY + 4;
-
-  const targetHeadX = cx;
-  const targetHeadY = targetTorsoY - headSize / 2 + 4;
-
-  // Animation states & component positions
-  let torsoPos = { x: cx, y: -80, attached: false };
-  let legLeftPos = { x: -60, y: H_A + 40, attached: false };
-  let legRightPos = { x: W_A + 60, y: H_A + 40, attached: false };
-  let armLeftPos = { x: -60, y: cy, attached: false };
-  let armRightPos = { x: W_A + 60, y: cy, attached: false };
-  let headPos = { x: cx, y: -100, attached: false };
-
-  // Particles array
-  const particles = [];
-
-  function addSparks(x, y, color, count, speed = 4) {
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const spd = (0.5 + Math.random()) * speed;
-      particles.push({
-        x, y,
-        vx: Math.cos(angle) * spd,
-        vy: Math.sin(angle) * spd,
-        size: 2 + Math.random() * 3,
-        life: 15 + Math.random() * 15,
-        maxLife: 30,
-        color: color || '#ffd93d'
-      });
-    }
-  }
-
-  // Helper to draw robotic mechanical arm with articulation and claw
-  function drawRobotArm(startX, startY, endX, endY, clawWidth = 24, clawGrip = 0, glowColor = '#4dd6ff') {
-    const midX = (startX + endX) / 2 + (startX < W_A / 2 ? -30 : 30);
-    const midY = (startY + endY) / 2 - 20;
-
-    actx.save();
-    // Arm segment 1
-    actx.strokeStyle = '#4a5568';
-    actx.lineWidth = 10;
-    actx.lineCap = 'round';
-    actx.beginPath();
-    actx.moveTo(startX, startY);
-    actx.lineTo(midX, midY);
-    actx.stroke();
-
-    actx.strokeStyle = '#2d3748';
-    actx.lineWidth = 6;
-    actx.beginPath();
-    actx.moveTo(startX, startY);
-    actx.lineTo(midX, midY);
-    actx.stroke();
-
-    // Arm segment 2
-    actx.strokeStyle = '#4a5568';
-    actx.lineWidth = 8;
-    actx.beginPath();
-    actx.moveTo(midX, midY);
-    actx.lineTo(endX, endY);
-    actx.stroke();
-
-    actx.strokeStyle = '#2d3748';
-    actx.lineWidth = 4;
-    actx.beginPath();
-    actx.moveTo(midX, midY);
-    actx.lineTo(endX, endY);
-    actx.stroke();
-
-    // Metallic joints
-    actx.fillStyle = '#cbd5e0';
-    actx.beginPath(); actx.arc(startX, startY, 7, 0, Math.PI * 2); actx.fill();
-    actx.beginPath(); actx.arc(midX, midY, 6, 0, Math.PI * 2); actx.fill();
-    actx.beginPath(); actx.arc(endX, endY, 5, 0, Math.PI * 2); actx.fill();
-
-    actx.fillStyle = glowColor;
-    actx.beginPath(); actx.arc(midX, midY, 2.5, 0, Math.PI * 2); actx.fill();
-
-    // Robotic Claw / Pincer
-    const angle = Math.atan2(endY - midY, endX - midX);
-    actx.translate(endX, endY);
-    actx.rotate(angle);
-
-    actx.fillStyle = '#718096';
-    actx.fillRect(-4, -8, 8, 16);
-
-    const pincerOffset = 8 + clawGrip * 6;
-    actx.fillStyle = '#e2e8f0';
-    // Top pincer
-    actx.beginPath();
-    actx.moveTo(2, -pincerOffset);
-    actx.lineTo(14, -pincerOffset + 2);
-    actx.lineTo(10, -2);
-    actx.fill();
-    // Bottom pincer
-    actx.beginPath();
-    actx.moveTo(2, pincerOffset);
-    actx.lineTo(14, pincerOffset - 2);
-    actx.lineTo(10, 2);
-    actx.fill();
-
-    actx.restore();
-  }
-
-  function renderAssembly() {
-    frame++;
-
-    // 1. BACKGROUND: HIGH-TECH LAB CHAMBER
-    actx.fillStyle = '#060713';
-    actx.fillRect(0, 0, W_A, H_A);
-
-    // Glowing Lab Grid Lines
-    actx.strokeStyle = 'rgba(77, 214, 255, 0.08)';
-    actx.lineWidth = 1;
-    for (let x = 0; x < W_A; x += 24) {
-      actx.beginPath(); actx.moveTo(x, 0); actx.lineTo(x, H_A); actx.stroke();
-    }
-    for (let y = 0; y < H_A; y += 24) {
-      actx.beginPath(); actx.moveTo(0, y); actx.lineTo(W_A, y); actx.stroke();
-    }
-
-    // Assembly Stage Pedestal
-    const pedY = targetLegY + legH + 2;
-    actx.fillStyle = '#101426';
-    actx.fillRect(cx - 70, pedY, 140, 18);
-    actx.fillStyle = '#1a2035';
-    actx.fillRect(cx - 60, pedY + 3, 120, 12);
-
-    // Pedestal Neon Edge Glow
-    actx.save();
-    actx.shadowBlur = 10;
-    actx.shadowColor = '#4dd6ff';
-    actx.fillStyle = '#4dd6ff';
-    actx.fillRect(cx - 60, pedY + 2, 120, 2);
-    actx.restore();
-
-    // HUD Diagnostic Overlay
-    actx.fillStyle = 'rgba(77, 214, 255, 0.5)';
-    actx.font = '9px monospace';
-    actx.textAlign = 'left';
-    actx.fillText(`LAB_SYSTEM: ACTIVE`, 16, 20);
-    actx.fillText(`SOGGETTO: ${state.name.toUpperCase()}`, 16, 32);
-    actx.fillText(`PROGRESSO: ${Math.min(100, Math.floor((frame / 340) * 100))}%`, 16, 44);
-
-    // Corner HUD target brackets
-    actx.strokeStyle = 'rgba(255, 217, 61, 0.3)';
-    actx.lineWidth = 2;
-    actx.beginPath(); actx.moveTo(cx - 80, cy - 80); actx.lineTo(cx - 100, cy - 80); actx.lineTo(cx - 100, cy - 60); actx.stroke();
-    actx.beginPath(); actx.moveTo(cx + 80, cy - 80); actx.lineTo(cx + 100, cy - 80); actx.lineTo(cx + 100, cy - 60); actx.stroke();
-    actx.beginPath(); actx.moveTo(cx - 80, cy + 80); actx.lineTo(cx - 100, cy + 80); actx.lineTo(cx - 100, cy + 60); actx.stroke();
-    actx.beginPath(); actx.moveTo(cx + 80, cy + 80); actx.lineTo(cx + 100, cy + 80); actx.lineTo(cx + 100, cy + 60); actx.stroke();
-
-    // ==========================================
-    // PHASE 1: BUSTO / TORSO (Frames 10 - 70)
-    // ==========================================
-    if (frame >= 10 && !torsoPos.attached) {
-      statusEl.textContent = "POSIZIONAMENTO BUSTO CORE...";
-      titleEl.textContent = "MONTAGGIO BUSTO";
-      torsoPos.y += (targetTorsoY - torsoPos.y) * 0.08;
-      if (Math.abs(torsoPos.y - targetTorsoY) < 1.5) {
-        torsoPos.y = targetTorsoY;
-        torsoPos.attached = true;
-        sfx.stomp();
-        addSparks(cx, targetTorsoY + torsoH / 2, '#4dd6ff', 18);
-      }
-    }
-
-    if (frame < 80) {
-      const grip = torsoPos.attached ? (frame - 65) * 0.05 : 0;
-      drawRobotArm(cx, -10, cx, torsoPos.y - 4, 28, Math.min(1, Math.max(0, grip)), '#4dd6ff');
-    }
-
-    if (frame >= 10) {
-      actx.save();
-      const tX = targetTorsoX, tY = torsoPos.y;
-      const bodyGrad = actx.createLinearGradient(tX, tY, tX + torsoW, tY + torsoH);
-      bodyGrad.addColorStop(0, '#3b7dff');
-      bodyGrad.addColorStop(0.6, '#1f4fbf');
-      bodyGrad.addColorStop(1, '#13358a');
-      actx.fillStyle = bodyGrad;
-      actx.fillRect(tX, tY, torsoW, torsoH);
-
-      actx.fillStyle = '#ffd93d';
-      actx.fillRect(tX + 12, tY + 10, torsoW - 24, 6);
-      actx.fillStyle = '#102354';
-      actx.fillRect(tX + 8, tY + 22, torsoW - 16, 26);
-
-      actx.shadowBlur = 10;
-      actx.shadowColor = '#4dd6ff';
-      actx.fillStyle = '#4dd6ff';
-      actx.beginPath();
-      actx.arc(tX + torsoW / 2, tY + 32, 6, 0, Math.PI * 2);
-      actx.fill();
-      actx.restore();
-    }
-
-    // ==========================================
-    // PHASE 2: GAMBE / LEGS (Frames 75 - 145)
-    // ==========================================
-    if (frame >= 75) {
-      if (frame === 75) {
-        statusEl.textContent = "INNESTO ARTI INFERIORI...";
-        titleEl.textContent = "SOPPORTI GAMBE";
-      }
-
-      if (!legLeftPos.attached) {
-        legLeftPos.x += (targetLegLeftX - legLeftPos.x) * 0.08;
-        legLeftPos.y += (targetLegY - legLeftPos.y) * 0.08;
-        if (Math.hypot(legLeftPos.x - targetLegLeftX, legLeftPos.y - targetLegY) < 2) {
-          legLeftPos.x = targetLegLeftX; legLeftPos.y = targetLegY;
-          legLeftPos.attached = true;
-          sfx.stomp();
-          addSparks(targetLegLeftX + legW / 2, targetLegY, '#ff4d6d', 15);
-        }
-      }
-
-      if (!legRightPos.attached) {
-        legRightPos.x += (targetLegRightX - legRightPos.x) * 0.08;
-        legRightPos.y += (targetLegY - legRightPos.y) * 0.08;
-        if (Math.hypot(legRightPos.x - targetLegRightX, legRightPos.y - targetLegY) < 2) {
-          legRightPos.x = targetLegRightX; legRightPos.y = targetLegY;
-          legRightPos.attached = true;
-          sfx.stomp();
-          addSparks(targetLegRightX + legW / 2, targetLegY, '#ff4d6d', 15);
-        }
-      }
-
-      if (frame < 155) {
-        drawRobotArm(-10, H_A - 10, legLeftPos.x + legW / 2, legLeftPos.y + legH / 2, 20, legLeftPos.attached ? 1 : 0, '#ff4d6d');
-        drawRobotArm(W_A + 10, H_A - 10, legRightPos.x + legW / 2, legRightPos.y + legH / 2, 20, legRightPos.attached ? 1 : 0, '#ff4d6d');
-      }
-
-      // Draw Left Leg
-      actx.fillStyle = '#1a1a1a';
-      actx.fillRect(legLeftPos.x, legLeftPos.y, legW, legH);
-      actx.fillStyle = '#3b7dff';
-      actx.fillRect(legLeftPos.x + 2, legLeftPos.y + 4, legW - 4, 18);
-      actx.fillStyle = '#ffd93d';
-      actx.fillRect(legLeftPos.x, legLeftPos.y + legH - 10, legW, 10);
-
-      // Draw Right Leg
-      actx.fillStyle = '#1a1a1a';
-      actx.fillRect(legRightPos.x, legRightPos.y, legW, legH);
-      actx.fillStyle = '#3b7dff';
-      actx.fillRect(legRightPos.x + 2, legRightPos.y + 4, legW - 4, 18);
-      actx.fillStyle = '#ffd93d';
-      actx.fillRect(legRightPos.x, legRightPos.y + legH - 10, legW, 10);
-
-      // Laser Welding Effect
-      if (frame >= 110 && frame <= 145) {
-        actx.save();
-        actx.shadowBlur = 8;
-        actx.shadowColor = '#ffd93d';
-        actx.strokeStyle = '#ffffff';
-        actx.lineWidth = 2;
-        actx.beginPath();
-        actx.moveTo(targetLegLeftX, targetLegY);
-        actx.lineTo(targetLegLeftX + legW, targetLegY);
-        actx.moveTo(targetLegRightX, targetLegY);
-        actx.lineTo(targetLegRightX + legW, targetLegY);
-        actx.stroke();
-        actx.restore();
-        if (frame % 3 === 0) addSparks(cx, targetLegY, '#ffd93d', 4, 6);
-      }
-    }
-
-    // ==========================================
-    // PHASE 3: BRACCIA / ARMS (Frames 150 - 215)
-    // ==========================================
-    if (frame >= 150) {
-      if (frame === 150) {
-        statusEl.textContent = "SALDATURA ARTI SUPERIORI...";
-        titleEl.textContent = "INNESTO BRACCIA";
-      }
-
-      if (!armLeftPos.attached) {
-        armLeftPos.x += (targetArmLeftX - armLeftPos.x) * 0.08;
-        armLeftPos.y += (targetArmY - armLeftPos.y) * 0.08;
-        if (Math.hypot(armLeftPos.x - targetArmLeftX, armLeftPos.y - targetArmY) < 2) {
-          armLeftPos.x = targetArmLeftX; armLeftPos.y = targetArmY;
-          armLeftPos.attached = true;
-          sfx.jump();
-          addSparks(targetArmLeftX, targetArmY, '#3bcb6f', 15);
-        }
-      }
-
-      if (!armRightPos.attached) {
-        armRightPos.x += (targetArmRightX - armRightPos.x) * 0.08;
-        armRightPos.y += (targetArmY - armRightPos.y) * 0.08;
-        if (Math.hypot(armRightPos.x - targetArmRightX, armRightPos.y - targetArmY) < 2) {
-          armRightPos.x = targetArmRightX; armRightPos.y = targetArmY;
-          armRightPos.attached = true;
-          sfx.jump();
-          addSparks(targetArmRightX + armW, targetArmY, '#3bcb6f', 15);
-        }
-      }
-
-      if (frame < 225) {
-        drawRobotArm(-20, cy - 30, armLeftPos.x, armLeftPos.y + armH / 2, 18, armLeftPos.attached ? 1 : 0, '#3bcb6f');
-        drawRobotArm(W_A + 20, cy - 30, armRightPos.x + armW, armRightPos.y + armH / 2, 18, armRightPos.attached ? 1 : 0, '#3bcb6f');
-      }
-
-      // Draw Left Arm
-      actx.fillStyle = '#1f4fbf';
-      actx.fillRect(armLeftPos.x, armLeftPos.y, armW, armH);
-      actx.fillStyle = '#3b7dff';
-      actx.fillRect(armLeftPos.x - 2, armLeftPos.y, armW, 12);
-      actx.fillStyle = '#ffd6a5';
-      actx.fillRect(armLeftPos.x + 2, armLeftPos.y + armH - 8, armW - 4, 8);
-
-      // Draw Right Arm
-      actx.fillStyle = '#1f4fbf';
-      actx.fillRect(armRightPos.x, armRightPos.y, armW, armH);
-      actx.fillStyle = '#3b7dff';
-      actx.fillRect(armRightPos.x + 2, armRightPos.y, armW, 12);
-      actx.fillStyle = '#ffd6a5';
-      actx.fillRect(armRightPos.x + 2, armRightPos.y + armH - 8, armW - 4, 8);
-
-      if (frame >= 180 && frame <= 215 && frame % 4 === 0) {
-        addSparks(targetArmLeftX + 4, targetArmY + 6, '#3bcb6f', 5);
-        addSparks(targetArmRightX, targetArmY + 6, '#3bcb6f', 5);
-      }
-    }
-
-    // ==========================================
-    // PHASE 4: TESTA / SELFIE HEAD (Frames 220 - 300)
-    // ==========================================
-    if (frame >= 220) {
-      if (frame === 220) {
-        statusEl.textContent = "MAPPATURA VISO E SINCRO CERVELLO...";
-        titleEl.textContent = "INSERIMENTO TESTA";
-      }
-
-      if (!headPos.attached) {
-        headPos.y += (targetHeadY - headPos.y) * 0.07;
-        if (Math.abs(headPos.y - targetHeadY) < 1.5) {
-          headPos.y = targetHeadY;
-          headPos.attached = true;
-          sfx.gunGet();
-          addSparks(cx, targetHeadY + headSize / 2, '#ffd93d', 30);
-          statusEl.textContent = "VISO E MATRICE AGGANCIATI CON SUCCESSO!";
-        }
-      }
-
-      if (frame < 315) {
-        drawRobotArm(cx + 40, -10, headPos.x, headPos.y - headSize / 2 - 2, 32, headPos.attached ? 1 : 0, '#ffd93d');
-      }
-
-      const hX = headPos.x, hY = headPos.y;
-      actx.save();
-
-      actx.fillStyle = '#1a1a1a';
-      actx.fillRect(hX - 8, hY + headSize / 2 - 6, 16, 10);
-
-      actx.fillStyle = '#ffd93d';
-      actx.beginPath();
-      actx.arc(hX, hY, headSize / 2 + 3, 0, Math.PI * 2);
-      actx.fill();
-
-      actx.beginPath();
-      actx.arc(hX, hY, headSize / 2, 0, Math.PI * 2);
-      actx.clip();
-
-      if (state.faceCanvas) {
-        actx.drawImage(state.faceCanvas, hX - headSize / 2, hY - headSize / 2, headSize, headSize);
-      } else {
-        actx.fillStyle = '#ffd6a5';
-        actx.fillRect(hX - headSize / 2, hY - headSize / 2, headSize, headSize);
-      }
-      actx.restore();
-
-      if (frame >= 250 && frame <= 295) {
-        const scanY = hY - headSize / 2 + ((frame - 250) * 1.5) % headSize;
-        actx.save();
-        actx.shadowBlur = 12;
-        actx.shadowColor = '#ff4d6d';
-        actx.fillStyle = '#ff4d6d';
-        actx.fillRect(hX - headSize / 2 - 4, scanY, headSize + 8, 3);
-        actx.restore();
-        if (frame % 3 === 0) addSparks(hX, scanY, '#ff4d6d', 3, 3);
-      }
-    }
-
-    // ==========================================
-    // PHASE 5: CHARGING & PORTAL (Frames 305 - 410)
-    // ==========================================
-    if (frame >= 305) {
-      if (frame === 305) {
-        sfx.warp();
-        titleEl.textContent = "PORTALE ATTIVATO";
-        statusEl.textContent = "SOGGETTO PRONTO - TELETRASPORTO IN CORSO!";
-      }
-
-      const auraPulse = Math.sin(frame * 0.2) * 6;
-      actx.save();
-      actx.shadowBlur = 20 + auraPulse;
-      actx.shadowColor = '#4dd6ff';
-      actx.strokeStyle = 'rgba(77, 214, 255, 0.6)';
-      actx.lineWidth = 3;
-      actx.beginPath();
-      actx.ellipse(cx, cy, torsoW / 2 + 18 + auraPulse, torsoH + 28 + auraPulse, 0, 0, Math.PI * 2);
-      actx.stroke();
-      actx.restore();
-
-      const portalRadius = Math.min(180, (frame - 305) * 3);
-      const portalRot = frame * 0.1;
-      actx.save();
-      actx.translate(cx, cy);
-      actx.rotate(portalRot);
-
-      for (let i = 0; i < 8; i++) {
-        const pAngle = (Math.PI * 2 / 8) * i;
-        const px = Math.cos(pAngle) * portalRadius;
-        const py = Math.sin(pAngle) * portalRadius;
-        actx.fillStyle = i % 2 === 0 ? '#ffd93d' : '#ff4d6d';
-        actx.shadowBlur = 12;
-        actx.shadowColor = actx.fillStyle;
-        actx.fillRect(px - 6, py - 6, 12, 12);
-      }
-      actx.restore();
-
-      if (frame % 2 === 0) {
-        addSparks(cx + (Math.random() - 0.5) * 80, cy + (Math.random() - 0.5) * 120, '#4dd6ff', 4, 8);
-      }
-    }
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const pt = particles[i];
-      pt.x += pt.vx; pt.y += pt.vy;
-      pt.life--;
-      actx.fillStyle = pt.color;
-      actx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
-      actx.fillRect(pt.x, pt.y, pt.size, pt.size);
-      actx.globalAlpha = 1;
-      if (pt.life <= 0) particles.splice(i, 1);
-    }
-
-    if (frame > 370) {
-      const flashAlpha = Math.min(1, (frame - 370) / 35);
-      actx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
-      actx.fillRect(0, 0, W_A, H_A);
-    }
-
-    if (frame < totalFrames) {
-      requestAnimationFrame(renderAssembly);
-    } else {
-      showScreen('screen-game');
-      initGame();
-    }
-  }
-
-  requestAnimationFrame(renderAssembly);
-}
 </script>
 </body>
 </html>
