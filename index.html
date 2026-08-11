@@ -10,6 +10,8 @@
   4. musica        -> Coin-Block_Run.mp3
   5. TODO-RSVP     -> link Formspree / Google Form per risposte
   6. TODO-ICONA    -> icona home screen (icon-180.png, icon-512.png)
+  7. gun.png       -> pistola (pickup + in mano)
+  8. rocket.png    -> missili del boss (naso rivolto a destra nell'immagine sorgente)
   ================================================================
 -->
 <html lang="it">
@@ -170,7 +172,7 @@
   .device-icon { font-size: 34px; }
   input[type=text] {
     font-family: inherit;
-    font-size: clamp(12px, 2.5vw, 16px);
+    font-size: clamp(16px, 2.5vw, 18px);
     padding: 12px;
     margin: 16px 0;
     width: min(300px, 80vw);
@@ -212,7 +214,7 @@
 
   #game-wrap { position: relative; width: 100%; height: 100%; }
   #game-canvas {
-    display: block; margin: 0 auto; background: #2b1055; image-rendering: pixelated;
+    display: block; margin: 0 auto; background: #bfe3ff; image-rendering: pixelated;
   }
   
   /* Filtro e trasformazione sul viso del personaggio */
@@ -254,6 +256,11 @@
     color: #fff;
     text-shadow: 2px 2px 0 #000, 0 0 8px rgba(255,255,255,0.5);
     z-index: 5;
+  }
+  #hud-enemies {
+    margin-top: 4px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
   }
 
   #touch-controls {
@@ -453,7 +460,7 @@
     </p>
     <p class="warn blink">🔊 ALZA IL VOLUME DEL TELEFONO</p>
     <p class="warn">📷 Ti verrà chiesto di scattare un selfie<br>per creare il tuo personaggio</p>
-    <input type="text" id="player-name" placeholder="INSERISCI IL TUO NOME" maxlength="16">
+    <input type="text" id="player-name" placeholder="INSERISCI IL TUO NOME" maxlength="16" autocomplete="name" autocapitalize="words" spellcheck="false" enterkeyhint="done">
     <button class="pixel-btn" id="btn-to-camera">PREMI START</button>
   </section>
 
@@ -485,6 +492,7 @@
       <div id="hud">
         <div id="hud-name"></div>
         <div id="hud-lives"></div>
+        <div id="hud-enemies"></div>
       </div>
       <div id="boss-hp-wrap" style="display:none;">
         <div class="boss-hp-label">FILA - BOSS FINALE</div>
@@ -589,12 +597,20 @@ const sfx = {
 /* ============ VIEWPORT FIT ============ */
 const appEl = document.getElementById('app');
 function setRealAppHeight() {
+  // Mentre l'utente digita in un campo di testo evitiamo di ridimensionare
+  // #app: il layout centrato "salterebbe" in modo brusco alla comparsa/
+  // scomparsa della tastiera. Il browser gestisce da solo lo scroll
+  // dell'input in vista (vedi listener 'focus' più sotto).
+  const active = document.activeElement;
+  const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+  if (isTyping) return;
   const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   appEl.style.height = h + 'px';
 }
 window.addEventListener('resize', setRealAppHeight);
 window.addEventListener('orientationchange', () => setTimeout(setRealAppHeight, 150));
 if (window.visualViewport) window.visualViewport.addEventListener('resize', setRealAppHeight);
+document.addEventListener('focusout', () => setTimeout(setRealAppHeight, 100));
 setRealAppHeight();
 
 /* ============ SCHERMATA 0: PWA HOME ============ */
@@ -636,6 +652,17 @@ function showScreen(id) {
 
 /* ============ SCHERMATA 1: DISCLAIMER ============ */
 const bgm = document.getElementById('bgm');
+const nameInputEl = document.getElementById('player-name');
+nameInputEl.addEventListener('focus', () => {
+  setTimeout(() => nameInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+});
+nameInputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    nameInputEl.blur();
+    document.getElementById('btn-to-camera').click();
+  }
+});
 document.getElementById('btn-to-camera').addEventListener('click', () => {
   const nameInput = document.getElementById('player-name').value.trim();
   state.name = nameInput || 'Giocatore Misterioso';
@@ -776,6 +803,7 @@ function initGame(skipIntro) {
   document.getElementById('btn-shoot-gun').style.display = 'none';
   document.getElementById('boss-hp-wrap').style.display = 'none';
   document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
+  updateEnemyCounterHud();
   const tc = document.getElementById('touch-controls');
   tc.style.opacity = skipIntro ? '1' : '0';
   tc.style.pointerEvents = skipIntro ? 'auto' : 'none';
@@ -843,6 +871,12 @@ function buildBoss() {
     spawnStartFrame: 0,
     dir: -1,
     nextMissileFrame: 0,
+    jumpUnlocked: false,
+    jumpState: null,
+    jumpPhaseStart: 0,
+    jumpStartX: 0,
+    jumpTargetX: 0,
+    nextJumpFrame: Infinity,
   };
 }
 
@@ -1128,6 +1162,7 @@ function update() {
         p.scaleX = 0.8; p.scaleY = 1.2;
         sfx.stomp();
         spawnPoof(en.x + en.w / 2, en.y + en.h / 2, en.type === 'fire' ? '#ff8a3d' : '#c0392b', 14);
+        updateEnemyCounterHud();
       } else {
         loseLife();
         return;
@@ -1148,18 +1183,17 @@ function update() {
     if (fb.x < game.camX - 60 || fb.x > game.camX + W + 60) game.fireballs.splice(i, 1);
   }
 
-  // Cancello di Fuoco
-  const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
-  if (!firesDefeatedForGate && p.x + p.w > FIRE_GATE_X) p.x = FIRE_GATE_X - p.w;
+  // Cancello - si apre solo quando TUTTI i nemici sono sconfitti
+  const allEnemiesDefeatedForGate = game.enemies.every(e => !e.alive);
+  if (!allEnemiesDefeatedForGate && p.x + p.w > FIRE_GATE_X) p.x = FIRE_GATE_X - p.w;
 
   if (!game.arenaEntered && p.x > ARENA_ENTRY_X) game.arenaEntered = true;
   if (game.arenaEntered && p.x < ARENA_ENTRY_X) p.x = ARENA_ENTRY_X;
 
   // Raccolta Pistola
   if (!game.hasGun && !game.gunPickup.collected) {
-    const firesDefeated = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
     const gp = game.gunPickup;
-    if (firesDefeated && p.x < gp.x + gp.w && p.x + p.w > gp.x && p.y < gp.y + gp.h && p.y + p.h > gp.y) {
+    if (allEnemiesDefeatedForGate && p.x < gp.x + gp.w && p.x + p.w > gp.x && p.y < gp.y + gp.h && p.y + p.h > gp.y) {
       gp.collected = true;
       game.hasGun = true;
       sfx.gunGet();
@@ -1199,9 +1233,12 @@ function update() {
   }
 
   // Boss
+  const JUMP_TELEGRAPH_FRAMES = 40;
+  const JUMP_RISE_FRAMES = 26;
+  const JUMP_FALL_FRAMES = 22;
   if (game.boss.alive) {
     const boss = game.boss;
-    if (boss.state === 'dormant' && p.x > BOSS_TRIGGER_X) {
+    if (boss.state === 'dormant' && p.x > BOSS_TRIGGER_X && game.enemies.every(e => !e.alive)) {
       boss.state = 'spawning';
       boss.spawnStartFrame = game.frame;
       spawnGroundCrack(boss.x + boss.w / 2);
@@ -1217,17 +1254,75 @@ function update() {
       }
     }
 
-    if (boss.state !== 'dormant' && p.x + p.w > boss.x && p.x < boss.x + boss.w) {
+    if (boss.state !== 'dormant' && !boss.jumpState && p.x + p.w > boss.x && p.x < boss.x + boss.w) {
       p.x = boss.x - p.w;
     }
 
     if (boss.state === 'active') {
-      if (game.frame >= boss.nextMissileFrame) {
-        game.missiles.push({
-          x: boss.x - 6, y: boss.y + boss.h - 35, w: 16, h: 10,
-          vx: -3.5, vy: 0, spawnFrame: game.frame,
-        });
+      // Sblocco dell'attacco "salto e schianto" a metà vita
+      if (!boss.jumpUnlocked && boss.hp <= Math.ceil(boss.maxHp / 2)) {
+        boss.jumpUnlocked = true;
+        boss.nextJumpFrame = game.frame + 90;
+      }
+
+      if (!boss.jumpState && game.frame >= boss.nextMissileFrame) {
+        const count = 1 + Math.floor(Math.random() * 3); // 1-3 missili
+        for (let i = 0; i < count; i++) {
+          game.missiles.push({
+            x: boss.x - 6, y: boss.y + boss.h - 45 + i * 16, w: 16, h: 10,
+            vx: -3.2 + (Math.random() - 0.5) * 1.2,
+            vy: (Math.random() - 0.5) * 1.4,
+            spawnFrame: game.frame,
+          });
+        }
         boss.nextMissileFrame = game.frame + 75 + Math.floor(Math.random() * 35);
+      }
+
+      // Avvio dell'attacco salto
+      if (boss.jumpUnlocked && !boss.jumpState && game.frame >= boss.nextJumpFrame) {
+        boss.jumpState = 'active';
+        boss.jumpPhaseStart = game.frame;
+        boss.jumpStartX = boss.x;
+        boss.jumpGroundY = boss.y;
+        const minX = ARENA_ENTRY_X + 20;
+        const maxX = game.flagX - boss.w - 40;
+        boss.jumpTargetX = Math.min(Math.max(p.x + p.w / 2 - boss.w / 2, minX), maxX);
+      }
+
+      // Esecuzione della sequenza di salto
+      if (boss.jumpState) {
+        const elapsed = game.frame - boss.jumpPhaseStart;
+        const apexY = boss.jumpGroundY - 150;
+        if (elapsed < JUMP_TELEGRAPH_FRAMES) {
+          // Fase di carica: il boss resta fermo, ma "vibra" come avviso
+          boss.x = boss.jumpStartX;
+          boss.y = boss.jumpGroundY;
+          if (elapsed % 8 < 4) boss.flashUntil = game.frame + 2;
+        } else if (elapsed < JUMP_TELEGRAPH_FRAMES + JUMP_RISE_FRAMES) {
+          const t = (elapsed - JUMP_TELEGRAPH_FRAMES) / JUMP_RISE_FRAMES;
+          const ease = 1 - (1 - t) * (1 - t);
+          boss.x = boss.jumpStartX + (boss.jumpTargetX - boss.jumpStartX) * ease;
+          boss.y = boss.jumpGroundY + (apexY - boss.jumpGroundY) * ease;
+        } else if (elapsed < JUMP_TELEGRAPH_FRAMES + JUMP_RISE_FRAMES + JUMP_FALL_FRAMES) {
+          const t = (elapsed - JUMP_TELEGRAPH_FRAMES - JUMP_RISE_FRAMES) / JUMP_FALL_FRAMES;
+          const ease = t * t;
+          boss.x = boss.jumpTargetX;
+          boss.y = apexY + (boss.jumpGroundY - apexY) * ease;
+        } else {
+          // Impatto al suolo
+          boss.x = boss.jumpTargetX;
+          boss.y = boss.jumpGroundY;
+          triggerShake(10, 20);
+          sfx.stomp();
+          spawnGroundCrack(boss.x + boss.w / 2);
+          spawnDust(boss.x + boss.w / 2, boss.y + boss.h, 0);
+          const landHit = p.x < boss.x + boss.w + 10 && p.x + p.w > boss.x - 10 &&
+                           p.y + p.h > GROUND_Y - 10 && game.frame > p.invulnUntil;
+          boss.jumpState = null;
+          boss.nextJumpFrame = game.frame + 300;
+          boss.nextMissileFrame = game.frame + 50;
+          if (landHit) { loseLife(); return; }
+        }
       }
     }
   }
@@ -1238,7 +1333,7 @@ function update() {
   updateParticles(game.sparkParticles);
 
   // Missili inseguitori
-  const HOMING_WINDOW = 35;
+  const HOMING_WINDOW = 120; // ~2 secondi a 60fps, poi proseguono dritti
   for (let i = game.missiles.length - 1; i >= 0; i--) {
     const m = game.missiles[i];
     if ((game.frame - m.spawnFrame) < HOMING_WINDOW) {
@@ -1250,6 +1345,21 @@ function update() {
       m.vy += ((targetY / dist) * speed - m.vy) * 0.06;
     }
     m.x += m.vx; m.y += m.vy;
+
+    // Scia stile propulsore
+    if (game.frame % 2 === 0) {
+      const angle = Math.atan2(m.vy, m.vx);
+      const tailX = m.x + m.w / 2 - Math.cos(angle) * (m.w / 2 + 3);
+      const tailY = m.y + m.h / 2 - Math.sin(angle) * (m.w / 2 + 3);
+      game.sparkParticles.push({
+        x: tailX, y: tailY,
+        vx: -Math.cos(angle) * 0.6 + (Math.random() - 0.5) * 0.5,
+        vy: -Math.sin(angle) * 0.6 + (Math.random() - 0.5) * 0.5,
+        size: 2 + Math.random() * 2,
+        life: 12 + Math.random() * 6, maxLife: 18,
+        color: Math.random() < 0.5 ? '#ff8a3d' : '#ffd93d',
+      });
+    }
 
     const hitPlayer = p.x < m.x + m.w && p.x + p.w > m.x && p.y < m.y + m.h && p.y + p.h > m.y;
     if (hitPlayer && game.frame > p.invulnUntil) {
@@ -1269,6 +1379,18 @@ function update() {
   }
 }
 
+function updateEnemyCounterHud() {
+  if (!game) return;
+  const normalLeft = game.enemies.filter(e => e.type !== 'fire' && e.alive).length;
+  const fireLeft = game.enemies.filter(e => e.type === 'fire' && e.alive).length;
+  const el = document.getElementById('hud-enemies');
+  if (normalLeft <= 0 && fireLeft <= 0) {
+    el.textContent = '✅ Nemici sconfitti!';
+  } else {
+    el.textContent = `👾 x${normalLeft}   🔥 x${fireLeft}`;
+  }
+}
+
 function loseLife() {
   document.getElementById('boss-hp-wrap').style.display = 'none';
   sfx.hit();
@@ -1285,8 +1407,9 @@ function loseLife() {
 
     game.enemies = buildEnemies();
     if (gunAlreadyEarned) {
-      game.enemies.forEach(e => { if (e.type === 'fire') e.alive = false; });
+      game.enemies.forEach(e => { e.alive = false; });
     }
+    updateEnemyCounterHud();
     game.fireballs = [];
     game.hasGun = gunAlreadyEarned;
     game.gunPickup = { x: 1895, y: GROUND_Y - 52, w: 56, h: 48, collected: gunAlreadyEarned };
@@ -1340,10 +1463,10 @@ function render() {
   for (const en of game.enemies) if (en.alive) drawEnemy(en);
   for (const fb of game.fireballs) drawFireball(fb);
 
-  const firesDefeatedForGate = game.enemies.filter(e => e.type === 'fire').every(e => !e.alive);
-  if (!firesDefeatedForGate) drawFireGate(FIRE_GATE_X);
+  const allEnemiesDefeatedForGate = game.enemies.every(e => !e.alive);
+  if (!allEnemiesDefeatedForGate) drawFireGate(FIRE_GATE_X);
 
-  if (!game.gunPickup.collected && firesDefeatedForGate) drawGunPickup(game.gunPickup);
+  if (!game.gunPickup.collected && allEnemiesDefeatedForGate) drawGunPickup(game.gunPickup);
 
   // Particelle
   for (const pt of game.bossParticles) drawParticle(pt);
@@ -1351,7 +1474,10 @@ function render() {
   for (const pt of game.dustParticles) drawDustParticle(pt);
   for (const pt of game.sparkParticles) drawSparkParticle(pt);
 
-  if (game.boss.alive && game.boss.state !== 'dormant') drawBossWithSpawn(game.boss);
+  if (game.boss.alive && game.boss.state !== 'dormant') {
+    drawBossJumpShadow(game.boss);
+    drawBossWithSpawn(game.boss);
+  }
 
   for (const m of game.missiles) drawMissile(m);
   for (const b of game.bullets) drawBullet(b);
@@ -1398,9 +1524,9 @@ function positionFaceOverlay() {
 
 function drawSky() {
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#110c2a');
-  grad.addColorStop(0.5, '#2b1055');
-  grad.addColorStop(1, '#75317c');
+  grad.addColorStop(0, '#7ec1ff');
+  grad.addColorStop(0.55, '#bfe3ff');
+  grad.addColorStop(1, '#eef8ff');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 }
@@ -1408,7 +1534,7 @@ function drawSky() {
 function drawParallax() {
   // Montagne distanti (parallasse ultra-lenta)
   const distOffset = (game.camX * 0.1) % 400;
-  ctx.fillStyle = '#21133b';
+  ctx.fillStyle = '#a9b6e8';
   for (let i = -1; i < 3; i++) {
     const mx = i * 400 - distOffset;
     ctx.beginPath();
@@ -1420,7 +1546,7 @@ function drawParallax() {
 
   // Colline (parallasse media)
   const hillOffset = (game.camX * 0.3) % 300;
-  ctx.fillStyle = '#1d4838';
+  ctx.fillStyle = '#3fae5c';
   for (let i = -1; i < 4; i++) {
     const hx = i * 300 - hillOffset;
     drawHill(hx, GROUND_Y + 4, 100, 45);
@@ -1429,7 +1555,7 @@ function drawParallax() {
 
   // Nuvole pixel
   const cloudOffset = (game.camX * 0.15) % 260;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
   for (let i = -1; i < 4; i++) {
     const cx = i * 260 - cloudOffset;
     drawCloud(cx + 30, 35);
@@ -1533,6 +1659,11 @@ const gunSprite = new Image();
 let gunSpriteLoaded = false;
 gunSprite.onload = () => { gunSpriteLoaded = true; };
 gunSprite.src = 'gun.png';
+
+const rocketSprite = new Image();
+let rocketSpriteLoaded = false;
+rocketSprite.onload = () => { rocketSpriteLoaded = true; };
+rocketSprite.src = 'rocket.png';
 
 /* Portale moderno (gradienti, anelli, vortice) — riutilizzato in lab e nel gioco */
 function drawModernPortal(c, x, y, radius, time, opts = {}) {
@@ -1762,18 +1893,54 @@ function drawBullet(b) {
   ctx.restore();
 }
 
-function drawMissile(m) {
+function drawBossJumpShadow(boss) {
+  if (!boss.jumpState) return;
+  const JUMP_TELEGRAPH_FRAMES = 40;
+  const JUMP_RISE_FRAMES = 26;
+  const elapsed = game.frame - boss.jumpPhaseStart;
+  const cx = boss.jumpTargetX + boss.w / 2;
+  let alpha, scale;
+  if (elapsed < JUMP_TELEGRAPH_FRAMES) {
+    // Avviso lampeggiante prima del decollo
+    alpha = 0.25 + Math.abs(Math.sin(elapsed * 0.5)) * 0.35;
+    scale = 0.7;
+  } else if (elapsed < JUMP_TELEGRAPH_FRAMES + JUMP_RISE_FRAMES) {
+    alpha = 0.35;
+    scale = 0.6;
+  } else {
+    const t = (elapsed - JUMP_TELEGRAPH_FRAMES - JUMP_RISE_FRAMES) / 22;
+    alpha = 0.4 + t * 0.5;
+    scale = 0.6 + t * 0.6;
+  }
   ctx.save();
-  ctx.shadowBlur = 10;
-  ctx.shadowColor = '#ff4d6d';
-  ctx.fillStyle = '#8a2b2b';
-  ctx.fillRect(m.x, m.y, m.w, m.h);
-  ctx.fillStyle = '#ff8a3d';
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = '#1a1a1a';
   ctx.beginPath();
-  ctx.moveTo(m.x, m.y + m.h / 2);
-  ctx.lineTo(m.x - 8, m.y);
-  ctx.lineTo(m.x - 8, m.y + m.h);
+  ctx.ellipse(cx, GROUND_Y + 2, (boss.w / 1.6) * scale, 10 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
+}
+
+function drawMissile(m) {
+  const angle = Math.atan2(m.vy, m.vx);
+  ctx.save();
+  ctx.translate(m.x + m.w / 2, m.y + m.h / 2);
+  ctx.rotate(angle);
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = '#ff8a3d';
+  if (rocketSpriteLoaded) {
+    const rw = 26, rh = 14;
+    ctx.drawImage(rocketSprite, -rw / 2, -rh / 2, rw, rh);
+  } else {
+    ctx.fillStyle = '#8a2b2b';
+    ctx.fillRect(-m.w / 2, -m.h / 2, m.w, m.h);
+    ctx.fillStyle = '#ff8a3d';
+    ctx.beginPath();
+    ctx.moveTo(-m.w / 2, 0);
+    ctx.lineTo(-m.w / 2 - 8, -m.h / 2);
+    ctx.lineTo(-m.w / 2 - 8, m.h / 2);
+    ctx.fill();
+  }
   ctx.restore();
 }
 
