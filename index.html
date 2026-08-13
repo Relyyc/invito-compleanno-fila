@@ -534,6 +534,21 @@
   .recap-label { color: #b8f2e6; }
   .recap-value { color: #ffd93d; font-weight: bold; }
 
+  .id-card-wrap {
+    margin: 18px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  #id-card-canvas {
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  }
+
   @media (orientation: landscape) and (max-height: 500px) {
     .result-box { padding: 14px 20px; }
     #face-preview { width: 56px; height: 56px; margin-bottom: 8px; }
@@ -702,6 +717,12 @@
       <canvas id="face-preview"></canvas>
       <h1 class="title" style="font-size:22px;">CE L'HAI FATTA!</h1>
       <p class="body-text" id="win-message"></p>
+
+      <div class="id-card-wrap">
+        <canvas id="id-card-canvas" width="480" height="290"></canvas>
+        <button class="pixel-btn" id="btn-download-card">📥 SCARICA LA TUA TESSERA</button>
+      </div>
+
       <p class="body-text" style="margin-top:20px; color:#ffd93d;">
         <!-- TODO-DATA / TODO-LUOGO -->
         📅 SABATO 12 SETTEMBRE 2026 - ORE 19:00<br>
@@ -957,6 +978,7 @@ let savedHasGun = false;
 
 function initGame(skipIntro) {
   fitCanvas();
+  lastShotFrame = -1000;
   // In caso di RIPROVA dopo un game over, riparti dall'ultimo checkpoint
   // raggiunto (es. se avevi già sbloccato la pistola). Una partita nuova
   // di zecca (skipIntro=false) invece riparte sempre da capo.
@@ -2446,6 +2468,83 @@ function formatRecapTime(seconds) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+function renderIdCard(stats, elapsedSeconds) {
+  const canvas = document.getElementById('id-card-canvas');
+  const w = canvas.width, h = canvas.height;
+  const c = canvas.getContext('2d');
+  c.clearRect(0, 0, w, h);
+
+  // Sfondo tessera
+  const bgGrad = c.createLinearGradient(0, 0, w, h);
+  bgGrad.addColorStop(0, '#fdf6e3');
+  bgGrad.addColorStop(1, '#efe0b8');
+  c.fillStyle = bgGrad;
+  c.fillRect(0, 0, w, h);
+
+  // Bordi stile pixel
+  c.strokeStyle = '#1a1a2e';
+  c.lineWidth = 6;
+  c.strokeRect(3, 3, w - 6, h - 6);
+  c.strokeStyle = '#ffd93d';
+  c.lineWidth = 2;
+  c.strokeRect(11, 11, w - 22, h - 22);
+
+  // Header
+  c.fillStyle = '#1a1a2e';
+  c.fillRect(11, 11, w - 22, 38);
+  c.fillStyle = '#ffd93d';
+  c.font = 'bold 15px monospace';
+  c.textAlign = 'center';
+  c.fillText('🎮 TESSERA UFFICIALE DA EROE 🎮', w / 2, 35);
+
+  // Foto (a tutto colore, "in chiaro")
+  const photoSize = 130;
+  const photoX = 30, photoY = 66;
+  c.fillStyle = '#1a1a2e';
+  c.fillRect(photoX - 4, photoY - 4, photoSize + 8, photoSize + 8);
+  if (state.faceCanvas) {
+    c.drawImage(state.faceCanvas, photoX, photoY, photoSize, photoSize);
+  }
+  c.strokeStyle = '#ffd93d';
+  c.lineWidth = 3;
+  c.strokeRect(photoX, photoY, photoSize, photoSize);
+
+  // Colonna dati
+  const textX = photoX + photoSize + 26;
+  c.textAlign = 'left';
+  c.fillStyle = '#7a6a3a';
+  c.font = 'bold 11px monospace';
+  c.fillText('NOME EROE', textX, photoY + 6);
+  c.fillStyle = '#1a1a2e';
+  c.font = 'bold 19px monospace';
+  const displayName = (state.name || 'Giocatore Misterioso').toUpperCase();
+  c.fillText(displayName.length > 18 ? displayName.slice(0, 18) + '…' : displayName, textX, photoY + 30);
+
+  const rows = [
+    ['⏱ TEMPO', formatRecapTime(elapsedSeconds)],
+    ['💀 MORTI PRE-BOSS', String(stats.deathsPreBoss)],
+    ['👑 MORTI VS BOSS', String(stats.deathsBoss)],
+    ['🦘 SALTI', String(stats.jumps)],
+    ['🔫 PROIETTILI', String(stats.shots)],
+  ];
+  let ry = photoY + 56;
+  rows.forEach(([label, value]) => {
+    c.fillStyle = '#7a6a3a';
+    c.font = '12px monospace';
+    c.fillText(label, textX, ry);
+    c.fillStyle = '#1a1a2e';
+    c.font = 'bold 13px monospace';
+    c.fillText(value, textX + 155, ry);
+    ry += 20;
+  });
+
+  // Footer
+  c.fillStyle = '#1a1a2e';
+  c.font = '10px monospace';
+  c.textAlign = 'center';
+  c.fillText('RILASCIATA IN OCCASIONE DEL COMPLEANNO DI FILA', w / 2, h - 16);
+}
+
 function onWin() {
   document.getElementById('win-message').textContent =
     `${state.name}, hai superato la prova! Preparati per la festa di Michele: sarà leggendaria.`;
@@ -2461,6 +2560,7 @@ function onWin() {
   document.getElementById('recap-deaths-boss').textContent = stats.deathsBoss;
   document.getElementById('recap-jumps').textContent = stats.jumps;
   document.getElementById('recap-shots').textContent = stats.shots;
+  renderIdCard(stats, elapsedSeconds);
 
   document.getElementById('win-recap').style.display = 'block';
   document.getElementById('win-reward').style.display = 'none';
@@ -2474,6 +2574,15 @@ document.getElementById('btn-reveal-reward').addEventListener('click', () => {
   document.getElementById('win-reward').style.display = 'block';
   sfx.win();
   spawnConfetti();
+});
+
+document.getElementById('btn-download-card').addEventListener('click', () => {
+  const canvas = document.getElementById('id-card-canvas');
+  const safeName = (state.name || 'giocatore').replace(/[^a-z0-9]+/gi, '_');
+  const link = document.createElement('a');
+  link.download = `tessera_${safeName}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
 });
 
 function spawnConfetti() {
