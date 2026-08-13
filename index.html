@@ -21,12 +21,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Il compleanno di Fila">
 <meta name="theme-color" content="#0b0b1a">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <!-- MANIFEST PWA (Fix) -->
 <link rel="manifest" href="manifest.json">
-<title>Sei Invitato! - Premi Start</title>
+<title>Il compleanno di Fila</title>
 <style>
   @font-face {
     font-family: 'PixelFont';
@@ -335,8 +336,8 @@
 
   /* JOYSTICK AREA */
   #joystick-area {
-    width: 120px;
-    height: 120px;
+    width: 160px;
+    height: 160px;
     touch-action: none;
     margin-bottom: 10px;
   }
@@ -352,8 +353,8 @@
     touch-action: none;
   }
   #joystick-knob {
-    width: 50px;
-    height: 50px;
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
     background: radial-gradient(circle at 35% 35%, #6de0ff, #1f4fbf);
     border: 2px solid #fff;
@@ -541,8 +542,8 @@
     .result-box button.pixel-btn { margin-top: 10px; padding: 10px 18px; }
     .recap-stats { padding: 8px 12px; margin: 10px 0; }
     .recap-row { padding: 4px 0; font-size: 11px; }
-    #joystick-area { width: 90px; height: 90px; }
-    #joystick-knob { width: 40px; height: 40px; }
+    #joystick-area { width: 120px; height: 120px; }
+    #joystick-knob { width: 54px; height: 54px; }
     .touch-btn { width: 64px; height: 64px; font-size: 26px; }
     #right-controls { gap: 12px; }
   }
@@ -951,24 +952,33 @@ if (window.visualViewport) window.visualViewport.addEventListener('resize', fitC
 fitCanvas();
 
 let game = null;
+let savedCheckpointX = 20;
+let savedHasGun = false;
 
 function initGame(skipIntro) {
   fitCanvas();
+  // In caso di RIPROVA dopo un game over, riparti dall'ultimo checkpoint
+  // raggiunto (es. se avevi già sbloccato la pistola). Una partita nuova
+  // di zecca (skipIntro=false) invece riparte sempre da capo.
+  if (!skipIntro) { savedCheckpointX = 20; savedHasGun = false; }
+  const startCheckpointX = skipIntro ? savedCheckpointX : 20;
+  const startHasGun = skipIntro ? savedHasGun : false;
+
   game = {
     keys: { left: false, right: false, jump: false, shoot: false },
     analogX: 0,
     lives: 3,
-    checkpointX: 20,
+    checkpointX: startCheckpointX,
     over: false,
     won: false,
     camX: 0,
     frame: 0,
-    player: makePlayer(20),
+    player: makePlayer(startCheckpointX),
     platforms: buildLevel(),
     enemies: buildEnemies(),
     fireballs: [],
-    hasGun: false,
-    gunPickup: { x: 1895, y: GROUND_Y - 52, w: 56, h: 48, collected: false },
+    hasGun: startHasGun,
+    gunPickup: { x: 1895, y: GROUND_Y - 52, w: 56, h: 48, collected: startHasGun },
     bullets: [],
     boss: buildBoss(),
     missiles: [],
@@ -989,13 +999,16 @@ function initGame(skipIntro) {
       shots: 0,
     },
   };
+  if (startHasGun) {
+    game.enemies.forEach(e => { e.alive = false; });
+  }
   if (!skipIntro) {
     game.intro = { phase: 'portal_open', frame: 0, portalX: 28, portalY: GROUND_Y - 50 };
     game.player = makePlayer(28);
     game.player.pose = 'hidden';
     game.player.visible = false;
   }
-  document.getElementById('btn-shoot-gun').style.display = 'none';
+  document.getElementById('btn-shoot-gun').style.display = startHasGun ? 'flex' : 'none';
   document.getElementById('boss-hp-wrap').style.display = 'none';
   document.getElementById('hud-lives').textContent = '♥'.repeat(game.lives);
   updateEnemyCounterHud();
@@ -1507,6 +1520,8 @@ function update() {
       game.hasGun = true;
       sfx.gunGet();
       game.checkpointX = gp.x;
+      savedCheckpointX = gp.x;
+      savedHasGun = true;
       document.getElementById('btn-shoot-gun').style.display = 'flex';
       spawnSparks(gp.x + gp.w/2, gp.y + gp.h/2, 20);
     }
@@ -1887,6 +1902,11 @@ function drawCloud(x, y) {
 }
 
 function drawGroundBlock(plat) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(plat.x, plat.y, plat.w, plat.h);
+  ctx.clip();
+
   ctx.fillStyle = '#5c3a21';
   ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
 
@@ -1907,6 +1927,8 @@ function drawGroundBlock(plat) {
   }
   ctx.fillStyle = '#52e375';
   ctx.fillRect(plat.x, plat.y, plat.w, 2);
+
+  ctx.restore();
 }
 
 function drawFlag(flagX) {
