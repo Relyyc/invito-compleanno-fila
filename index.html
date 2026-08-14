@@ -279,20 +279,21 @@
 
   #hud {
     position: absolute;
-    top: 10px; left: 10px;
-    font-size: 14px;
+    top: 8px; right: 8px;
+    font-size: 12px;
     color: #fff;
     text-shadow: 2px 2px 0 #000, 0 0 8px rgba(255,255,255,0.5);
     z-index: 5;
-    background: rgba(10, 10, 25, 0.45);
-    border: 2px solid rgba(255, 255, 255, 0.35);
+    background: rgba(10, 10, 25, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 8px;
-    padding: 8px 14px;
+    padding: 6px 12px;
     backdrop-filter: blur(3px);
+    text-align: right;
   }
-  #hud-name { font-size: 12px; opacity: 0.9; margin-bottom: 4px; }
-  #hud-lives { font-size: 20px; letter-spacing: 2px; }
-  #hud-enemies { margin-top: 6px; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; }
+  #hud-name { font-size: 10px; opacity: 0.85; margin-bottom: 3px; }
+  #hud-lives { font-size: 16px; letter-spacing: 2px; }
+  #hud-enemies { margin-top: 4px; font-size: 12px; font-weight: bold; letter-spacing: 0.5px; }
 
   #level-banner {
     position: absolute;
@@ -540,6 +541,12 @@
   .recap-label { color: #b8f2e6; }
   .recap-value { color: #ffd93d; font-weight: bold; }
 
+  #screen-win {
+    justify-content: flex-start;
+  }
+  #screen-win .result-box {
+    margin: auto 0;
+  }
   .id-card-wrap {
     margin: 18px 0;
     display: flex;
@@ -728,14 +735,17 @@
       <div class="id-card-wrap">
         <canvas id="id-card-canvas" width="480" height="290"></canvas>
         <button class="pixel-btn" id="btn-download-card">📥 SCARICA LA TUA TESSERA</button>
+        <button class="pixel-btn" id="btn-show-party-info">🎉 SCOPRI DATA E LUOGO DELLA FESTA</button>
       </div>
 
-      <p class="body-text" style="margin-top:20px; color:#ffd93d;">
-        <!-- TODO-DATA / TODO-LUOGO -->
-        📅 SABATO 12 SETTEMBRE 2026 - ORE 19:00<br>
-        📍 Piazza dei Ricordi 1, Cantù
-      </p>
-      <button class="pixel-btn" onclick="window.open('https://forms.gle/TODO-RSVP','_blank')">CONFERMA LA TUA PRESENZA</button>
+      <div id="party-info" style="display:none;">
+        <p class="body-text" style="margin-top:20px; color:#ffd93d;">
+          <!-- TODO-DATA / TODO-LUOGO -->
+          📅 SABATO 12 SETTEMBRE 2026 - ORE 19:00<br>
+          📍 Piazza dei Ricordi 1, Cantù
+        </p>
+        <button class="pixel-btn" onclick="window.open('https://forms.gle/TODO-RSVP','_blank')">CONFERMA LA TUA PRESENZA</button>
+      </div>
     </div>
   </section>
 
@@ -962,7 +972,8 @@ function pixelateFace(sourceCanvas) {
 /* ============ ENGINE PLATFORMER AA ============ */
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
+let W = canvas.width;
+const H = canvas.height;
 const GRAVITY = 0.5;
 const GROUND_Y = H - 44;
 
@@ -977,6 +988,16 @@ function fitCanvas() {
   const controlsEl = document.getElementById('touch-controls');
   const reserve = (controlsEl && controlsEl.offsetHeight) ? controlsEl.offsetHeight + 24 : 0;
   const availH = Math.max(140, availHFull - reserve);
+
+  // Adattiamo la risoluzione orizzontale del mondo di gioco al reale
+  // aspect ratio dello schermo: si vede più mondo di gioco a bordo
+  // schermo, invece di lasciare bande nere ai lati.
+  const targetW = Math.round(Math.min(640, Math.max(420, H * (availW / availH))));
+  if (targetW !== W) {
+    W = targetW;
+    canvas.width = W;
+  }
+
   const scale = Math.min(availW / W, availH / H);
   canvas.style.width = Math.floor(W * scale) + 'px';
   canvas.style.height = Math.floor(H * scale) + 'px';
@@ -1757,10 +1778,6 @@ function loseLife() {
   sfx.hit();
   triggerShake(8, 15);
   game.lives--;
-  if (game.stats) {
-    if (game.boss && game.boss.state !== 'dormant') game.stats.deathsBoss++;
-    else game.stats.deathsPreBoss++;
-  }
   document.getElementById('hud-lives').textContent = '♥'.repeat(Math.max(game.lives, 0));
   if (game.lives <= 0) {
     game.over = true;
@@ -1787,6 +1804,17 @@ function loseLife() {
     game.poofParticles = [];
     game.missiles = [];
     document.getElementById('btn-shoot-gun').style.display = gunAlreadyEarned ? 'flex' : 'none';
+
+    // Il recap finale racconta solo l'ULTIMA vita: si riparte da zero
+    // a ogni respawn, così ciò che è successo prima non pesa più.
+    game.stats = {
+      startTime: performance.now(),
+      deathsPreBoss: 0,
+      deathsBoss: 0,
+      jumps: 0,
+      shots: 0,
+    };
+    lastShotFrame = -1000;
   }
 }
 
@@ -2577,6 +2605,8 @@ function onWin() {
 
   document.getElementById('win-recap').style.display = 'block';
   document.getElementById('win-reward').style.display = 'none';
+  document.getElementById('party-info').style.display = 'none';
+  document.getElementById('btn-show-party-info').style.display = 'block';
 
   showScreen('screen-win');
   sfx.win();
@@ -2590,12 +2620,41 @@ document.getElementById('btn-reveal-reward').addEventListener('click', () => {
 });
 
 document.getElementById('btn-download-card').addEventListener('click', () => {
-  const canvas = document.getElementById('id-card-canvas');
+  const idCanvas = document.getElementById('id-card-canvas');
   const safeName = (state.name || 'giocatore').replace(/[^a-z0-9]+/gi, '_');
-  const link = document.createElement('a');
-  link.download = `tessera_${safeName}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  const filename = `tessera_${safeName}.png`;
+
+  function fallbackOpenInNewTab() {
+    try {
+      const dataUrl = idCanvas.toDataURL('image/png');
+      window.open(dataUrl, '_blank');
+    } catch (err2) {
+      alert('Non riesco a generare la tessera da qui. Se stai aprendo il file direttamente dal telefono (senza un vero indirizzo web), prova a caricare la pagina su un sito e riprova.');
+    }
+  }
+
+  try {
+    idCanvas.toBlob(blob => {
+      if (!blob) { fallbackOpenInNewTab(); return; }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }, 'image/png');
+  } catch (err) {
+    fallbackOpenInNewTab();
+  }
+});
+
+document.getElementById('btn-show-party-info').addEventListener('click', () => {
+  const info = document.getElementById('party-info');
+  info.style.display = 'block';
+  document.getElementById('btn-show-party-info').style.display = 'none';
+  setTimeout(() => info.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
 });
 
 function spawnConfetti() {
