@@ -735,6 +735,7 @@
       <div class="id-card-wrap">
         <canvas id="id-card-canvas" width="480" height="290"></canvas>
         <button class="pixel-btn" id="btn-download-card">📥 SCARICA LA TUA TESSERA</button>
+        <p class="body-text" style="font-size:10px; opacity:0.75; margin:-4px 0 4px;">Se non parte da sola, si aprirà in un'altra scheda: tienila premuta per salvarla</p>
         <button class="pixel-btn" id="btn-show-party-info">🎉 SCOPRI DATA E LUOGO DELLA FESTA</button>
       </div>
 
@@ -1778,6 +1779,10 @@ function loseLife() {
   sfx.hit();
   triggerShake(8, 15);
   game.lives--;
+  if (game.stats) {
+    if (game.boss && game.boss.state !== 'dormant') game.stats.deathsBoss++;
+    else game.stats.deathsPreBoss++;
+  }
   document.getElementById('hud-lives').textContent = '♥'.repeat(Math.max(game.lives, 0));
   if (game.lives <= 0) {
     game.over = true;
@@ -1804,17 +1809,6 @@ function loseLife() {
     game.poofParticles = [];
     game.missiles = [];
     document.getElementById('btn-shoot-gun').style.display = gunAlreadyEarned ? 'flex' : 'none';
-
-    // Il recap finale racconta solo l'ULTIMA vita: si riparte da zero
-    // a ogni respawn, così ciò che è successo prima non pesa più.
-    game.stats = {
-      startTime: performance.now(),
-      deathsPreBoss: 0,
-      deathsBoss: 0,
-      jumps: 0,
-      shots: 0,
-    };
-    lastShotFrame = -1000;
   }
 }
 
@@ -2622,32 +2616,40 @@ document.getElementById('btn-reveal-reward').addEventListener('click', () => {
 document.getElementById('btn-download-card').addEventListener('click', () => {
   const idCanvas = document.getElementById('id-card-canvas');
   const safeName = (state.name || 'giocatore').replace(/[^a-z0-9]+/gi, '_');
-  const filename = `tessera_${safeName}.png`;
+  const filename = `tessera_${safeName}.jpg`;
 
-  function fallbackOpenInNewTab() {
-    try {
-      const dataUrl = idCanvas.toDataURL('image/png');
-      window.open(dataUrl, '_blank');
-    } catch (err2) {
-      alert('Non riesco a generare la tessera da qui. Se stai aprendo il file direttamente dal telefono (senza un vero indirizzo web), prova a caricare la pagina su un sito e riprova.');
+  idCanvas.toBlob(async (blob) => {
+    if (!blob) {
+      alert('Non riesco a generare l\'immagine della tessera. Prova a ricaricare la pagina e riprova.');
+      return;
     }
-  }
+    const file = new File([blob], filename, { type: 'image/jpeg' });
 
-  try {
-    idCanvas.toBlob(blob => {
-      if (!blob) { fallbackOpenInNewTab(); return; }
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 3000);
-    }, 'image/png');
-  } catch (err) {
-    fallbackOpenInNewTab();
-  }
+    // Su smartphone: la condivisione nativa include "Salva immagine" nella Galleria/Foto
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'La mia tessera da eroe' });
+        return;
+      } catch (err) {
+        // Condivisione annullata o non disponibile: proseguiamo col fallback
+      }
+    }
+
+    const url = URL.createObjectURL(blob);
+
+    // Tentativo di download diretto (funziona su desktop e su molti Android)
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Fallback garantito: apri comunque l'immagine in una nuova scheda,
+    // così la puoi salvare tenendo il dito premuto sopra.
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 8000);
+  }, 'image/jpeg', 0.92);
 });
 
 document.getElementById('btn-show-party-info').addEventListener('click', () => {
