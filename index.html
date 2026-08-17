@@ -1526,15 +1526,16 @@ function update() {
     if (!en.alive) continue;
 
     if (en.type === 'fire') {
-      const distToPlayer = Math.abs((p.x + p.w / 2) - (en.x + en.w / 2));
-      const ACTIVATION_RANGE = 240; // il nemico "si accorge" del giocatore solo se abbastanza vicino/visibile
+      // "Sparano a vista": si attivano solo quando sono davvero dentro
+      // l'inquadratura della camera, non prima.
+      const visible = (en.x + en.w > game.camX) && (en.x < game.camX + W);
       if (!en.activated) {
-        if (distToPlayer < ACTIVATION_RANGE) {
+        if (visible) {
           en.activated = true;
-          en.nextShotFrame = game.frame + 35; // piccola pausa prima del primo sparo
+          en.nextShotFrame = game.frame + 18; // reazione rapida, appena lo vedi
         }
-      } else if (distToPlayer > ACTIVATION_RANGE + 100) {
-        en.activated = false; // il giocatore si è allontanato: torna "addormentato"
+      } else if (!visible) {
+        en.activated = false; // esce dall'inquadratura: torna "addormentato"
       }
       if (en.activated && game.frame >= en.nextShotFrame) {
         if (en.burstRemaining <= 0) en.burstRemaining = 1 + Math.floor(Math.random() * 3);
@@ -2518,9 +2519,14 @@ function formatRecapTime(seconds) {
 
 function renderIdCard(stats, elapsedSeconds) {
   const canvas = document.getElementById('id-card-canvas');
-  const w = canvas.width, h = canvas.height;
+  const w = 480, h = 290; // sistema di coordinate "logico" (invariato)
+  const SCALE = 4; // canvas reale ~1920x1160 per un download in alta risoluzione
+  canvas.width = w * SCALE;
+  canvas.height = h * SCALE;
   const c = canvas.getContext('2d');
-  c.clearRect(0, 0, w, h);
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.clearRect(0, 0, canvas.width, canvas.height);
+  c.scale(SCALE, SCALE);
 
   // Sfondo tessera
   const bgGrad = c.createLinearGradient(0, 0, w, h);
