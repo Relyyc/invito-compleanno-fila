@@ -1011,16 +1011,25 @@ fitCanvas();
 let game = null;
 let savedCheckpointX = 20;
 let savedHasGun = false;
+let savedStats = null;
 
 function initGame(skipIntro) {
   fitCanvas();
   lastShotFrame = -1000;
   // In caso di RIPROVA dopo un game over, riparti dall'ultimo checkpoint
-  // raggiunto (es. se avevi già sbloccato la pistola). Una partita nuova
-  // di zecca (skipIntro=false) invece riparte sempre da capo.
-  if (!skipIntro) { savedCheckpointX = 20; savedHasGun = false; }
+  // raggiunto (es. se avevi già sbloccato la pistola) E con le statistiche
+  // accumulate fin lì. Una partita nuova di zecca (skipIntro=false) invece
+  // riparte sempre da capo, azzerando tutto.
+  if (!skipIntro) {
+    savedCheckpointX = 20;
+    savedHasGun = false;
+    savedStats = null;
+  }
   const startCheckpointX = skipIntro ? savedCheckpointX : 20;
   const startHasGun = skipIntro ? savedHasGun : false;
+  if (!savedStats) {
+    savedStats = { startTime: performance.now(), deathsPreBoss: 0, deathsBoss: 0, jumps: 0, shots: 0 };
+  }
 
   game = {
     keys: { left: false, right: false, jump: false, shoot: false },
@@ -1049,13 +1058,7 @@ function initGame(skipIntro) {
     shakeMagnitude: 0,
     flagX: 2900,
     intro: null,
-    stats: {
-      startTime: performance.now(),
-      deathsPreBoss: 0,
-      deathsBoss: 0,
-      jumps: 0,
-      shots: 0,
-    },
+    stats: savedStats,
   };
   if (startHasGun) {
     game.enemies.forEach(e => { e.alive = false; });
@@ -1119,8 +1122,8 @@ function buildEnemies() {
     { x: 620, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 560, maxX: 650, alive: true },
     { x: 1000, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: -1, minX: 850, maxX: 1030, alive: true },
     { x: 1800, y: GROUND_Y - 20, w: 20, h: 20, type: 'walker', dir: 1, minX: 1760, maxX: 1840, alive: true },
-    { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, nextShotFrame: 60, burstRemaining: 0 },
-    { x: 1890, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, nextShotFrame: 90, burstRemaining: 0 },
+    { x: 1420, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, nextShotFrame: 60, burstRemaining: 0, activated: false },
+    { x: 1890, y: GROUND_Y - 24, w: 22, h: 24, type: 'fire', dir: -1, alive: true, nextShotFrame: 90, burstRemaining: 0, activated: false },
   ];
 }
 
@@ -1523,7 +1526,17 @@ function update() {
     if (!en.alive) continue;
 
     if (en.type === 'fire') {
-      if (game.frame >= en.nextShotFrame) {
+      const distToPlayer = Math.abs((p.x + p.w / 2) - (en.x + en.w / 2));
+      const ACTIVATION_RANGE = 240; // il nemico "si accorge" del giocatore solo se abbastanza vicino/visibile
+      if (!en.activated) {
+        if (distToPlayer < ACTIVATION_RANGE) {
+          en.activated = true;
+          en.nextShotFrame = game.frame + 35; // piccola pausa prima del primo sparo
+        }
+      } else if (distToPlayer > ACTIVATION_RANGE + 100) {
+        en.activated = false; // il giocatore si è allontanato: torna "addormentato"
+      }
+      if (en.activated && game.frame >= en.nextShotFrame) {
         if (en.burstRemaining <= 0) en.burstRemaining = 1 + Math.floor(Math.random() * 3);
         game.fireballs.push({ x: en.x - 4, y: en.y + 4, w: 12, h: 12, vx: -5.5 });
         en.burstRemaining--;
