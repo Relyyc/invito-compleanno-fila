@@ -749,6 +749,23 @@
 
       <div class="id-card-wrap">
         <canvas id="id-card-canvas" width="480" height="290"></canvas>
+        <div style="
+  margin:8px auto 14px;
+  max-width:420px;
+  padding:10px 14px;
+  background:#1a1a2e;
+  border:3px solid #ffd93d;
+  color:#ffd93d;
+  font-family:inherit;
+  font-size:11px;
+  line-height:1.6;
+  box-shadow:4px 4px 0 #7a6a10;
+">
+  🏆 QUEST FINALE SBLOCCATA<br>
+  Scarica la tessera e condividila nel gruppo.<br>
+  Fila deciderà se sei degno di partecipare al compleanno.
+</div>
+
         <button class="pixel-btn" id="btn-download-card">📥 SCARICA LA TUA TESSERA</button>
         <p class="body-text" style="font-size:10px; opacity:0.75; margin:-4px 0 4px;">Se non parte da sola, si aprirà in un'altra scheda: tienila premuta per salvarla</p>
         <button class="pixel-btn" id="btn-show-party-info">🎉 SCOPRI DATA E LUOGO DELLA FESTA</button>
@@ -1541,28 +1558,37 @@ function update() {
     if (!en.alive) continue;
 
     if (en.type === 'fire') {
-      // "Sparano a vista": si attivano solo quando sono davvero dentro
-      // l'inquadratura della camera, non prima.
-      const visible = (en.x + en.w > game.camX) && (en.x < game.camX + W);
-      if (!en.activated) {
-        if (visible) {
-          en.activated = true;
-          en.nextShotFrame = game.frame + 18; // reazione rapida, appena lo vedi
-        }
-      } else if (!visible) {
-        en.activated = false; // esce dall'inquadratura: torna "addormentato"
-      }
-      if (en.activated && game.frame >= en.nextShotFrame) {
-        if (en.burstRemaining <= 0) en.burstRemaining = 1 + Math.floor(Math.random() * 3);
-        game.fireballs.push({ x: en.x - 4, y: en.y + 4, w: 12, h: 12, vx: -5.5 });
-        en.burstRemaining--;
-        if (en.burstRemaining > 0) en.nextShotFrame = game.frame + 14;
-        else en.nextShotFrame = game.frame + 45 + Math.floor(Math.random() * 20);
-      }
-    } else {
-      en.x += en.dir * 1.2;
-      if (en.x < en.minX || en.x > en.maxX) en.dir *= -1;
+
+  const playerDistance =
+    Math.abs((p.x + p.w / 2) - (en.x + en.w / 2));
+
+  const attackRange = 280;
+
+  en.activated = playerDistance <= attackRange;
+
+  if (en.activated && game.frame >= en.nextShotFrame) {
+
+    if (en.burstRemaining <= 0) {
+      en.burstRemaining = 1 + Math.floor(Math.random() * 3);
     }
+
+    game.fireballs.push({
+      x: en.dir > 0 ? en.x + en.w : en.x - 4,
+      y: en.y + 4,
+      w: 12,
+      h: 12,
+      vx: en.dir > 0 ? 5.5 : -5.5
+    });
+
+    en.burstRemaining--;
+
+    if (en.burstRemaining > 0) {
+      en.nextShotFrame = game.frame + 14;
+    } else {
+      en.nextShotFrame = game.frame + 45 + Math.floor(Math.random() * 20);
+    }
+  }
+}
 
     const overlap = p.x < en.x + en.w && p.x + p.w > en.x && p.y < en.y + en.h && p.y + p.h > en.y;
     if (overlap && game.frame > p.invulnUntil) {
