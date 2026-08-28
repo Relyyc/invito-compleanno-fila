@@ -1559,35 +1559,72 @@ function update() {
 
     if (en.type === 'fire') {
 
-  const playerDistance =
-    Math.abs((p.x + p.w / 2) - (en.x + en.w / 2));
+  const playerDistance = Math.abs(
+    (game.player.x + game.player.w / 2) -
+    (en.x + en.w / 2)
+  );
 
-  const attackRange = 280;
+  const ATTACK_RANGE = 250;
 
-  en.activated = playerDistance <= attackRange;
+  if (!en.activated) {
+
+    if (playerDistance <= ATTACK_RANGE) {
+      en.activated = true;
+      en.nextShotFrame = game.frame + 25;
+    }
+
+  } else {
+
+    if (playerDistance > ATTACK_RANGE + 60) {
+      en.activated = false;
+    }
+
+  }
 
   if (en.activated && game.frame >= en.nextShotFrame) {
 
     if (en.burstRemaining <= 0) {
-      en.burstRemaining = 1 + Math.floor(Math.random() * 3);
+      en.burstRemaining = 1 + Math.floor(Math.random() * 2);
     }
 
+    const dir =
+      (game.player.x + game.player.w / 2) <
+      (en.x + en.w / 2)
+        ? -1
+        : 1;
+
     game.fireballs.push({
-      x: en.dir > 0 ? en.x + en.w : en.x - 4,
+      x: dir < 0 ? en.x - 4 : en.x + en.w - 8,
       y: en.y + 4,
       w: 12,
       h: 12,
-      vx: en.dir > 0 ? 5.5 : -5.5
+      vx: dir * 5.5
     });
 
     en.burstRemaining--;
 
     if (en.burstRemaining > 0) {
-      en.nextShotFrame = game.frame + 14;
+      en.nextShotFrame = game.frame + 20;
     } else {
-      en.nextShotFrame = game.frame + 45 + Math.floor(Math.random() * 20);
+      en.nextShotFrame =
+        game.frame +
+        50 +
+        Math.floor(Math.random() * 30);
     }
   }
+
+} else {
+
+  // WALKER NORMALI
+  en.x += en.dir * 1.2;
+
+  if (
+    en.x < en.minX ||
+    en.x > en.maxX
+  ) {
+    en.dir *= -1;
+  }
+
 }
 
     const overlap = p.x < en.x + en.w && p.x + p.w > en.x && p.y < en.y + en.h && p.y + p.h > en.y;
