@@ -1008,7 +1008,7 @@ function fitCanvas() {
   // Adattiamo la risoluzione orizzontale del mondo di gioco al reale
   // aspect ratio dello schermo: si vede più mondo di gioco a bordo
   // schermo, invece di lasciare bande nere ai lati.
-  const targetW = Math.round(Math.min(640, Math.max(420, H * (availW / availH))));
+  const targetW = Math.round(Math.min(1200, Math.max(420, H * (availW / availH))));
   if (targetW !== W) {
     W = targetW;
     canvas.width = W;
