@@ -4,14 +4,10 @@
   INVITO COMPLEANNO - EDIZIONE PIXEL AA v3.1 (JOYSTICK)
   ================================================================
   COSE DA SOSTITUIRE PRIMA DI PUBBLICARE (cerca "TODO" nel file):
-  1. nome del festeggiato -> Michele
-  2. TODO-DATA     -> data e ora della festa
-  3. TODO-LUOGO    -> indirizzo / luogo
-  4. musica        -> Coin-Block_Run.mp3
-  5. TODO-RSVP     -> link Formspree / Google Form per risposte
-  6. TODO-ICONA    -> icona home screen (icon-180.png, icon-512.png)
-  7. gun.png       -> pistola (pickup + in mano)
-  8. rocket.png    -> missili del boss (naso rivolto a destra nell'immagine sorgente)
+  1. TODO-DATA     -> data e ora della festa
+  2. TODO-LUOGO    -> indirizzo / luogo
+  3. TODO-RSVP     -> link Formspree / Google Form per risposte
+  (nome festeggiato, musica, icone, pistola e missili sono già a posto)
   ================================================================
 -->
 <html lang="it">
@@ -275,6 +271,24 @@
   @media (orientation: portrait) {
     #screen-game.active #rotate-overlay { display: flex; }
     #screen-game.active #game-wrap { display: none; }
+  }
+
+  #volume-toggle {
+    position: absolute;
+    top: 8px; left: 8px;
+    z-index: 5;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: rgba(10, 10, 25, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   #hud {
@@ -680,6 +694,7 @@
       <p class="body-text" style="margin-top:16px;">Gira il telefono in orizzontale per giocare</p>
     </div>
     <div id="game-wrap">
+      <button id="volume-toggle" type="button">🔊</button>
       <div id="hud">
         <div id="hud-name"></div>
         <div id="hud-lives"></div>
@@ -2323,7 +2338,10 @@ function drawMissile(m) {
   const angle = Math.atan2(m.vy, m.vx);
   ctx.save();
   ctx.translate(m.x + m.w / 2, m.y + m.h / 2);
-  ctx.rotate(angle);
+  // Nello sprite rocket.png il muso punta già verso sinistra (propulsore
+  // a destra), quindi ruotiamo con un offset di 180° rispetto alla
+  // direzione di volo per farlo puntare correttamente.
+  ctx.rotate(angle + Math.PI);
   ctx.shadowBlur = 8;
   ctx.shadowColor = '#ff8a3d';
   if (rocketSpriteLoaded) {
@@ -2601,7 +2619,7 @@ function renderIdCard(stats, elapsedSeconds) {
 
 function onWin() {
   document.getElementById('win-message').textContent =
-    `${state.name}, hai superato la prova! Preparati per la festa di Michele: sarà leggendaria.`;
+    `${state.name}, hai superato la prova! Preparati per la festa di Fila: sarà leggendaria.`;
   const preview = document.getElementById('face-preview');
   preview.width = 90; preview.height = 90;
   const pctx = preview.getContext('2d');
@@ -3176,6 +3194,12 @@ function startAssemblySequence() {
   }
 
   requestAnimationFrame(renderAssembly);
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
 }
 </script>
 </body>

@@ -3,10 +3,12 @@ const CACHE_NAME = "fila-pwa-v1";
 const FILES_TO_CACHE = [
     "./",
     "./index.html",
+    "./manifest.json",
     "./icon-180.png",
     "./icon-512.png",
     "./nemico.png",
     "./gun.png",
+    "./rocket.png",
     "./Coin-Block_Run.mp3"
 ];
 
