@@ -606,7 +606,6 @@
 </style>
 </head>
 <body>
-<div id="dev-version">🎮 AA v3.1 - JOYSTICK + FIX</div>
 <div id="app" class="crt">
 
   <!-- SCHERMATA 0: AGGIUNGI ALLA HOME -->
@@ -678,6 +677,12 @@
     <button class="pixel-btn" id="btn-shoot">📸 SCATTA</button>
     <button class="pixel-btn" id="btn-retake" style="display:none;">RIPETI</button>
     <button class="pixel-btn" id="btn-confirm" style="display:none; background:#3bcb6f; box-shadow:4px 4px 0 #145c2b,-4px 4px 0 #145c2b,0 0 0 3px #fff inset;">CONFERMA E GIOCA</button>
+
+    <div id="camera-denied-block" style="display:none;">
+      <h1 class="title shake-title" style="font-size:clamp(16px,4vw,24px); color:#ff4d6d;">AH LA METTI COSÌ?</h1>
+      <p class="body-text" style="color:#ff4d6d;">Sei proprio senza palle sfigat*</p>
+      <button class="pixel-btn" id="btn-camera-denied-ack">HAI RAGIONE, LO SO</button>
+    </div>
   </section>
 
   <!-- SCHERMATA 2.5: MONTAGGIO PERSONAGGIO -->
@@ -946,8 +951,10 @@ async function startCamera() {
     mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
     video.srcObject = mediaStream;
   } catch (err) {
-    document.getElementById('camera-status').textContent =
-      'Impossibile accedere alla fotocamera. Controlla i permessi.';
+    document.getElementById('camera-status').style.display = 'none';
+    video.style.display = 'none';
+    document.getElementById('btn-shoot').style.display = 'none';
+    document.getElementById('camera-denied-block').style.display = 'block';
   }
 }
 
@@ -982,6 +989,27 @@ document.getElementById('btn-confirm').addEventListener('click', () => {
   
   showScreen('screen-assembly');
   startAssemblySequence();
+});
+
+document.getElementById('btn-camera-denied-ack').addEventListener('click', () => {
+  const defaultImg = new Image();
+  defaultImg.onload = () => {
+    captureCanvas.width = defaultImg.naturalWidth;
+    captureCanvas.height = defaultImg.naturalHeight;
+    captureCanvas.getContext('2d').drawImage(defaultImg, 0, 0);
+
+    state.faceCanvas = pixelateFace(captureCanvas);
+    document.getElementById('face-overlay').src = state.faceCanvas.toDataURL();
+    document.getElementById('hud-name').textContent = state.name;
+
+    showScreen('screen-assembly');
+    startAssemblySequence();
+  };
+  defaultImg.onerror = () => {
+    document.getElementById('camera-denied-block').innerHTML =
+      '<p class="body-text" style="color:#ff4d6d;">Errore nel caricamento di merda.jpg (controlla che sia nella stessa cartella).</p>';
+  };
+  defaultImg.src = 'merda.jpg';
 });
 
 function pixelateFace(sourceCanvas) {
